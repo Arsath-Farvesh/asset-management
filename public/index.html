@@ -35,6 +35,9 @@ body { background-color:#f8f9fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana
 </a>
 
     <div class="ms-auto d-flex align-items-center gap-3">
+      <a href="qr-scan.html" class="btn btn-info btn-sm">
+        <i class="fas fa-qrcode me-1"></i>Scan QR
+      </a>
       <span id="welcomeText" class="fw-bold text-light"></span>
       <button id="logoutBtn" class="btn btn-outline-light btn-sm">Logout</button>
     </div>
@@ -89,6 +92,17 @@ body { background-color:#f8f9fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana
                         <div class="col-md-6">
                             <label for="employee-name" class="form-label">Assigned Employee</label>
                             <input type="text" class="form-control" id="employee-name" placeholder="Enter employee name">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" placeholder="Enter location">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary" id="add-category-btn">
+                                <i class="fas fa-plus me-1"></i>Add Category
+                            </button>
                         </div>
                     </div>
                     <div id="dynamic-fields"></div>
@@ -153,6 +167,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = "/login.html";
     });
 
+    // Add Category functionality
+    document.getElementById('add-category-btn').addEventListener('click', () => {
+        const newCategory = prompt('Enter new category name:');
+        if (newCategory && newCategory.trim()) {
+            const categorySelect = document.getElementById('asset-category');
+            const option = document.createElement('option');
+            option.value = newCategory.toLowerCase().replace(/\s+/g, '_');
+            option.textContent = newCategory;
+            categorySelect.appendChild(option);
+            alert('Category added successfully!');
+        }
+    });
+
     // --- Asset form JS ---
     const assetForm = document.getElementById('asset-form');
     const assetCategory = document.getElementById('asset-category');
@@ -176,9 +203,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     const previewQr = document.getElementById('preview-qr');
     const previewBarcode = document.getElementById('preview-barcode');
 
-    // 🔹 ADDED: make Serial No & Employee update preview live
+    // 🔹 ADDED: make Serial No, Employee & Location update preview live
     serialNumber.addEventListener('input', updatePreview);
     employeeName.addEventListener('input', updatePreview);
+    location.addEventListener('input', updatePreview);
 
     const categoryAssets = {
         assets: ["Laptop","Projector","Printer","Scanner"],
@@ -290,7 +318,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const name = document.getElementById('asset-name').value;
         const serial = serialNumber.value;
         const employee = employeeName.value;
-        const payload = { name, serial_number: serial, employee_name: employee };
+        const location = document.getElementById('location').value;
+        const payload = { name, serial_number: serial, employee_name: employee, location };
 
         if (categoryFields[category]) {
             categoryFields[category].forEach(f=>{

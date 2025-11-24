@@ -61,6 +61,18 @@
       text-align: left;
       white-space: nowrap;
     }
+    .action-btn {
+      padding: 5px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .edit-btn { background-color: #007bff; color: white; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .qr-btn { background-color: #28a745; color: white; }
+    .admin-only { display: none; }
   </style>
 </head>
 <body>
@@ -96,6 +108,19 @@
   </div>
 
   <script>
+    let userRole = null;
+
+    async function checkUserRole() {
+      const res = await fetch("/me", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        userRole = data.role;
+        if (userRole === 'admin') {
+          document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
+        }
+      }
+    }
+
     async function fetchHistory() {
       const res = await fetch("/api/history", { credentials: "include" });
       if (!res.ok) return alert("Failed to load history. Please login.");
@@ -110,8 +135,14 @@
           <td>${row.name}</td>
           <td>${row.serial_number || ""}</td>
           <td>${row.employee_name || ""}</td>
+          <td>${row.location || ""}</td>
           <td>${row.submitted_by || ""}</td>
           <td>${new Date(row.created_at).toLocaleString()}</td>
+          <td class="admin-only">
+            <button class="action-btn edit-btn" onclick="editAsset('${row.category}', ${row.id}, '${row.name}', '${row.serial_number || ""}', '${row.employee_name || ""}', '${row.location || ""}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteAsset('${row.category}', ${row.id})">Delete</button>
+            <button class="action-btn qr-btn" onclick="showQR('${row.qr_code}')">QR</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -145,7 +176,80 @@
       fetchHistory(); // repopulate table after restore
     }
 
-    fetchHistory();
+    async function editAsset(category, id, name, serial, employee, location) {
+      const newName = prompt('Edit Asset Name:', name);
+      if (newName === null) return;
+
+      const newSerial = prompt('Edit Serial Number:', serial);
+      if (newSerial === null) return;
+
+      const newEmployee = prompt('Edit Employee Name:', employee);
+      if (newEmployee === null) return;
+
+      const newLocation = prompt('Edit Location:', location);
+      if (newLocation === null) return;
+
+      const res = await fetch(`/api/assets/${category}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newName,
+          serial_number: newSerial,
+          employee_name: newEmployee,
+          location: newLocation
+        }),
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        alert('Asset updated successfully!');
+        fetchHistory();
+      } else {
+        alert('Failed to update asset.');
+      }
+    }
+
+    async function deleteAsset(category, id) {
+      if (!confirm('Are you sure you want to delete this asset?')) return;
+
+      const res = await fetch(`/api/assets/${category}/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        alert('Asset deleted successfully!');
+        fetchHistory();
+      } else {
+        alert('Failed to delete asset.');
+      }
+    }
+
+    function showQR(qrCode) {
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '1000';
+      modal.innerHTML = `
+        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+          <h3>QR Code</h3>
+          <img src="${qrCode}" style="max-width: 300px;">
+          <br><br>
+          <button onclick="this.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px;">Close</button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    // Initialize
+    checkUserRole().then(fetchHistory);
   </script>
 </body>
 </html>

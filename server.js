@@ -106,6 +106,7 @@ async function createTables() {
           name TEXT NOT NULL,
           serial_number TEXT,
           employee_name TEXT,
+          location TEXT,
           qr_code TEXT,
           barcode TEXT,
           submitted_by TEXT,
@@ -269,7 +270,7 @@ app.get("/api/history", isAuthenticated, async (req, res) => {
     let history = [];
     for (const table of validTables) {
       const result = await client.query(
-        `SELECT id, name, serial_number, employee_name, submitted_by, created_at FROM ${table}`
+        `SELECT id, name, serial_number, employee_name, location, submitted_by, created_at FROM ${table}`
       );
       result.rows.forEach(row => row.category = table);
       history = history.concat(result.rows);
@@ -356,7 +357,7 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
   const category = req.params.category;
   if (!validTables.includes(category)) return res.status(400).json({ error: "Invalid category" });
 
-  const { name, serial_number, employee_name } = req.body;
+  const { name, serial_number, employee_name, location } = req.body;
   if (!name) return res.status(400).json({ error: "Name required" });
 
   const client = await pool.connect();
@@ -371,9 +372,9 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
     const submittedBy = req.session.user.username;
 
     const result = await client.query(
-      `INSERT INTO ${category} (name, serial_number, employee_name, qr_code, barcode, submitted_by)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [name, serial_number || null, employee_name || null, qrImage, barcodeImage, submittedBy]
+      `INSERT INTO ${category} (name, serial_number, employee_name, location, qr_code, barcode, submitted_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [name, serial_number || null, employee_name || null, location || null, qrImage, barcodeImage, submittedBy]
     );
 
     res.json({ success: true, data: result.rows[0] });
@@ -394,6 +395,88 @@ app.get("/api/assets/:category", isAuthenticated, async (req, res) => {
     const result = await client.query(`SELECT * FROM ${category} ORDER BY created_at DESC`);
     res.json(result.rows);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// --- Admin-only middleware ---
+function isAdmin(req, res, next) {
+  if (req.session.user && req.session.user.role === 'admin') next();
+  else res.status(403).json({ success: false, error: "Admin access required" });
+}
+
+// --- Update asset (admin only) ---
+app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) => {
+  const category = req.params.category;
+  const id = req.params.id;
+  if (!validTables.includes(category)) return res.status(400).json({ error: "Invalid category" });
+
+  const { name, serial_number, employee_name, location } = req.body;
+  if (!name) return res.status(400).json({ error: "Name required" });
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `UPDATE ${category} SET name=$1, serial_number=$2, employee_name=$3, location=$4 WHERE id=$5 RETURNING *`,
+      [name, serial_number || null, employee_name || null, location || null, id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: "Asset not found" });
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// --- Delete asset (admin only) ---
+app.delete("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) => {
+  const category = req.params.category;
+  const id = req.params.id;
+  if (!validTables.includes(category)) return res.status(400).json({ error: "Invalid category" });
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`DELETE FROM ${category} WHERE id=$1 RETURNING *`, [id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: "Asset not found" });
+
+    res.json({ success: true, message: "Asset deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// --- Get asset by QR data ---
+app.get("/api/asset-by-qr", isAuthenticated, async (req, res) => {
+  const qrData = req.query.qr;
+  if (!qrData) return res.status(400).json({ error: "QR data required" });
+
+  const client = await pool.connect();
+  try {
+    let asset = null;
+    for (const table of validTables) {
+      const result = await client.query(`SELECT * FROM ${table} WHERE qr_code LIKE $1`, [`%${qrData}%`]);
+      if (result.rows.length > 0) {
+        asset = result.rows[0];
+        asset.category = table;
+        break;
+      }
+    }
+
+    if (!asset) return res.status(404).json({ error: "Asset not found" });
+
+    res.json({ success: true, data: asset });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   } finally {
     client.release();
