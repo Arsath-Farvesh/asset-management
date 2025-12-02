@@ -25,6 +25,8 @@ app.use(cors({
   credentials: true
 }));
 
+app.set('trust proxy', 1); // needed for secure cookies behind Railway's proxy
+
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -35,10 +37,12 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production', // true on Railway (HTTPS)
+    sameSite: 'none', // allow frontend on Vercel to send/receive the cookie
     maxAge: 1000 * 60 * 60
   }
 }));
+
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
