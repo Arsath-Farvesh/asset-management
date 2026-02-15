@@ -387,9 +387,17 @@ app.post("/logout", (req, res) => {
   res.json({ success: true });
 });
 
+app.get("/check-auth", (req, res) => {
+  if (req.session.user) {
+    res.json({ authenticated: true, user: req.session.user });
+  } else {
+    res.json({ authenticated: false });
+  }
+});
+
 app.get("/me", (req, res) => {
   if (req.session.user) {
-    res.json({ loggedIn: true, username: req.session.user.username, role: req.session.user.role });
+    res.json({ loggedIn: true, username: req.session.user.username, role: req.session.user.role, user: req.session.user });
   } else {
     res.json({ loggedIn: false });
   }
@@ -669,6 +677,36 @@ app.post("/forgot-password", async (req, res) => {
 
 app.post("/reset-password", async (req, res) => {
   res.json({ success: false, message: "Password reset not configured" });
+});
+
+// ===== HISTORY API =====
+app.get("/api/history", isAuthenticated, async (req, res) => {
+  try {
+    let history = [];
+    
+    // Fetch from all valid tables
+    for (const table of validTables) {
+      try {
+        const result = await pool.query(
+          `SELECT * FROM ${table} ORDER BY created_at DESC LIMIT 1000`
+        );
+        result.rows.forEach(row => {
+          row.category = table;
+          history.push(row);
+        });
+      } catch (e) {
+        // Table may not exist yet, continue
+      }
+    }
+    
+    // Sort by created_at descending
+    history.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    res.json({ success: true, data: history });
+  } catch (err) {
+    console.error("History fetch error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ===== CATEGORIES =====
