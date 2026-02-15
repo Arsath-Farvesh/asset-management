@@ -380,25 +380,25 @@ body {
                   <select class="form-select" id="asset-category" required>
                     <option value="">Select a category</option>
                     <option value="assets">Assets</option>
-                    <option value="employees">Employees</option>
-                    <option value="maintenance_logs">Maintenance Logs</option>
-                    <option value="documents">Documents</option>
+                    <option value="customer_details">Customer Details</option>
                     <option value="depreciation_history">Depreciation History</option>
+                    <option value="digital_media">Digital Media</option>
+                    <option value="documents">Documents</option>
+                    <option value="employees">Employees</option>
+                    <option value="equipments_assets">Equipments Assets</option>
+                    <option value="financial_assets">Financial Assets</option>
+                    <option value="furniture">Furniture</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="intellectual_property">Intellectual Property</option>
                     <option value="it_hardware">IT Hardware</option>
-                    <option value="software_license">Software License</option>
+                    <option value="leased_assets">Leased Assets</option>
                     <option value="locations">Locations</option>
                     <option value="machinery_equipment">Machinery & Equipment</option>
-                    <option value="digital_media">Digital Media</option>
-                    <option value="vehicles">Vehicles</option>
+                    <option value="maintenance_logs">Maintenance Logs</option>
                     <option value="real_estate">Real Estate</option>
-                    <option value="furniture">Furniture</option>
-                    <option value="financial_assets">Financial Assets</option>
-                    <option value="infrastructure">Infrastructure</option>
+                    <option value="software_license">Software License</option>
                     <option value="tools">Tools</option>
-                    <option value="leased_assets">Leased Assets</option>
-                    <option value="equipments_assets">Equipments Assets</option>
-                    <option value="intellectual_property">Intellectual Property</option>
-                    <option value="customer_details">Customer Details</option>
+                    <option value="vehicles">Vehicles</option>
                   </select>
                   <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-three-dots-vertical"></i>
@@ -607,25 +607,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     caseType.addEventListener('input', updatePreview);
 
     const categoryAssets = {
-        assets: ["Laptop","Projector","Printer","Scanner"],
-        employees: ["John Doe","Jane Smith","Michael Brown"],
-        maintenance_logs: ["AC Service","Generator Check","Elevator Maintenance"],
-        documents: ["Invoice","Contract","Policy Document"],
+        assets: ["Laptop","Printer","Projector","Scanner"],
+        customer_details: [],
         depreciation_history: ["Laptop Depreciation","Vehicle Depreciation"],
-        it_hardware: ["Desktop PC","Laptop","Monitor","Keyboard","Mouse"],
-        software_license: ["MS Office","Adobe Photoshop","Antivirus","ERP System"],
-        locations: ["Head Office","Branch 1","Branch 2","Warehouse"],
-        machinery_equipment: ["Forklift","CNC Machine","Drill Press"],
-        digital_media: ["Camera","Microphone","Tripod","Lighting Kit"],
-        vehicles: ["Sedan","SUV","Pickup Truck","Motorbike"],
-        real_estate: ["Office Building","Warehouse","Shop"],
-        furniture: ["Conference Table","Small Table","L-Shaped Table","Office Chair","Bookshelf"],
-        financial_assets: ["Stocks","Bonds","Mutual Funds","Cash Reserve"],
-        infrastructure: ["Server Room","Networking Equipment","Power Backup"],
-        tools: ["Hammer","Screwdriver Set","Wrench","Drill"],
-        equipments_assets: ["DDL","RDC","EJARI","Private Notary","Management Office","Finance Office"],
-        leased_assets: ["Leased Car","Leased Printer","Leased Laptop"],
-        intellectual_property: ["Patent","Trademark","Copyright"]
+        digital_media: ["Camera","Lighting Kit","Microphone","Tripod"],
+        documents: ["Contract","Invoice","Policy Document"],
+        employees: ["Jane Smith","John Doe","Michael Brown"],
+        equipments_assets: ["EJARI","Finance Office","Management Office","Private Notary","RDC","DDL"],
+        financial_assets: ["Bonds","Cash Reserve","Mutual Funds","Stocks"],
+        furniture: ["Bookshelf","Conference Table","L-Shaped Table","Office Chair","Small Table"],
+        infrastructure: ["Networking Equipment","Power Backup","Server Room"],
+        intellectual_property: ["Copyright","Patent","Trademark"],
+        it_hardware: ["Desktop PC","Keyboard","Laptop","Monitor","Mouse"],
+        leased_assets: ["Leased Car","Leased Laptop","Leased Printer"],
+        locations: ["Branch 1","Branch 2","Head Office","Warehouse"],
+        machinery_equipment: ["CNC Machine","Drill Press","Forklift"],
+        maintenance_logs: ["AC Service","Elevator Maintenance","Generator Check"],
+        real_estate: ["Office Building","Shop","Warehouse"],
+        software_license: ["Adobe Photoshop","Antivirus","ERP System","MS Office"],
+        tools: ["Drill","Hammer","Screwdriver Set","Wrench"],
+        vehicles: ["Motorbike","Pickup Truck","Sedan","SUV"]
     };
 
     const categoryFields = {
