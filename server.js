@@ -43,13 +43,39 @@ app.use(session({
   }
 }));
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+let pool;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  });
+
+  pool.on("connect", () => console.log("✅ Connected to PostgreSQL"));
+  pool.on("error", (err) => console.error("DB error:", err));
+} else {
+  console.warn('⚠️  No DATABASE_URL provided — running without DB. Many API endpoints will be disabled.');
+  pool = {
+    on: () => {},
+    connect: async () => ({
+      query: async () => { throw new Error('No DATABASE_URL set'); },
+      release: () => {}
+    }),
+    query: async () => { throw new Error('No DATABASE_URL set'); }
+  };
+}
+
+const dbEnabled = !!process.env.DATABASE_URL;
+
+// Return a clear 503 JSON for any /api routes when DB is not configured
+app.use('/api', (req, res, next) => {
+  if (!dbEnabled) return res.status(503).json({ success: false, error: 'Database not configured' });
+  next();
 });
 
-pool.on("connect", () => console.log("✅ Connected to PostgreSQL"));
-pool.on("error", (err) => console.error("DB error:", err));
+function requireDbOr503(req, res, next) {
+  if (!dbEnabled) return res.status(503).json({ success: false, error: 'Database not configured' });
+  next();
+}
 
 // --- Users table setup ---
 async function createUsersTable() {
@@ -113,7 +139,9 @@ async function initUsers() {
   await createUsersTable();
   await updateUsersTableSchema(); // Add this to fix existing tables
 }
-initUsers();
+if (process.env.DATABASE_URL) {
+  initUsers();
+}
 
 async function createUser(username, password, role = 'user', email = null, phone = null, department = null) {
   const client = await pool.connect();
@@ -270,7 +298,9 @@ async function initializeDatabase() {
   await addEquipmentsAssetsColumns();
   await createCustomerDetailsTable();
 }
-initializeDatabase();
+if (process.env.DATABASE_URL) {
+  initializeDatabase();
+}
 
 // --- Middleware ---
 function isAuthenticated(req, res, next) {
@@ -587,7 +617,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-app.post("/forgot-password", async (req, res) => {
+app.post("/forgot-password", requireDbOr503, async (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ success: false, message: "Username is required" });
 
@@ -631,7 +661,7 @@ app.post("/forgot-password", async (req, res) => {
   }
 });
 
-app.post("/reset-password", async (req, res) => {
+app.post("/reset-password", requireDbOr503, async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) return res.status(400).json({ success: false, message: "Token and new password required" });
 
