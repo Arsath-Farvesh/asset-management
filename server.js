@@ -271,25 +271,6 @@ async function createTables() {
       await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS location TEXT`);
       await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS qr_text TEXT`);
       
-      // Add category-specific columns
-      if (table === 'employees') {
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS department TEXT`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS position TEXT`);
-      } else if (table === 'assets') {
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS purchase_date DATE`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS value NUMERIC`);
-      } else if (table === 'maintenance_logs') {
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS maintenance_date DATE`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS technician TEXT`);
-      } else if (table === 'it_hardware') {
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS brand TEXT`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS model TEXT`);
-      } else if (table === 'vehicles') {
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS make TEXT`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS model TEXT`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS year TEXT`);
-      }
-      
       try {
         await client.query(`
           DROP TRIGGER IF EXISTS update_${table}_updated_at ON ${table};
@@ -434,8 +415,6 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
 
   const { name, serial_number, employee_name, location, ...extraFields } = req.body;
   
-  console.log(`📝 Creating ${category} asset:`, { name, serial_number, employee_name, location, extraFields });
-  
   if (category === 'customer_details' && !extraFields.customer_name) {
     return res.status(400).json({ success: false, error: "Customer name required" });
   }
@@ -485,14 +464,10 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
     }
 
     const query = `INSERT INTO ${category} (${columns.join(', ')}) VALUES (${placeholders.join(', ')}) RETURNING *`;
-    console.log(`📊 Executing query for ${category}:`, query.substring(0, 100) + '...');
-    
     const result = await pool.query(query, values);
-    console.log(`✅ ${category} asset created successfully, ID: ${result.rows[0].id}`);
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error(`❌ Error creating ${category} asset:`, err.message);
-    console.error(`Full error:`, err);
+    console.error("Create asset error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
