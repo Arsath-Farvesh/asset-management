@@ -3,220 +3,527 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Asset Management - Input Modules</title>
+<title>Takhlees Asset Management System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root { --primary:#2c3e50; --secondary:#3498db; --accent:#e74c3c; --light:#ecf0f1; }
-body { background-color:#f8f9fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding:20px; }
-.header { background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%); color:white; padding:20px; border-radius:10px; margin-bottom:30px; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
-.card { border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); margin-bottom:20px; border:none; transition: transform 0.3s; }
-.card:hover { transform:translateY(-5px); }
-.form-container { background-color:white; padding:30px; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
-.category-badge { background-color: var(--secondary); color:white; padding:5px 10px; border-radius:20px; font-size:0.8rem; margin-left:10px; }
-.qr-barcode { max-width:200px; margin:0 auto; display:block; border:1px solid #ddd; border-radius:5px; padding:10px; background:white; }
-.success-alert { display:none; position:fixed; top:20px; right:20px; z-index:1000; box-shadow:0 4px 6px rgba(0,0,0,0.1); animation:fadeIn 0.5s, fadeOut 0.5s 2.5s;}
-@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-@keyframes fadeOut { from{opacity:1;} to{opacity:0;} }
-.required-field::after { content:"*"; color:var(--accent); margin-left:4px; }
-.section-title { border-bottom:2px solid var(--secondary); padding-bottom:10px; margin-bottom:20px; color:var(--primary);}
-.navbar-custom { background-color: var(--primary); }
-.navbar-custom .navbar-brand, .navbar-custom .navbar-text { color: white; }
-.btn-scan { border:1px solid rgba(255,255,255,0.5); color:white; }
-.btn-scan:hover { color:var(--primary); background:white; }
-/* Hide asset name column when customer details selected */
-.hidden-field { display: none !important; }
+:root {
+  --takhlees-gold: #C5A572;
+  --takhlees-blue: #003049;
+  --takhlees-dark: #001219;
+  --takhlees-light: #F7F7F7;
+  --takhlees-accent: #D62828;
+  --takhlees-success: #06A77D;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.navbar-takhlees {
+  background: linear-gradient(135deg, var(--takhlees-dark) 0%, var(--takhlees-blue) 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 16px 0;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 20px;
+  color: white !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo-small {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--takhlees-gold) 0%, #D4AF37 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(197, 165, 114, 0.3);
+}
+
+.brand-logo-small i {
+  color: var(--takhlees-dark);
+  font-size: 20px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand-text .main {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.brand-text .sub {
+  font-size: 10px;
+  opacity: 0.9;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.navbar-nav .btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 8px 16px;
+  transition: all 0.3s;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--takhlees-gold) 0%, #D4AF37 100%);
+  border: none;
+  color: var(--takhlees-dark);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 165, 114, 0.4);
+  color: var(--takhlees-dark);
+}
+
+.btn-outline-gold {
+  border: 2px solid var(--takhlees-gold);
+  color: var(--takhlees-gold);
+  background: transparent;
+}
+
+.btn-outline-gold:hover {
+  background: var(--takhlees-gold);
+  color: var(--takhlees-dark);
+}
+
+.welcome-user {
+  color: var(--takhlees-gold);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.page-header {
+  background: linear-gradient(135deg, var(--takhlees-dark) 0%, var(--takhlees-blue) 100%);
+  color: white;
+  padding: 40px 0;
+  margin-bottom: 40px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h1 {
+  font-weight: 700;
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.card-takhlees {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  background: white;
+  margin-bottom: 30px;
+  transition: all 0.3s;
+}
+
+.card-takhlees:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.card-header-takhlees {
+  background: linear-gradient(135deg, rgba(197, 165, 114, 0.1) 0%, rgba(197, 165, 114, 0.05) 100%);
+  border-bottom: 2px solid var(--takhlees-gold);
+  padding: 20px 25px;
+  border-radius: 16px 16px 0 0;
+}
+
+.card-header-takhlees h3 {
+  color: var(--takhlees-dark);
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0;
+}
+
+.card-body-takhlees {
+  padding: 30px 25px;
+}
+
+.form-label {
+  color: var(--takhlees-dark);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.required-field::after {
+  content: "*";
+  color: var(--takhlees-accent);
+  margin-left: 4px;
+}
+
+.form-control, .form-select {
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--takhlees-gold);
+  box-shadow: 0 0 0 4px rgba(197, 165, 114, 0.1);
+}
+
+.input-group .btn {
+  border-radius: 0 10px 10px 0;
+}
+
+.category-badge {
+  background: linear-gradient(135deg, var(--takhlees-gold) 0%, #D4AF37 100%);
+  color: var(--takhlees-dark);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--takhlees-blue) 0%, #005f73 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 48, 73, 0.3);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-weight: 600;
+}
+
+.qr-barcode {
+  max-width: 180px;
+  margin: 0 auto;
+  display: block;
+  border: 2px solid var(--takhlees-gold);
+  border-radius: 12px;
+  padding: 12px;
+  background: white;
+}
+
+.success-alert {
+  display: none;
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  z-index: 1000;
+  background: linear-gradient(135deg, var(--takhlees-success) 0%, #05c792 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(6, 167, 125, 0.3);
+  animation: slideIn 0.5s ease-out, slideOut 0.5s ease-in 2.5s;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+}
+
+.hidden-field {
+  display: none !important;
+}
+
+.preview-section {
+  background: linear-gradient(135deg, rgba(197, 165, 114, 0.05) 0%, rgba(197, 165, 114, 0.02) 100%);
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 15px;
+}
+
+.preview-section h4 {
+  color: var(--takhlees-dark);
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.preview-section p {
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.preview-section span {
+  color: var(--takhlees-dark);
+  font-weight: 600;
+}
+
+.loading-spinner {
+  display: none;
+}
 </style>
 </head>
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+<nav class="navbar navbar-expand-lg navbar-takhlees">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="#"><i class="fas fa-boxes me-2"></i>Asset Management</a>
-    <div class="d-flex gap-2">
-      <a href="history.html" class="btn btn-warning btn-sm">
-        <i class="fas fa-history me-1"></i>History
+    <a class="navbar-brand" href="#">
+      <div class="brand-logo-small">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <div class="brand-text">
+        <span class="main">Takhlees</span>
+        <span class="sub">ASSET MANAGEMENT SYSTEM</span>
+      </div>
+    </a>
+    
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <a href="history.html" class="btn btn-gold btn-sm">
+        <i class="bi bi-clock-history me-1"></i>History
       </a>
-      <a href="qr-scan.html" class="btn btn-outline-light btn-sm btn-scan">
-        <i class="fas fa-qrcode me-1"></i>Scan QR
+      <a href="qr-scan.html" class="btn btn-outline-gold btn-sm">
+        <i class="bi bi-qr-code me-1"></i>Scan QR
       </a>
-    </div>
-
-    <div class="ms-auto d-flex align-items-center gap-3">
-      <span id="welcomeText" class="fw-bold text-light"></span>
-      <button id="logoutBtn" class="btn btn-outline-light btn-sm">Logout</button>
+      <span id="welcomeText" class="welcome-user ms-3 d-none d-md-inline"></span>
+      <button id="logoutBtn" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </button>
     </div>
   </div>
 </nav>
 
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container text-center">
+    <h1><i class="bi bi-plus-circle-fill me-3"></i>Asset Input Module</h1>
+    <p>Add and manage assets for Takhlees Government Services</p>
+  </div>
+</div>
+
+<!-- Main Content -->
 <div class="container">
-    <div class="header text-center">
-        <h1><i class="fas fa-plus-circle me-2"></i>Asset Input Module</h1>
-        <p class="lead">Add new assets to the management system</p>
-    </div>
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="form-container card">
-                <h3 class="section-title"><i class="fas fa-pencil-alt me-2"></i>Asset Details</h3>
-                <form id="asset-form">
-                    <div class="row mb-3">
-                        <div class="col-md-6" id="asset-category-col">
-                            <label for="asset-category" class="form-label required-field">Category</label>
-                            <div class="input-group">
-                                <select class="form-select" id="asset-category" required>
-                                    <option value="">Select a category</option>
-                                    <option value="assets">Assets</option>
-                                    <option value="employees">Employees</option>
-                                    <option value="maintenance_logs">Maintenance Logs</option>
-                                    <option value="documents">Documents</option>
-                                    <option value="depreciation_history">Depreciation History</option>
-                                    <option value="it_hardware">IT Hardware</option>
-                                    <option value="software_license">Software License</option>
-                                    <option value="locations">Locations</option>
-                                    <option value="machinery_equipment">Machinery & Equipment</option>
-                                    <option value="digital_media">Digital Media</option>
-                                    <option value="vehicles">Vehicles</option>
-                                    <option value="real_estate">Real Estate</option>
-                                    <option value="furniture">Furniture</option>
-                                    <option value="financial_assets">Financial Assets</option>
-                                    <option value="infrastructure">Infrastructure</option>
-                                    <option value="tools">Tools</option>
-                                    <option value="leased_assets">Leased Assets</option>
-                                    <option value="equipments_assets">Equipments Assets</option>
-                                    <option value="intellectual_property">Intellectual Property</option>
-                                    <option value="customer_details">Customer Details</option>
-                                </select>
-                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Options</button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" id="clear-category">Clear selection</a></li>
-                                    <li><a class="dropdown-item" href="qr-scan.html">Scan QR</a></li>
-                                    <li><a class="dropdown-item" href="history.html">View history</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-6" id="asset-name-col">
-                            <label for="asset-name" class="form-label required-field">Asset Name</label>
-                            <div id="asset-name-container">
-                                <select class="form-select" id="asset-name" disabled required>
-                                    <option value="">Select a category first</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Customer Details Section (shown only for customer_details) -->
-                    <div id="customer-details-section" style="display: none;">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="customer-name" class="form-label required-field">Customer Name</label>
-                                <input type="text" class="form-control" id="customer-name" placeholder="Enter customer name" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="customer-phone" class="form-label required-field">Customer Phone</label>
-                                <input type="tel" class="form-control" id="customer-phone" placeholder="Enter phone number" required>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="case-date" class="form-label required-field">Date</label>
-                                <input type="date" class="form-control" id="case-date" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="case-number" class="form-label required-field">Number of Case</label>
-                                <input type="text" class="form-control" id="case-number" placeholder="Enter case number" required>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label for="case-type" class="form-label required-field">Type of Case</label>
-                                <input type="text" class="form-control" id="case-type" placeholder="Enter type of case" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Standard Fields (hidden for customer_details) -->
-                    <div id="standard-fields">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="serial-number" class="form-label">Serial Number</label>
-                                <input type="text" class="form-control" id="serial-number" placeholder="Enter serial number">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="employee-name" class="form-label">Assigned Employee</label>
-                                <input type="text" class="form-control" id="employee-name" placeholder="Enter employee name">
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="asset-location" class="form-label">Location</label>
-                                <input type="text" class="form-control" id="asset-location" placeholder="Enter asset location">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="dynamic-fields"></div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <button type="reset" class="btn btn-secondary me-md-2"><i class="fas fa-undo me-2"></i> Reset Form</button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i> Add Asset</button>
-                    </div>
-                </form>
-            </div>
+  <div class="row">
+    <!-- Form Section -->
+    <div class="col-lg-8">
+      <div class="card-takhlees">
+        <div class="card-header-takhlees">
+          <h3><i class="bi bi-pencil-square me-2"></i>Asset Details</h3>
         </div>
-
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0"><i class="fas fa-eye me-2"></i>Asset Preview</h5>
+        <div class="card-body-takhlees">
+          <form id="asset-form">
+            <div class="row mb-4">
+              <div class="col-md-6" id="asset-category-col">
+                <label for="asset-category" class="form-label required-field">Category</label>
+                <div class="input-group">
+                  <select class="form-select" id="asset-category" required>
+                    <option value="">Select a category</option>
+                    <option value="assets">Assets</option>
+                    <option value="employees">Employees</option>
+                    <option value="maintenance_logs">Maintenance Logs</option>
+                    <option value="documents">Documents</option>
+                    <option value="depreciation_history">Depreciation History</option>
+                    <option value="it_hardware">IT Hardware</option>
+                    <option value="software_license">Software License</option>
+                    <option value="locations">Locations</option>
+                    <option value="machinery_equipment">Machinery & Equipment</option>
+                    <option value="digital_media">Digital Media</option>
+                    <option value="vehicles">Vehicles</option>
+                    <option value="real_estate">Real Estate</option>
+                    <option value="furniture">Furniture</option>
+                    <option value="financial_assets">Financial Assets</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="tools">Tools</option>
+                    <option value="leased_assets">Leased Assets</option>
+                    <option value="equipments_assets">Equipments Assets</option>
+                    <option value="intellectual_property">Intellectual Property</option>
+                    <option value="customer_details">Customer Details</option>
+                  </select>
+                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" id="clear-category"><i class="bi bi-x-circle me-2"></i>Clear</a></li>
+                    <li><a class="dropdown-item" href="qr-scan.html"><i class="bi bi-qr-code me-2"></i>Scan QR</a></li>
+                    <li><a class="dropdown-item" href="history.html"><i class="bi bi-clock-history me-2"></i>View History</a></li>
+                  </ul>
                 </div>
-                <div class="card-body text-center">
-                    <h4 id="preview-name">Asset Name</h4>
-                    <p>Category: <span id="preview-category" class="category-badge">Not selected</span></p>
-                    <p id="preview-serial-row">Serial: <span id="preview-serial">N/A</span></p>
-                    <p id="preview-employee-row">Employee: <span id="preview-employee">N/A</span></p>
-                    <p id="preview-location-row">Location: <span id="preview-location">N/A</span></p>
-                    <div id="preview-customer-details" style="display: none;">
-                        <p>Customer: <span id="preview-customer-name">N/A</span></p>
-                        <p>Phone: <span id="preview-customer-phone">N/A</span></p>
-                        <p>Case #: <span id="preview-case-number">N/A</span></p>
-                        <p>Case Type: <span id="preview-case-type">N/A</span></p>
-                    </div>
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <h6>QR Code</h6>
-                            <img id="preview-qr" class="qr-barcode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Sample">
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Barcode</h6>
-                            <img id="preview-barcode" class="qr-barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=Sample&scale=3&height=10">
-                        </div>
-                    </div>
+              </div>
+              <div class="col-md-6" id="asset-name-col">
+                <label for="asset-name" class="form-label required-field">Asset Name</label>
+                <div id="asset-name-container">
+                  <select class="form-select" id="asset-name" disabled required>
+                    <option value="">Select a category first</option>
+                  </select>
                 </div>
+              </div>
             </div>
+            
+            <!-- Customer Details Section -->
+            <div id="customer-details-section" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="customer-name" class="form-label required-field">Customer Name</label>
+                  <input type="text" class="form-control" id="customer-name" placeholder="Enter customer name">
+                </div>
+                <div class="col-md-6">
+                  <label for="customer-phone" class="form-label required-field">Customer Phone</label>
+                  <input type="tel" class="form-control" id="customer-phone" placeholder="+971 XX XXX XXXX">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="case-date" class="form-label required-field">Date</label>
+                  <input type="date" class="form-control" id="case-date">
+                </div>
+                <div class="col-md-6">
+                  <label for="case-number" class="form-label required-field">Case Number</label>
+                  <input type="text" class="form-control" id="case-number" placeholder="Enter case number">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label for="case-type" class="form-label required-field">Type of Case</label>
+                  <input type="text" class="form-control" id="case-type" placeholder="e.g., Ejari Registration, Visa Application">
+                </div>
+              </div>
+            </div>
+
+            <!-- Standard Fields -->
+            <div id="standard-fields">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="serial-number" class="form-label">Serial Number</label>
+                  <input type="text" class="form-control" id="serial-number" placeholder="Enter serial number">
+                </div>
+                <div class="col-md-6">
+                  <label for="employee-name" class="form-label">Assigned Employee</label>
+                  <input type="text" class="form-control" id="employee-name" placeholder="Enter employee name">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="asset-location" class="form-label">Location</label>
+                  <input type="text" class="form-control" id="asset-location" placeholder="e.g., Deira Office, Al Wahda Branch">
+                </div>
+              </div>
+            </div>
+            
+            <div id="dynamic-fields"></div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+              <button type="reset" class="btn btn-secondary">
+                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset Form
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-circle-fill me-2"></i>Add Asset
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
 
-    <div class="alert alert-success success-alert" role="alert" id="success-alert">
-        <i class="fas fa-check-circle me-2"></i> Asset added successfully!
+    <!-- Preview Section -->
+    <div class="col-lg-4">
+      <div class="card-takhlees">
+        <div class="card-header-takhlees">
+          <h3><i class="bi bi-eye-fill me-2"></i>Asset Preview</h3>
+        </div>
+        <div class="card-body-takhlees text-center">
+          <div class="preview-section">
+            <h4 id="preview-name">Asset Name</h4>
+            <p>Category: <span class="category-badge" id="preview-category">Not selected</span></p>
+            <p id="preview-serial-row">Serial: <span id="preview-serial">N/A</span></p>
+            <p id="preview-employee-row">Employee: <span id="preview-employee">N/A</span></p>
+            <p id="preview-location-row">Location: <span id="preview-location">N/A</span></p>
+            
+            <div id="preview-customer-details" style="display: none;">
+              <p>Customer: <span id="preview-customer-name">N/A</span></p>
+              <p>Phone: <span id="preview-customer-phone">N/A</span></p>
+              <p>Case #: <span id="preview-case-number">N/A</span></p>
+              <p>Case Type: <span id="preview-case-type">N/A</span></p>
+            </div>
+            
+            <div class="row mt-4">
+              <div class="col-6">
+                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px;">QR Code</h6>
+                <img id="preview-qr" class="qr-barcode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Takhlees">
+              </div>
+              <div class="col-6">
+                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px;">Barcode</h6>
+                <img id="preview-barcode" class="qr-barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=3&height=10">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
+
+<div class="alert success-alert" role="alert" id="success-alert">
+  <i class="bi bi-check-circle-fill me-2"></i>
+  <strong>Success!</strong> Asset has been added successfully.
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', async function() {
-    // Fetch logged-in user (with cookies)
-    try {
-        const res = await fetch("/me", { credentials: "include" });
-        const data = await res.json();
-        if (data.loggedIn) {
-            document.getElementById("welcomeText").textContent = `Welcome, ${data.username}`;
-        } else {
-            window.location.href = "/login.html";
-        }
-    } catch (err) {
-        console.error("User fetch error:", err);
+document.addEventListener("DOMContentLoaded", async () => {
+    // Check authentication
+    const authRes = await fetch("/check-auth", { credentials: "include" });
+    const auth = await authRes.json();
+    if (!auth.authenticated) {
         window.location.href = "/login.html";
     }
 
@@ -521,6 +828,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateDynamicFields();
 });
 </script>
-
 </body>
 </html>
