@@ -111,7 +111,6 @@ async function initUsers() {
   await createUsersTable();
   await updateUsersTableSchema(); // Add this to fix existing tables
 }
-initUsers();
 
 async function createUser(username, password, role = 'user', email = null, phone = null, department = null) {
   const client = await pool.connect();
@@ -130,13 +129,6 @@ async function createUser(username, password, role = 'user', email = null, phone
     client.release();
   }
 }
-
-// Create default users after schema is ready
-setTimeout(() => {
-  createUser("admin", "admin123", "admin", "arsathfarvesh02@gmail.com", "1234567890", "IT");
-  createUser("user1", "user123", "user", "developerf07@gmail.com", "0987654321", "Operations");
-  createUser("user2", "user456", "user", "user2@company.com", "1122334455", "Finance");
-}, 3000);
 
 // --- Assets tables setup ---
 const validTables = [
@@ -970,6 +962,21 @@ app.get('/health', async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start server after DB initialization
+async function startServer() {
+  try {
+    console.log('🔄 Initializing database...');
+    await initUsers();
+    await initializeDatabase();
+    console.log('✅ Database initialized');
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ Startup error:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
