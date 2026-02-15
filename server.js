@@ -24,6 +24,12 @@ app.use(cors({
 
 app.set('trust proxy', 1);
 
+// ===== REQUEST LOGGING (for debugging) =====
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+  next();
+});
+
 // ===== BODY PARSERS =====
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,8 +44,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24
   }
 }));
@@ -80,20 +86,31 @@ app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
-// ===== HEALTH CHECK - FOR RAILWAY =====
-app.get('/health', async (req, res) => {
+// ===== SIMPLE HEALTH CHECK - FOR RAILWAY (No DB dependency) =====
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ===== DETAILED HEALTH CHECK - WITH DATABASE =====
+app.get('/health/detailed', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW() as now');
     res.json({ 
       status: 'healthy', 
       database: 'connected',
-      time: result.rows[0].now 
+      time: result.rows[0].now,
+      uptime: process.uptime()
     });
   } catch (err) {
     res.status(503).json({ 
       status: 'unhealthy', 
       database: 'disconnected',
-      error: err.message 
+      error: err.message,
+      uptime: process.uptime()
     });
   }
 });
