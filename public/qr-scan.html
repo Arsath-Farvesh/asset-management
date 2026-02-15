@@ -1,40 +1,416 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QR Scanner</title>
+  <title>QR Scanner - Takhlees Government Services</title>
+  
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --takhlees-gold: #C5A572;
+      --takhlees-blue: #003049;
+      --takhlees-dark: #001219;
+      --takhlees-red: #D62828;
+      --takhlees-success: #06A77D;
+      --takhlees-light: #F8F9FA;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      min-height: 100vh;
+    }
+
+    /* Navbar */
+    .navbar-takhlees {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 20px rgba(0, 48, 73, 0.3);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .shield-icon {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.4);
+    }
+
+    .shield-icon i {
+      font-size: 24px;
+      color: white;
+    }
+
+    .brand-text h5 {
+      margin: 0;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-text p {
+      margin: 0;
+      color: var(--takhlees-gold);
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(197, 165, 114, 0.5);
+    }
+
+    .nav-btn i {
+      margin-right: 6px;
+    }
+
+    /* Scanner Container */
+    .scanner-container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .scanner-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 48, 73, 0.2);
+      overflow: hidden;
+      border: none;
+    }
+
+    .scanner-header {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .scanner-header i {
+      font-size: 4rem;
+      color: var(--takhlees-gold);
+      margin-bottom: 1rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .scanner-header h2 {
+      color: white;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .scanner-header p {
+      color: var(--takhlees-gold);
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .scanner-body {
+      padding: 2.5rem;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto 2rem auto;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 48, 73, 0.15);
+    }
+
+    .status-message {
+      text-align: center;
+      padding: 1.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    .status-message.info {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      color: var(--takhlees-blue);
+      border: 2px solid #90caf9;
+    }
+
+    .status-message.success {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      color: #2e7d32;
+      border: 2px solid #81c784;
+    }
+
+    .status-message.error {
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+      color: var(--takhlees-red);
+      border: 2px solid #ef5350;
+    }
+
+    .instructions {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border-left: 4px solid var(--takhlees-gold);
+    }
+
+    .instructions h5 {
+      color: var(--takhlees-blue);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .instructions li {
+      padding: 0.5rem 0;
+      color: var(--takhlees-dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instructions li i {
+      color: var(--takhlees-gold);
+      font-size: 1.2rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .btn-action {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-home {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
+    }
+
+    .btn-home:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(197, 165, 114, 0.5);
+      color: white;
+    }
+
+    .btn-history {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 48, 73, 0.3);
+    }
+
+    .btn-history:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 48, 73, 0.5);
+      color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .navbar-takhlees {
+        padding: 1rem;
+      }
+      
+      .scanner-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .scanner-header i {
+        font-size: 3rem;
+      }
+      
+      .scanner-body {
+        padding: 1.5rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .btn-action {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Scan QR</h2>
-  <p style="text-align:center;">Point your camera at the asset QR code.</p>
-  <div id="reader" style="width:100%;max-width:420px;margin:auto;"></div>
-  <p id="status" style="text-align:center;"></p>
-  <div style="text-align:center; margin-top:10px;">
-    <a href="/" style="margin-right:10px;">Home</a>
-    <a href="history.html">History</a>
+
+  <!-- Navbar -->
+  <nav class="navbar-takhlees">
+    <div class="container-fluid">
+      <div class="brand-logo">
+        <div class="shield-icon">
+          <i class="bi bi-shield-fill-check"></i>
+        </div>
+        <div class="brand-text">
+          <h5>Takhlees <span style="color: var(--takhlees-gold);">/</span> ASSET MANAGEMENT SYSTEM</h5>
+          <p>GOVERNMENT SERVICES</p>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="nav-btn" onclick="window.location.href='/index.html'">
+          <i class="bi bi-house-fill"></i> Home
+        </button>
+        <button class="nav-btn" onclick="window.location.href='/history.html'">
+          <i class="bi bi-clock-history"></i> History
+        </button>
+        <button class="nav-btn" id="logoutBtn">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Scanner Container -->
+  <div class="scanner-container">
+    <div class="scanner-card">
+      <div class="scanner-header">
+        <i class="bi bi-qr-code-scan"></i>
+        <h2>QR Code Scanner</h2>
+        <p>Point your camera at the asset QR code</p>
+      </div>
+      
+      <div class="scanner-body">
+        <div id="reader"></div>
+        
+        <div id="status" class="status-message"></div>
+        
+        <div class="instructions">
+          <h5>
+            <i class="bi bi-info-circle-fill"></i>
+            Scanning Instructions:
+          </h5>
+          <ul>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              Allow camera access when prompted
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              Position the QR code within the frame
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              Hold steady until detected
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              You'll be redirected automatically
+            </li>
+          </ul>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="btn-action btn-home" onclick="window.location.href='/index.html'">
+            <i class="bi bi-house-fill"></i>
+            Back to Home
+          </button>
+          <button class="btn-action btn-history" onclick="window.location.href='/history.html'">
+            <i class="bi bi-clock-history"></i>
+            View History
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
+    const statusEl = document.getElementById('status');
+
     async function checkLogin() {
       try {
         const r = await fetch('/me', { credentials:'include' });
         const j = await r.json();
         if (!j.loggedIn) {
-          document.getElementById('status').innerText = 'Please login first.';
-          window.location.href = '/login.html';
+          statusEl.className = 'status-message error';
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please login first. Redirecting...';
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 2000);
         }
       } catch (e) {
         console.error(e);
       }
     }
+    
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch("/logout", { method: "POST", credentials: "include" });
+      window.location.href = "/login.html";
+    });
+
     checkLogin();
 
     const reader = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
     function onScanSuccess(decodedText, decodedResult) {
+      statusEl.className = 'status-message success';
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> QR Code detected! Redirecting...';
+      
       reader.stop().then(() => {
         window.location.href = `/details.html?qr=${encodeURIComponent(decodedText)}`;
       }).catch(()=> {
@@ -51,13 +427,28 @@
         const cam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
         reader.start({ deviceId: { exact: cam.id } }, config, onScanSuccess, onScanError)
           .catch(err => {
-            reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(console.error);
+            reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(err => {
+              statusEl.className = 'status-message error';
+              statusEl.style.display = 'block';
+              statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera access denied or unavailable';
+              console.error(err);
+            });
           });
       } else {
-        reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(console.error);
+        reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(err => {
+          statusEl.className = 'status-message error';
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera access denied or unavailable';
+          console.error(err);
+        });
       }
     }).catch(err => {
-      reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(console.error);
+      reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(err => {
+        statusEl.className = 'status-message error';
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera access denied or unavailable';
+        console.error(err);
+      });
     });
   </script>
 </body>
