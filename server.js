@@ -664,9 +664,10 @@ app.use((err, req, res, next) => {
 });
 
 // ===== START SERVER =====
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
+  console.log(`🌐 Server bound to 0.0.0.0:${PORT}`);
   
   // Initialize database after server starts
   initDatabase().catch(err => {
