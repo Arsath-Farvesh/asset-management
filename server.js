@@ -44,29 +44,33 @@ app.use(session({
   }
 }));
 
-// ===== DATABASE CONNECTION - FIXED FOR RAILWAY =====
+// ===== DATABASE CONNECTION - SUPPORTS BOTH URL AND ENV VARS =====
 const dbUrl = process.env.DATABASE_URL;
-let sslConfig = false;
-
-if (dbUrl) {
-  // Enable SSL for Railway, AWS, or any production environment
-  if (dbUrl.includes('railway') || dbUrl.includes('amazonaws.com') || process.env.NODE_ENV === 'production') {
-    sslConfig = { rejectUnauthorized: false };
-  }
-}
-
-const pool = new Pool({
-  connectionString: dbUrl,
-  ssl: sslConfig,
+let poolConfig = {
   connectionTimeoutMillis: 30000,
   idleTimeoutMillis: 30000,
-  max: 20,
-  // Force IPv4 for Railway internal networking
-  ...(dbUrl?.includes('railway.internal') && { 
-    host: 'postgres.railway.internal',
-    options: '-c client_encoding=UTF8'
-  })
-});
+  max: 20
+};
+
+// Determine SSL configuration
+let sslConfig = false;
+if (process.env.NODE_ENV === 'production' || process.env.PGHOST?.includes('railway') || dbUrl?.includes('railway')) {
+  sslConfig = { rejectUnauthorized: false };
+}
+
+// Use DATABASE_URL if available, otherwise pg will use PG* env vars
+if (dbUrl) {
+  poolConfig.connectionString = dbUrl;
+  poolConfig.ssl = sslConfig;
+  console.log('🔗 Using DATABASE_URL for connection');
+} else {
+  // Using individual PG* variables (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE)
+  poolConfig.ssl = sslConfig;
+  console.log('🔗 Using PG* environment variables for connection');
+  console.log(`   Host: ${process.env.PGHOST}:${process.env.PGPORT}`);
+}
+
+const pool = new Pool(poolConfig);
 
 pool.on("connect", () => console.log("✅ PostgreSQL connected"));
 pool.on("error", (err) => console.error("❌ PostgreSQL error:", err.message));
