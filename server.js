@@ -44,13 +44,13 @@ app.use(session({
   }
 }));
 
-// ===== DATABASE CONNECTION - FIXED =====
+// ===== DATABASE CONNECTION - FIXED FOR RAILWAY =====
 const dbUrl = process.env.DATABASE_URL;
 let sslConfig = false;
 
 if (dbUrl) {
   // Enable SSL for Railway, AWS, or any production environment
-  if (dbUrl.includes('railway.app') || dbUrl.includes('amazonaws.com') || process.env.NODE_ENV === 'production') {
+  if (dbUrl.includes('railway') || dbUrl.includes('amazonaws.com') || process.env.NODE_ENV === 'production') {
     sslConfig = { rejectUnauthorized: false };
   }
 }
@@ -58,9 +58,14 @@ if (dbUrl) {
 const pool = new Pool({
   connectionString: dbUrl,
   ssl: sslConfig,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 30000,
   idleTimeoutMillis: 30000,
-  max: 20
+  max: 20,
+  // Force IPv4 for Railway internal networking
+  ...(dbUrl?.includes('railway.internal') && { 
+    host: 'postgres.railway.internal',
+    options: '-c client_encoding=UTF8'
+  })
 });
 
 pool.on("connect", () => console.log("✅ PostgreSQL connected"));
@@ -98,14 +103,27 @@ const validTables = [
   "equipments_assets","customer_details"
 ];
 
-// ===== DATABASE INITIALIZATION =====
+// ===== DATABASE INITIALIZATION WITH RETRY =====
+async function waitForDatabase(maxRetries = 10, delay = 3000) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('✅ Database connection verified');
+      return true;
+    } catch (err) {
+      console.log(`⏳ Waiting for database... (attempt ${i + 1}/${maxRetries})`);
+      if (i === maxRetries - 1) throw err;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 async function initDatabase() {
   console.log('🔄 Initializing database...');
   
   try {
-    // Test connection
-    await pool.query('SELECT 1');
-    console.log('✅ Database connection verified');
+    // Wait for database to be ready with retry
+    await waitForDatabase();
 
     // Create updated_at function
     await pool.query(`
@@ -133,7 +151,8 @@ async function initDatabase() {
     console.log('✅ Database initialization complete');
   } catch (err) {
     console.error('❌ Database initialization failed:', err.message);
-    // Don't throw - let server start anyway
+    console.error('Full error:', err);
+    // Don't throw - let server start anyway for debugging
   }
 }
 
