@@ -41,8 +41,8 @@ app.use(session({
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('railway') 
-    ? { rejectUnauthorized: false } 
+  ssl: process.env.DATABASE_URL?.includes('railway')
+    ? { rejectUnauthorized: false }
     : false,
 });
 
@@ -109,7 +109,7 @@ async function updateUsersTableSchema() {
 // Initialize tables in sequence
 async function initUsers() {
   await createUsersTable();
-  await updateUsersTableSchema(); // Add this to fix existing tables
+  await updateUsersTableSchema();
 }
 
 async function createUser(username, password, role = 'user', email = null, phone = null, department = null) {
@@ -128,6 +128,13 @@ async function createUser(username, password, role = 'user', email = null, phone
   } finally {
     client.release();
   }
+}
+
+// --- Create default users ---
+async function createDefaultUsers() {
+  await createUser("admin", "admin123", "admin", "arsathfarvesh02@gmail.com", "1234567890", "IT");
+  await createUser("user1", "user123", "user", "developerf07@gmail.com", "0987654321", "Operations");
+  await createUser("user2", "user456", "user", "user2@company.com", "1122334455", "Finance");
 }
 
 // --- Assets tables setup ---
@@ -260,7 +267,6 @@ async function initializeDatabase() {
   await addEquipmentsAssetsColumns();
   await createCustomerDetailsTable();
 }
-initializeDatabase();
 
 // --- Middleware ---
 function isAuthenticated(req, res, next) {
@@ -962,14 +968,15 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Start server after DB initialization
+// --- Start server after DB initialization ---
 async function startServer() {
   try {
     console.log('🔄 Initializing database...');
     await initUsers();
     await initializeDatabase();
-    console.log('✅ Database initialized');
-    
+    await createDefaultUsers();
+    console.log('✅ Database and users initialized');
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
