@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 
 // ===== CORS CONFIGURATION =====
 app.use(cors({
-  origin: process.env.FRONTEND_URL || true,
+  origin: "*",
   credentials: true
 }));
 
@@ -38,8 +38,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: true,
+    sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24
   }
 }));
@@ -641,7 +641,7 @@ app.use((err, req, res, next) => {
 });
 
 // ===== START SERVER =====
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
   
