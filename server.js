@@ -550,7 +550,7 @@ app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) 
   }
 });
 
-app.delete("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) => {
+app.delete("/api/assets/:category/:id", isAuthenticated, async (req, res) => {
   const { category, id } = req.params;
   if (!validTables.includes(category)) {
     return res.status(400).json({ success: false, error: "Invalid category" });
