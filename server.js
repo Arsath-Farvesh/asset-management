@@ -1,7 +1,4 @@
 require('dotenv').config();
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
 
 const express = require("express");
 const { Pool } = require("pg");
@@ -14,11 +11,10 @@ const path = require("path");
 const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-const cors = require("cors");
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -38,18 +34,20 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60
   }
 }));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: process.env.DATABASE_URL?.includes('railway') 
+    ? { rejectUnauthorized: false } 
+    : false,
 });
 
 pool.on("connect", () => console.log("✅ Connected to PostgreSQL"));
-pool.on("error", (err) => console.error("DB error:", err));
+pool.on("error", (err) => console.error("❌ DB error:", err));
 
 // --- Users table setup ---
 async function createUsersTable() {
