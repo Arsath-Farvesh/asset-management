@@ -233,13 +233,24 @@ body {
 }
 
 .qr-barcode {
-  max-width: 180px;
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  min-height: 160px;
   margin: 0 auto;
   display: block;
-  border: 2px solid var(--takhlees-gold);
+  border: 3px solid var(--takhlees-gold);
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
   background: white;
+  object-fit: contain;
+}
+
+.qr-barcode-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 .success-alert {
@@ -495,14 +506,18 @@ body {
               <p>Case Type: <span id="preview-case-type">N/A</span></p>
             </div>
             
-            <div class="row mt-4">
-              <div class="col-6">
-                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px;">QR Code</h6>
-                <img id="preview-qr" class="qr-barcode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Takhlees">
+            <div class="row mt-4 g-3">
+              <div class="col-md-6 d-flex flex-column align-items-center">
+                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px; width: 100%;">QR Code</h6>
+                <div class="qr-barcode-container">
+                  <img id="preview-qr" class="qr-barcode" alt="QR Code" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Takhlees">
+                </div>
               </div>
-              <div class="col-6">
-                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px;">Barcode</h6>
-                <img id="preview-barcode" class="qr-barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=3&height=10">
+              <div class="col-md-6 d-flex flex-column align-items-center">
+                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px; width: 100%;">Barcode</h6>
+                <div class="qr-barcode-container">
+                  <img id="preview-barcode" class="qr-barcode" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=2&height=50&includetext">
+                </div>
               </div>
             </div>
           </div>
@@ -667,8 +682,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             // Generate QR with customer data
             const qrData = encodeURIComponent(`${cName}-${cPhone}-${cNum}`);
-            previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
-            previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(cNum || cName)}&scale=3&height=10`;
+                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
+                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(cNum || cName)}&scale=2&height=50&includetext`;
         } else {
             // Standard asset preview
             const nameEl = document.getElementById('asset-name');
@@ -690,12 +705,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (name && category !== 'Not selected') {
                 const qrData = encodeURIComponent(`${name}-${category}-${serial}-${employee}`);
-                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
                 const barcodeValue = serial || name;
-                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodeValue)}&scale=3&height=10`;
+                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodeValue)}&scale=2&height=50&includetext`;
             } else {
-                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Sample`;
-                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=Sample&scale=3&height=10`;
+                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Sample`;
+                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=Sample&scale=2&height=50&includetext`;
             }
         }
     }
