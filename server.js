@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 
 // ===== CORS CONFIGURATION =====
 app.use(cors({
-  origin: process.env.FRONTEND_URL || true, // Allow all in production if not set
+  origin: process.env.FRONTEND_URL || true,
   credentials: true
 }));
 
@@ -28,20 +28,19 @@ app.set('trust proxy', 1);
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ===== STATIC FILES - FIXED =====
-// Serve from root directory (where HTML files actually are)
-app.use(express.static(path.join(__dirname)));
+// ===== STATIC FILES - CORRECT (HTML files are in public/) =====
+app.use(express.static(path.join(__dirname, "public")));
 
 // ===== SESSION CONFIGURATION =====
 app.use(session({
-  secret: process.env.SESSION_SECRET || "change_this_secret_in_production",
+  secret: process.env.SESSION_SECRET || "change_this_secret",
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+    maxAge: 1000 * 60 * 60 * 24
   }
 }));
 
@@ -50,7 +49,7 @@ const dbUrl = process.env.DATABASE_URL;
 let sslConfig = false;
 
 if (dbUrl) {
-  // Check if Railway or requires SSL
+  // Enable SSL for Railway, AWS, or any production environment
   if (dbUrl.includes('railway.app') || dbUrl.includes('amazonaws.com') || process.env.NODE_ENV === 'production') {
     sslConfig = { rejectUnauthorized: false };
   }
@@ -67,23 +66,21 @@ const pool = new Pool({
 pool.on("connect", () => console.log("✅ PostgreSQL connected"));
 pool.on("error", (err) => console.error("❌ PostgreSQL error:", err.message));
 
-// ===== ROOT ROUTE - ADDED =====
+// ===== ROOT ROUTE - REDIRECT TO LOGIN =====
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.redirect('/login.html');
 });
 
-// ===== HEALTH CHECK - ENHANCED =====
+// ===== HEALTH CHECK - FOR RAILWAY =====
 app.get('/health', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW() as now');
     res.json({ 
       status: 'healthy', 
       database: 'connected',
-      time: result.rows[0].now,
-      uptime: process.uptime()
+      time: result.rows[0].now 
     });
   } catch (err) {
-    console.error('Health check failed:', err.message);
     res.status(503).json({ 
       status: 'unhealthy', 
       database: 'disconnected',
@@ -101,16 +98,16 @@ const validTables = [
   "equipments_assets","customer_details"
 ];
 
-// ===== DATABASE INITIALIZATION - NON-BLOCKING =====
+// ===== DATABASE INITIALIZATION =====
 async function initDatabase() {
   console.log('🔄 Initializing database...');
   
   try {
-    // Test connection first
+    // Test connection
     await pool.query('SELECT 1');
     console.log('✅ Database connection verified');
-    
-    // Create function for updated_at trigger
+
+    // Create updated_at function
     await pool.query(`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
       RETURNS TRIGGER AS $$
@@ -120,25 +117,23 @@ async function initDatabase() {
       END;
       $$ language 'plpgsql';
     `);
-    
-    // Initialize users table
+
+    // Initialize tables
     await createUsersTable();
     await updateUsersTableSchema();
-    
-    // Initialize asset tables
     await createTables();
     await addEquipmentsAssetsColumns();
     await createCustomerDetailsTable();
     
-    // Create default users (non-blocking, ignore conflicts)
+    // Create default users (ignore if exist)
     await createDefaultUsers().catch(err => {
-      console.log('⚠️ Default users may already exist:', err.message);
+      console.log('⚠️ Default users may exist:', err.message);
     });
-    
+
     console.log('✅ Database initialization complete');
   } catch (err) {
     console.error('❌ Database initialization failed:', err.message);
-    console.log('⚠️ Server will continue - database may need manual setup');
+    // Don't throw - let server start anyway
   }
 }
 
@@ -161,9 +156,6 @@ async function createUsersTable() {
       )
     `);
     console.log("✅ Users table ready");
-  } catch (err) {
-    console.error("Users table error:", err.message);
-    throw err;
   } finally {
     client.release();
   }
@@ -180,7 +172,6 @@ async function updateUsersTableSchema() {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`);
     
-    // Create trigger (may fail if already exists, that's OK)
     try {
       await client.query(`
         DROP TRIGGER IF EXISTS update_users_updated_at ON users;
@@ -189,13 +180,9 @@ async function updateUsersTableSchema() {
         FOR EACH ROW
         EXECUTE PROCEDURE update_updated_at_column();
       `);
-    } catch (triggerErr) {
-      console.log('Trigger update skipped:', triggerErr.message);
-    }
+    } catch (e) { /* Trigger may exist */ }
     
     console.log("✅ Users schema updated");
-  } catch (err) {
-    console.error("Schema update error:", err.message);
   } finally {
     client.release();
   }
@@ -204,24 +191,19 @@ async function updateUsersTableSchema() {
 async function createDefaultUsers() {
   const users = [
     { username: "admin", password: "admin123", role: "admin", email: "arsathfarvesh02@gmail.com" },
-    { username: "user1", password: "user123", role: "user", email: "developerf07@gmail.com" },
-    { username: "user2", password: "user456", role: "user", email: "user2@company.com" }
+    { username: "user1", password: "user123", role: "user", email: "developerf07@gmail.com" }
   ];
   
   for (const user of users) {
-    try {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      await pool.query(
-        `INSERT INTO users (username, password, role, email) 
-         VALUES ($1, $2, $3, $4) 
-         ON CONFLICT (username) DO NOTHING`,
-        [user.username, hashedPassword, user.role, user.email]
-      );
-      console.log(`✅ User ${user.username} created or exists`);
-    } catch (err) {
-      console.error(`Failed to create ${user.username}:`, err.message);
-    }
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    await pool.query(
+      `INSERT INTO users (username, password, role, email) 
+       VALUES ($1, $2, $3, $4) 
+       ON CONFLICT (username) DO NOTHING`,
+      [user.username, hashedPassword, user.role, user.email]
+    );
   }
+  console.log("✅ Default users created");
 }
 
 async function createTables() {
@@ -230,44 +212,36 @@ async function createTables() {
     for (const table of validTables) {
       if (table === 'customer_details') continue;
       
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS ${table} (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          serial_number TEXT,
+          employee_name TEXT,
+          qr_code TEXT,
+          qr_text TEXT,
+          barcode TEXT,
+          submitted_by TEXT,
+          location TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS location TEXT`);
+      await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS qr_text TEXT`);
+      
       try {
         await client.query(`
-          CREATE TABLE IF NOT EXISTS ${table} (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL,
-            serial_number TEXT,
-            employee_name TEXT,
-            qr_code TEXT,
-            qr_text TEXT,
-            barcode TEXT,
-            submitted_by TEXT,
-            location TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          )
+          DROP TRIGGER IF EXISTS update_${table}_updated_at ON ${table};
+          CREATE TRIGGER update_${table}_updated_at
+          BEFORE UPDATE ON ${table}
+          FOR EACH ROW
+          EXECUTE PROCEDURE update_updated_at_column();
         `);
-        
-        // Add columns if missing
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS location TEXT`);
-        await client.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS qr_text TEXT`);
-        
-        // Create trigger
-        try {
-          await client.query(`
-            DROP TRIGGER IF EXISTS update_${table}_updated_at ON ${table};
-            CREATE TRIGGER update_${table}_updated_at
-            BEFORE UPDATE ON ${table}
-            FOR EACH ROW
-            EXECUTE PROCEDURE update_updated_at_column();
-          `);
-        } catch (e) {
-          // Trigger might already exist
-        }
-        
-        console.log(`✅ Table ${table} ready`);
-      } catch (tableErr) {
-        console.error(`❌ Table ${table} error:`, tableErr.message);
-      }
+      } catch (e) { /* Trigger exists */ }
+      
+      console.log(`✅ Table ${table} ready`);
     }
   } finally {
     client.release();
@@ -275,53 +249,43 @@ async function createTables() {
 }
 
 async function addEquipmentsAssetsColumns() {
-  try {
-    await pool.query(`
-      ALTER TABLE equipments_assets 
-      ADD COLUMN IF NOT EXISTS date DATE,
-      ADD COLUMN IF NOT EXISTS keys INTEGER;
-    `);
-    console.log("✅ equipments_assets columns ready");
-  } catch (err) {
-    console.error("equipments_assets columns error:", err.message);
-  }
+  await pool.query(`
+    ALTER TABLE equipments_assets 
+    ADD COLUMN IF NOT EXISTS date DATE,
+    ADD COLUMN IF NOT EXISTS keys INTEGER;
+  `);
+  console.log("✅ equipments_assets columns ready");
 }
 
 async function createCustomerDetailsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_details (
+      id SERIAL PRIMARY KEY,
+      customer_name TEXT NOT NULL,
+      customer_phone TEXT,
+      case_date DATE,
+      case_number TEXT,
+      case_type TEXT,
+      qr_code TEXT,
+      qr_text TEXT,
+      barcode TEXT,
+      submitted_by TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS customer_details (
-        id SERIAL PRIMARY KEY,
-        customer_name TEXT NOT NULL,
-        customer_phone TEXT,
-        case_date DATE,
-        case_number TEXT,
-        case_type TEXT,
-        qr_code TEXT,
-        qr_text TEXT,
-        barcode TEXT,
-        submitted_by TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
+      DROP TRIGGER IF EXISTS update_customer_details_updated_at ON customer_details;
+      CREATE TRIGGER update_customer_details_updated_at
+      BEFORE UPDATE ON customer_details
+      FOR EACH ROW
+      EXECUTE PROCEDURE update_updated_at_column();
     `);
-    
-    try {
-      await pool.query(`
-        DROP TRIGGER IF EXISTS update_customer_details_updated_at ON customer_details;
-        CREATE TRIGGER update_customer_details_updated_at
-        BEFORE UPDATE ON customer_details
-        FOR EACH ROW
-        EXECUTE PROCEDURE update_updated_at_column();
-      `);
-    } catch (e) {
-      // Trigger might exist
-    }
-    
-    console.log("✅ customer_details table ready");
-  } catch (err) {
-    console.error("customer_details table error:", err.message);
-  }
+  } catch (e) { /* Trigger exists */ }
+  
+  console.log("✅ customer_details table ready");
 }
 
 // ===== MIDDLEWARE =====
@@ -339,7 +303,7 @@ function isAdmin(req, res, next) {
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.status(400).json({ success: false, error: "Username and password required" });
+    return res.status(400).json({ success: false, error: "Credentials required" });
   }
 
   try {
@@ -369,17 +333,7 @@ app.post("/api/login", async (req, res) => {
       department: user.department
     };
     
-    res.json({ 
-      success: true, 
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        email: user.email,
-        phone: user.phone,
-        department: user.department
-      }
-    });
+    res.json({ success: true, user: req.session.user });
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
@@ -399,7 +353,7 @@ app.get("/me", (req, res) => {
   }
 });
 
-// ===== USER MANAGEMENT ROUTES =====
+// ===== USER MANAGEMENT =====
 app.get("/api/users", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -408,7 +362,6 @@ app.get("/api/users", isAuthenticated, isAdmin, async (req, res) => {
     `);
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error("Get users error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -432,10 +385,10 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
   try {
     let qrText, barcodeText;
     if (category === 'customer_details') {
-      qrText = `${extraFields.customer_name}-${extraFields.case_number || ''}-${extraFields.case_type || ''}`;
+      qrText = `${extraFields.customer_name}-${extraFields.case_number || ''}`;
       barcodeText = extraFields.case_number || extraFields.customer_name;
     } else {
-      qrText = `${name}-${category}-${serial_number || ""}-${employee_name || ""}`;
+      qrText = `${name}-${category}-${serial_number || ""}`;
       barcodeText = serial_number || name;
     }
     
@@ -453,18 +406,15 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
     if (category === 'customer_details') {
       columns = ['customer_name', 'customer_phone', 'case_date', 'case_number', 'case_type', 'qr_code', 'qr_text', 'barcode', 'submitted_by'];
       values = [
-        extraFields.customer_name,
-        extraFields.customer_phone || null,
-        extraFields.case_date || null,
-        extraFields.case_number || null,
-        extraFields.case_type || null,
-        qrImage, qrText, barcodeImage, submittedBy
+        extraFields.customer_name, extraFields.customer_phone || null,
+        extraFields.case_date || null, extraFields.case_number || null,
+        extraFields.case_type || null, qrImage, qrText, barcodeImage, submittedBy
       ];
-      placeholders = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9'];
+      placeholders = ['$1','$2','$3','$4','$5','$6','$7','$8','$9'];
     } else {
       columns = ['name', 'serial_number', 'employee_name', 'qr_code', 'qr_text', 'barcode', 'submitted_by', 'location'];
       values = [name, serial_number || null, employee_name || null, qrImage, qrText, barcodeImage, submittedBy, location || null];
-      placeholders = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8'];
+      placeholders = ['$1','$2','$3','$4','$5','$6','$7','$8'];
 
       Object.keys(extraFields).forEach((key) => {
         columns.push(key);
@@ -474,7 +424,6 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
     }
 
     const query = `INSERT INTO ${category} (${columns.join(', ')}) VALUES (${placeholders.join(', ')}) RETURNING *`;
-    
     const result = await pool.query(query, values);
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -493,7 +442,6 @@ app.get("/api/assets/:category", isAuthenticated, async (req, res) => {
     const result = await pool.query(`SELECT * FROM ${category} ORDER BY created_at DESC`);
     res.json({ success: true, data: result.rows });
   } catch (err) {
-    console.error("Get assets error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -511,7 +459,6 @@ app.get("/api/assets/:category/:id", isAuthenticated, async (req, res) => {
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error("Get asset error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -529,35 +476,26 @@ app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) 
     
     if (category === 'customer_details') {
       updates = ['customer_name=$1', 'customer_phone=$2', 'case_date=$3', 'case_number=$4', 'case_type=$5', 'updated_at=NOW()'];
-      values = [
-        extraFields.customer_name,
-        extraFields.customer_phone || null,
-        extraFields.case_date || null,
-        extraFields.case_number || null,
-        extraFields.case_type || null
-      ];
+      values = [extraFields.customer_name, extraFields.customer_phone || null, extraFields.case_date || null, extraFields.case_number || null, extraFields.case_type || null];
     } else {
       updates = ['name=$1', 'serial_number=$2', 'employee_name=$3', 'location=$4', 'updated_at=NOW()'];
       values = [name, serial_number || null, employee_name || null, location || null];
       let paramIndex = 5;
-
       Object.keys(extraFields).forEach(key => {
-        updates.push(`${key}=$${paramIndex}`);
+        updates.push(`${key}=$${paramIndex++}`);
         values.push(extraFields[key] || null);
-        paramIndex++;
       });
     }
 
     values.push(id);
     const query = `UPDATE ${category} SET ${updates.join(', ')} WHERE id=$${values.length} RETURNING *`;
-    
     const result = await pool.query(query, values);
+    
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: "Not found" });
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error("Update asset error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -575,12 +513,11 @@ app.delete("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, re
     }
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error("Delete asset error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ===== QR CODE LOOKUP =====
+// ===== QR LOOKUP =====
 app.get("/api/qr/:code", isAuthenticated, async (req, res) => {
   const code = req.params.code;
   
@@ -596,12 +533,11 @@ app.get("/api/qr/:code", isAuthenticated, async (req, res) => {
     }
     res.status(404).json({ success: false, error: "QR not found" });
   } catch (err) {
-    console.error("QR lookup error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ===== HISTORY ROUTES =====
+// ===== HISTORY =====
 app.get("/api/history", isAuthenticated, async (req, res) => {
   try {
     let history = [];
@@ -614,14 +550,11 @@ app.get("/api/history", isAuthenticated, async (req, res) => {
         );
         result.rows.forEach(row => row.category = table);
         history = history.concat(result.rows);
-      } catch (tableErr) {
-        console.error(`Error fetching from ${table}:`, tableErr.message);
-      }
+      } catch (e) { /* Skip failed tables */ }
     }
     history.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     res.json({ success: true, data: history });
   } catch (err) {
-    console.error("History error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -639,9 +572,7 @@ app.get("/api/history/pdf", isAuthenticated, async (req, res) => {
         );
         result.rows.forEach(row => row.category = table);
         history = history.concat(result.rows);
-      } catch (tableErr) {
-        console.error(`Error fetching from ${table} for PDF:`, tableErr.message);
-      }
+      } catch (e) { /* Skip failed tables */ }
     }
     history.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -653,53 +584,45 @@ app.get("/api/history/pdf", isAuthenticated, async (req, res) => {
     doc.fontSize(18).font("Helvetica-Bold").text("Asset History Report", { align: "center" });
     doc.moveDown(1);
 
-    const tableTop = doc.y;
-    const rowHeight = 20;
-    const colWidths = {
-      id: 40, category: 100, name: 120, serial_number: 100,
-      employee_name: 120, submitted_by: 100, location: 120, created_at: 120
-    };
+    // Table headers
+    const headers = ["ID","Category","Name","Serial","Employee","Submitted By","Location","Created At"];
+    const colWidths = [40, 100, 120, 100, 120, 100, 120, 120];
     const startX = doc.page.margins.left;
+    let x = startX;
+    let y = doc.y;
 
     doc.fontSize(10).font("Helvetica-Bold");
-    let x = startX;
-    ["ID","Category","Name","Serial Number","Employee Name","Submitted By","Location","Created At"].forEach((header, i) => {
-      doc.text(header, x, tableTop, { width: Object.values(colWidths)[i], align: "left" });
-      x += Object.values(colWidths)[i];
+    headers.forEach((header, i) => {
+      doc.text(header, x, y, { width: colWidths[i], align: "left" });
+      x += colWidths[i];
     });
 
     doc.font("Helvetica");
-    let y = tableTop + rowHeight;
+    y += 20;
 
     history.forEach((row) => {
       x = startX;
-      [
+      const values = [
         row.id, row.category, row.name || "-", row.serial_number || "-",
         row.employee_name || "-", row.submitted_by || "-",
         row.location || "-", new Date(row.created_at).toLocaleString()
-      ].forEach((text, i) => {
-        doc.text(text.toString(), x, y, { width: Object.values(colWidths)[i], align: "left" });
-        x += Object.values(colWidths)[i];
+      ];
+      values.forEach((text, i) => {
+        doc.text(String(text), x, y, { width: colWidths[i], align: "left" });
+        x += colWidths[i];
       });
-      y += rowHeight;
-
-      if (y + rowHeight > doc.page.height - doc.page.margins.bottom) {
-        doc.addPage({ layout: "landscape" });
-        y = doc.page.margins.top;
-      }
+      y += 20;
     });
 
     doc.end();
   } catch (err) {
-    console.error("PDF error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ===== PASSWORD RESET (Simplified) =====
+// ===== PASSWORD RESET (Placeholder) =====
 app.post("/forgot-password", async (req, res) => {
-  // Simplified - just return success for now
-  res.json({ success: true, message: "Password reset not configured" });
+  res.json({ success: false, message: "Password reset not configured" });
 });
 
 app.post("/reset-password", async (req, res) => {
@@ -713,19 +636,17 @@ app.get("/api/categories", (req, res) => {
 
 // ===== ERROR HANDLING =====
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  console.error('Error:', err);
   res.status(500).json({ success: false, error: 'Internal server error' });
 });
 
 // ===== START SERVER =====
-// Start server immediately, then initialize database
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Static files served from: ${__dirname}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
   
-  // Initialize database after server starts (non-blocking)
+  // Initialize database after server starts
   initDatabase().catch(err => {
-    console.error('Database init failed:', err.message);
+    console.error('Database init error:', err.message);
   });
 });
