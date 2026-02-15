@@ -58,10 +58,14 @@ let poolConfig = {
   max: 20
 };
 
-// Determine SSL configuration
+// Determine SSL configuration  
+// Disable SSL for Railway TCP proxy connections
 let sslConfig = false;
-if (process.env.NODE_ENV === 'production' || process.env.PGHOST?.includes('railway') || dbUrl?.includes('railway')) {
+if (dbUrl?.includes('railway') && !process.env.PGHOST?.includes('proxy')) {
   sslConfig = { rejectUnauthorized: false };
+} else if (process.env.PGHOST?.includes('proxy')) {
+  // TCP proxy doesn't need SSL
+  sslConfig = false;
 }
 
 // Use DATABASE_URL if available, otherwise pg will use PG* env vars
@@ -74,6 +78,7 @@ if (dbUrl) {
   poolConfig.ssl = sslConfig;
   console.log('🔗 Using PG* environment variables for connection');
   console.log(`   Host: ${process.env.PGHOST}:${process.env.PGPORT}`);
+  console.log(`   SSL: ${sslConfig ? 'enabled' : 'disabled'}`);
 }
 
 const pool = new Pool(poolConfig);
