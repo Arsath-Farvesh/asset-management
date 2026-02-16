@@ -591,13 +591,26 @@ app.get("/api/qr/:code", isAuthenticated, async (req, res) => {
 app.get("/api/history", isAuthenticated, async (req, res) => {
   try {
     let history = [];
-    const assetTables = validTables.filter(t => t !== 'customer_details');
+    const assetTables = validTables;
     
     for (const table of assetTables) {
       try {
-        const result = await pool.query(
-          `SELECT id, name, serial_number, employee_name, submitted_by, location, created_at FROM ${table}`
-        );
+        let query;
+        if (table === 'customer_details') {
+          query = `
+            SELECT id,
+                   customer_name AS name,
+                   case_number AS serial_number,
+                   customer_phone AS employee_name,
+                   submitted_by,
+                   NULL::text AS location,
+                   created_at
+            FROM customer_details
+          `;
+        } else {
+          query = `SELECT id, name, serial_number, employee_name, submitted_by, location, created_at FROM ${table}`;
+        }
+        const result = await pool.query(query);
         result.rows.forEach(row => row.category = table);
         history = history.concat(result.rows);
       } catch (e) { /* Skip failed tables */ }
@@ -613,13 +626,26 @@ app.get("/api/history", isAuthenticated, async (req, res) => {
 app.get("/api/history/pdf", isAuthenticated, async (req, res) => {
   try {
     let history = [];
-    const assetTables = validTables.filter(t => t !== 'customer_details');
+    const assetTables = validTables;
     
     for (const table of assetTables) {
       try {
-        const result = await pool.query(
-          `SELECT id, name, serial_number, employee_name, submitted_by, location, created_at FROM ${table}`
-        );
+        let query;
+        if (table === 'customer_details') {
+          query = `
+            SELECT id,
+                   customer_name AS name,
+                   case_number AS serial_number,
+                   customer_phone AS employee_name,
+                   submitted_by,
+                   NULL::text AS location,
+                   created_at
+            FROM customer_details
+          `;
+        } else {
+          query = `SELECT id, name, serial_number, employee_name, submitted_by, location, created_at FROM ${table}`;
+        }
+        const result = await pool.query(query);
         result.rows.forEach(row => row.category = table);
         history = history.concat(result.rows);
       } catch (e) { /* Skip failed tables */ }
@@ -677,36 +703,6 @@ app.post("/forgot-password", async (req, res) => {
 
 app.post("/reset-password", async (req, res) => {
   res.json({ success: false, message: "Password reset not configured" });
-});
-
-// ===== HISTORY API =====
-app.get("/api/history", isAuthenticated, async (req, res) => {
-  try {
-    let history = [];
-    
-    // Fetch from all valid tables
-    for (const table of validTables) {
-      try {
-        const result = await pool.query(
-          `SELECT * FROM ${table} ORDER BY created_at DESC LIMIT 1000`
-        );
-        result.rows.forEach(row => {
-          row.category = table;
-          history.push(row);
-        });
-      } catch (e) {
-        // Table may not exist yet, continue
-      }
-    }
-    
-    // Sort by created_at descending
-    history.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    
-    res.json({ success: true, data: history });
-  } catch (err) {
-    console.error("History fetch error:", err.message);
-    res.status(500).json({ success: false, error: err.message });
-  }
 });
 
 // ===== CATEGORIES =====

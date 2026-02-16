@@ -466,7 +466,17 @@ body {
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label for="asset-location" class="form-label">Location</label>
-                  <input type="text" class="form-control" id="asset-location" placeholder="e.g., Deira Office, Al Wahda Branch">
+                  <select class="form-select" id="asset-location">
+                    <option value="">Select location</option>
+                    <option value="EJARI">EJARI</option>
+                    <option value="Finance Office">Finance Office</option>
+                    <option value="Management Office">Management Office</option>
+                    <option value="Private Notary">Private Notary</option>
+                    <option value="RDC">RDC</option>
+                    <option value="DDL">DDL</option>
+                    <option value="__manual__">Manual entry</option>
+                  </select>
+                  <input type="text" class="form-control mt-2 d-none" id="asset-location-manual" placeholder="Enter location">
                 </div>
               </div>
             </div>
@@ -572,6 +582,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const serialNumber = document.getElementById('serial-number');
     const employeeName = document.getElementById('employee-name');
     const locationInput = document.getElementById('asset-location');
+    const locationManual = document.getElementById('asset-location-manual');
     
     // Customer fields
     const customerName = document.getElementById('customer-name');
@@ -600,7 +611,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Event listeners for live preview
     serialNumber.addEventListener('input', updatePreview);
     employeeName.addEventListener('input', updatePreview);
+    locationInput.addEventListener('change', () => {
+      updateLocationManualVisibility();
+      updatePreview();
+    });
     locationInput.addEventListener('input', updatePreview);
+    locationManual.addEventListener('input', updatePreview);
     customerName.addEventListener('input', updatePreview);
     customerPhone.addEventListener('input', updatePreview);
     caseDate.addEventListener('input', updatePreview);
@@ -613,7 +629,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         depreciation_history: ["Laptop Depreciation","Vehicle Depreciation"],
         digital_media: ["Camera","Lighting Kit","Microphone","Tripod"],
         documents: ["Contract","Invoice","Policy Document"],
-        employees: ["Jane Smith","John Doe","Michael Brown"],
         equipments_assets: ["EJARI","Finance Office","Management Office","Private Notary","RDC","DDL"],
         financial_assets: ["Bonds","Cash Reserve","Mutual Funds","Stocks"],
         furniture: ["Bookshelf","Conference Table","L-Shaped Table","Office Chair","Small Table"],
@@ -658,6 +673,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         ]
     };
 
+    function updateLocationManualVisibility() {
+      if (locationInput.value === '__manual__') {
+        locationManual.classList.remove('d-none');
+      } else {
+        locationManual.classList.add('d-none');
+        locationManual.value = '';
+      }
+    }
+
+    function getLocationValue() {
+      if (locationInput.value === '__manual__') {
+        return locationManual.value.trim();
+      }
+      return locationInput.value;
+    }
+
     function updatePreview() {
         const category = assetCategory.value || 'Not selected';
         previewCategory.textContent = category;
@@ -692,7 +723,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const name = nameEl ? nameEl.value : '';
             const serial = serialNumber.value || '';
             const employee = employeeName.value || '';
-            const locationVal = locationInput.value || '';
+            const locationVal = getLocationValue() || '';
 
             previewName.textContent = name || 'Asset Name';
             previewSerial.textContent = serial || 'N/A';
@@ -727,6 +758,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             assetNameCol.classList.add('hidden-field');
             standardFields.style.display = 'none';
             customerDetailsSection.style.display = 'block';
+            updateLocationManualVisibility();
             
             // Clear dynamic fields (customer details has its own section)
             updatePreview();
@@ -736,6 +768,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             assetNameCol.classList.remove('hidden-field');
             standardFields.style.display = 'block';
             customerDetailsSection.style.display = 'none';
+            updateLocationManualVisibility();
         }
 
         // Handle Asset Name field for standard categories
@@ -812,7 +845,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const name = document.getElementById('asset-name').value;
             const serial = serialNumber.value;
             const employee = employeeName.value;
-            const locationVal = locationInput.value;
+            const locationVal = getLocationValue();
             
             payload = { 
                 name, 
@@ -851,6 +884,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     updateDynamicFields();
+    updateLocationManualVisibility();
 });
 </script>
 </body>
