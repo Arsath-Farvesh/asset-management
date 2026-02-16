@@ -779,6 +779,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <option value="">Select a category first</option>
                 </select>
             `;
+        } else if (category === 'employees') {
+          assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter employee name" required>`;
         } else if (categoryAssets[category]) {
             let selectHTML = `<select class="form-select" id="asset-name" required>
                 <option value="">Select ${category.replace(/_/g,' ')} asset</option>`;
@@ -828,6 +830,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     assetForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+      if (!assetForm.reportValidity()) {
+        return;
+      }
         const category = assetCategory.value;
         let payload = {};
 
@@ -870,8 +875,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 body: JSON.stringify(payload),
                 credentials: "include"
             });
-            const data = await res.json();
-            if (data.success) {
+          const data = await res.json();
+          if (!res.ok || !data.success || !data.data) {
+            throw new Error(data.error || 'Error adding asset');
+          }
+          if (data.success) {
                 successAlert.style.display = 'block';
                 setTimeout(() => successAlert.style.display = 'none', 3000);
                 assetForm.reset();

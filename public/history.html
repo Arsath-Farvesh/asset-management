@@ -452,7 +452,7 @@
       const emptyState = document.getElementById('emptyState');
       
       try {
-        const resp = await fetch('/api/history', { credentials:'include' });
+        const resp = await fetch('/api/history', { credentials:'include', cache: 'no-store' });
         if (!resp.ok) {
           throw new Error('Failed to load history');
         }
