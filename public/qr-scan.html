@@ -345,10 +345,10 @@
   </style>
   <link rel="stylesheet" href="theme.css">
 </head>
-<body>
+<body class="animate-fade-in">
 
   <!-- Navbar -->
-  <nav class="navbar-takhlees">
+  <nav class="navbar-takhlees navbar-enhanced">
     <div class="container-fluid">
       <div class="brand-logo">
         <div class="shield-icon">
@@ -360,13 +360,13 @@
         </div>
       </div>
       <div class="d-flex gap-2">
-        <button class="nav-btn" onclick="window.location.href='/index.html'">
+        <button class="nav-btn btn-enhanced" onclick="window.location.href='/index.html'">
           <i class="bi bi-house-fill"></i> Home
         </button>
-        <button class="nav-btn" onclick="window.location.href='/history.html'">
+        <button class="nav-btn btn-enhanced" onclick="window.location.href='/history.html'">
           <i class="bi bi-clock-history"></i> History
         </button>
-        <button class="nav-btn" id="logoutBtn">
+        <button class="nav-btn btn-enhanced" id="logoutBtn">
           <i class="bi bi-box-arrow-right"></i> Logout
         </button>
       </div>
@@ -375,17 +375,17 @@
 
   <!-- Scanner Container -->
   <div class="scanner-container">
-    <div class="scanner-card">
-      <div class="scanner-header">
+    <div class="scanner-card card-enhanced">
+      <div class="scanner-header text-center">
         <i class="bi bi-qr-code-scan"></i>
-        <h2>QR Code Scanner</h2>
-        <p>Point your camera at the asset QR code</p>
+        <h2 class="mb-2">QR Code Scanner</h2>
+        <p class="mb-0">Point your camera at the asset QR code</p>
       </div>
       
       <div class="scanner-body">
         <div id="reader"></div>
         
-        <div id="status" class="status-message"></div>
+        <div id="status" class="status-message text-center"></div>
         
         <div class="instructions">
           <h5>
@@ -412,12 +412,12 @@
           </ul>
         </div>
         
-        <div class="action-buttons">
-          <button class="btn-action btn-home" onclick="window.location.href='/index.html'">
+        <div class="action-buttons d-flex gap-3 justify-content-center mt-4">
+          <button class="btn-action btn-home btn-enhanced" onclick="window.location.href='/index.html'">
             <i class="bi bi-house-fill"></i>
             Back to Home
           </button>
-          <button class="btn-action btn-history" onclick="window.location.href='/history.html'">
+          <button class="btn-action btn-history btn-enhanced" onclick="window.location.href='/history.html'">
             <i class="bi bi-clock-history"></i>
             View History
           </button>

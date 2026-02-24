@@ -459,40 +459,40 @@
   </nav>
 
   <!-- Page Header -->
-  <div class="page-header">
-    <h1><i class="bi bi-info-circle"></i> Asset Details</h1>
-    <p>Complete asset information and documentation</p>
+  <div class="page-header text-center">
+    <h1 class="mb-2"><i class="bi bi-info-circle me-2"></i> Asset Details</h1>
+    <p class="mb-0">Complete asset information and documentation</p>
   </div>
 
   <!-- Main Content -->
   <div class="main-container">
-    <div class="card-takhlees">
-      <div class="card-header-takhlees">
-        <h5><i class="bi bi-file-earmark-text-fill"></i> Asset Information</h5>
-        <p>Detailed record from Takhlees Government Services</p>
+    <div class="card-takhlees card-enhanced">
+      <div class="card-header-takhlees card-header-enhanced">
+        <h5 class="mb-2"><i class="bi bi-file-earmark-text-fill me-2"></i> Asset Information</h5>
+        <p class="mb-0">Detailed record from Takhlees Government Services</p>
       </div>
       <div class="card-body-takhlees">
-        <div id="loadingState" class="loading">
+        <div id="loadingState" class="loading text-center">
           <div class="spinner"></div>
-          <p>Loading asset details...</p>
+          <p class="mb-0">Loading asset details...</p>
         </div>
         
         <div id="result" style="display: none;"></div>
         
-        <div id="errorState" class="error-state" style="display: none;">
+        <div id="errorState" class="error-state text-center" style="display: none;">
           <i class="bi bi-exclamation-triangle-fill"></i>
-          <h4>Asset Not Found</h4>
-          <p id="errorMessage">The requested asset could not be found in the system.</p>
+          <h4 class="mb-3">Asset Not Found</h4>
+          <p id="errorMessage" class="mb-0">The requested asset could not be found in the system.</p>
         </div>
       </div>
     </div>
 
-    <div class="action-buttons">
-      <button class="btn-action btn-back" id="backBtn">
+    <div class="action-buttons d-flex gap-3 justify-content-center mt-4">
+      <button class="btn-action btn-back btn-enhanced" id="backBtn">
         <i class="bi bi-arrow-left"></i>
         Go Back
       </button>
-      <a href="/index.html" class="btn-action btn-home">
+      <a href="/index.html" class="btn-action btn-home btn-enhanced">
         <i class="bi bi-house-fill"></i>
         Return to Home
       </a>

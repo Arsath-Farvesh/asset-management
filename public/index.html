@@ -597,28 +597,28 @@ body.dark-mode .page-header {
         </div>
         <div class="card-body-takhlees text-center">
           <div class="preview-section">
-            <h4 id="preview-name">Asset Name</h4>
-            <p>Category: <span class="category-badge badge-enhanced" id="preview-category">Not selected</span></p>
-            <p id="preview-serial-row">Serial: <span id="preview-serial">N/A</span></p>
-            <p id="preview-employee-row">Employee: <span id="preview-employee">N/A</span></p>
-            <p id="preview-location-row">Location: <span id="preview-location">N/A</span></p>
+            <h4 id="preview-name" class="mb-3" style="font-weight: 700; color: var(--text-primary);">Asset Name</h4>
+            <p class="mb-2"><strong>Category:</strong> <span class="category-badge badge-enhanced" id="preview-category">Not selected</span></p>
+            <p id="preview-serial-row" class="mb-2"><strong>Serial:</strong> <span id="preview-serial">N/A</span></p>
+            <p id="preview-employee-row" class="mb-2"><strong>Employee:</strong> <span id="preview-employee">N/A</span></p>
+            <p id="preview-location-row" class="mb-2"><strong>Location:</strong> <span id="preview-location">N/A</span></p>
             
             <div id="preview-customer-details" style="display: none;">
-              <p>Customer: <span id="preview-customer-name">N/A</span></p>
-              <p>Phone: <span id="preview-customer-phone">N/A</span></p>
-              <p>Case #: <span id="preview-case-number">N/A</span></p>
-              <p>Case Type: <span id="preview-case-type">N/A</span></p>
+              <p class="mb-2"><strong>Customer:</strong> <span id="preview-customer-name">N/A</span></p>
+              <p class="mb-2"><strong>Phone:</strong> <span id="preview-customer-phone">N/A</span></p>
+              <p class="mb-2"><strong>Case #:</strong> <span id="preview-case-number">N/A</span></p>
+              <p class="mb-2"><strong>Case Type:</strong> <span id="preview-case-type">N/A</span></p>
             </div>
             
             <div class="row mt-4 g-3">
               <div class="col-md-6 d-flex flex-column align-items-center">
-                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px; width: 100%;">QR Code</h6>
+                <h6 class="text-center w-100 mb-3" style="color: var(--text-primary); font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">QR Code</h6>
                 <div class="qr-barcode-container">
                   <img id="preview-qr" class="qr-barcode" alt="QR Code" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Takhlees">
                 </div>
               </div>
               <div class="col-md-6 d-flex flex-column align-items-center">
-                <h6 style="color: var(--takhlees-dark); font-weight: 600; margin-bottom: 12px; width: 100%;">Barcode</h6>
+                <h6 class="text-center w-100 mb-3" style="color: var(--text-primary); font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Barcode</h6>
                 <div class="qr-barcode-container">
                   <img id="preview-barcode" class="qr-barcode" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=2&height=50&includetext">
                 </div>
