@@ -700,7 +700,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         if (category === 'customer_details') {
-            // Customer details preview
+            // Case details preview
             const cName = customerName.value || 'Customer Name';
             const cPhone = customerPhone.value || 'N/A';
             const cDate = caseDate.value || 'N/A';
@@ -713,7 +713,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             previewCaseNumber.textContent = cNum;
             previewCaseType.textContent = cType;
             
-            // Hide standard fields in preview, show customer details
+            // Hide standard fields in preview, show case details
             previewSerialRow.style.display = 'none';
             previewEmployeeRow.style.display = 'none';
             previewLocationRow.style.display = 'none';
@@ -736,7 +736,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             previewEmployee.textContent = employee || 'N/A';
             previewLocation.textContent = locationVal || 'N/A';
             
-            // Show standard fields in preview, hide customer details
+            // Show standard fields in preview, hide case details
             previewSerialRow.style.display = 'block';
             previewEmployeeRow.style.display = 'block';
             previewLocationRow.style.display = 'block';
@@ -758,7 +758,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const category = assetCategory.value;
         dynamicFields.innerHTML = '';
 
-        // Handle Customer Details category specially
+        // Handle Case Details category specially
         if (category === 'customer_details') {
             // Hide asset name column and standard fields
             assetNameCol.classList.add('hidden-field');
@@ -766,7 +766,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             customerDetailsSection.style.display = 'block';
             updateLocationManualVisibility();
             
-            // Clear dynamic fields (customer details has its own section)
+            // Clear dynamic fields (case details has its own section)
             updatePreview();
             return;
         } else {
@@ -844,7 +844,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         let payload = {};
 
         if (category === 'customer_details') {
-            // Customer details payload
+            // Case details payload
             payload = {
                 customer_name: customerName.value,
                 customer_phone: customerPhone.value,
