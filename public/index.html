@@ -381,12 +381,12 @@ body {
                   <select class="form-select" id="asset-category" required>
                     <option value="">Select a category</option>
                     <option value="assets">Assets</option>
-                    <option value="Case_Details">Case Details</option>
+                    <option value="customer_details">Case Details</option>
                     <option value="depreciation_history">Depreciation History</option>
                     <option value="digital_media">Digital Media</option>
                     <option value="documents">Documents</option>
                     <option value="employees">Employees</option>
-                    <option value="Keys">Keys</option>
+                    <option value="equipments_assets">Keys</option>
                     <option value="financial_assets">Financial Assets</option>
                     <option value="furniture">Furniture</option>
                     <option value="infrastructure">Infrastructure</option>
@@ -421,7 +421,7 @@ body {
               </div>
             </div>
             
-            <!-- Customer Details Section -->
+            <!-- Case Details Section -->
             <div id="customer-details-section" style="display: none;">
               <div class="row mb-3">
                 <div class="col-md-6">
@@ -625,12 +625,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const categoryAssets = {
         assets: ["Laptop","Printer","Projector","Scanner"],
-        Case_details: [],
+      customer_details: [],
         depreciation_history: ["Laptop Depreciation","Vehicle Depreciation"],
         digital_media: ["Camera","Lighting Kit","Microphone","Tripod"],
         documents: ["Contract","Invoice","Policy Document"],
         employees: [],
-        Keys: [],
         financial_assets: ["Bonds","Cash Reserve","Mutual Funds","Stocks"],
         furniture: ["Bookshelf","Conference Table","L-Shaped Table","Office Chair","Small Table"],
         infrastructure: ["Networking Equipment","Power Backup","Server Room"],
@@ -668,9 +667,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             { type: 'text', id: 'model', label: 'Model', placeholder: 'Vehicle model' },
             { type: 'text', id: 'year', label: 'Year', placeholder: 'Manufacturing year' }
         ],
-        Keys: [
-            { type: 'date', id: 'date', label: 'date', placeholder: 'Equip Assign Date' },
-            { type: 'number', id: 'keys', label: 'Value (#)', placeholder: 'No of Quantity' }
+        equipments_assets: [
+          { type: 'date', id: 'date', label: 'Date', placeholder: 'Equip Assign Date' },
+          { type: 'number', id: 'keys', label: 'Keys', placeholder: 'No of Quantity' }
         ]
     };
 
@@ -692,7 +691,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function updatePreview() {
         const category = assetCategory.value || 'Not selected';
-        previewCategory.textContent = category;
+        if (category === 'customer_details') {
+          previewCategory.textContent = 'Case Details';
+        } else if (category === 'equipments_assets') {
+          previewCategory.textContent = 'Keys';
+        } else {
+          previewCategory.textContent = category;
+        }
 
         if (category === 'customer_details') {
             // Customer details preview
@@ -781,6 +786,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             `;
         } else if (category === 'employees') {
           assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter employee name" required>`;
+        } else if (category === 'equipments_assets') {
+          assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter key name" required>`;
         } else if (categoryAssets[category]) {
             let selectHTML = `<select class="form-select" id="asset-name" required>
                 <option value="">Select ${category.replace(/_/g,' ')} asset</option>`;

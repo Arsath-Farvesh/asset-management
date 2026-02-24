@@ -476,6 +476,13 @@
       const container = document.getElementById('result');
       const d = payload.data;
       
+      let displayCategory = payload.category.replace(/_/g, ' ').toUpperCase();
+      if (payload.category === 'customer_details') {
+        displayCategory = 'Case Details';
+      } else if (payload.category === 'equipments_assets') {
+        displayCategory = 'Keys';
+      }
+
       const detailsHTML = `
         <div class="details-grid">
           <div class="detail-item">
@@ -490,7 +497,7 @@
               <i class="bi bi-bookmark-fill"></i>
               Category
             </div>
-            <div class="detail-value">${payload.category.replace(/_/g, ' ').toUpperCase()}</div>
+            <div class="detail-value">${displayCategory}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">

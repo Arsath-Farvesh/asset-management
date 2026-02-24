@@ -474,10 +474,16 @@
         tbody.innerHTML = '';
         
         rows.forEach(row => {
+          let displayCategory = row.category.replace(/_/g, ' ').toUpperCase();
+          if (row.category === 'customer_details') {
+            displayCategory = 'Case Details';
+          } else if (row.category === 'equipments_assets') {
+            displayCategory = 'Keys';
+          }
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><strong>#${row.id}</strong></td>
-            <td><span class="badge-category">${row.category.replace(/_/g, ' ').toUpperCase()}</span></td>
+            <td><span class="badge-category">${displayCategory}</span></td>
             <td>${row.name || '-'}</td>
             <td>${row.serial_number || '-'}</td>
             <td>${row.employee_name || '-'}</td>
