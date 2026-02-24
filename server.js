@@ -321,7 +321,7 @@ async function createCaseDetailsTable() {
     await pool.query(`
       DROP TRIGGER IF EXISTS update_case_details_updated_at ON case_details;
       CREATE TRIGGER update_case_details_updated_at
-      BEFORE UPDATE ON customer_details
+      BEFORE UPDATE ON case_details
       FOR EACH ROW
       EXECUTE PROCEDURE update_updated_at_column();
     `);
@@ -605,7 +605,7 @@ app.get("/api/history", isAuthenticated, async (req, res) => {
                    submitted_by,
                    NULL::text AS location,
                    created_at
-            FROM customer_details
+            FROM case_details
           `;
         } else {
           query = `SELECT id, name, serial_number, employee_name, submitted_by, location, created_at FROM ${table}`;
@@ -631,7 +631,7 @@ app.get("/api/history/pdf", isAuthenticated, async (req, res) => {
     for (const table of assetTables) {
       try {
         let query;
-        if (table === 'customer_details') {
+        if (table === 'case_details') {
           query = `
             SELECT id,
                    customer_name AS name,
@@ -640,7 +640,7 @@ app.get("/api/history/pdf", isAuthenticated, async (req, res) => {
                    submitted_by,
                    NULL::text AS location,
                    created_at
-            FROM customer_details
+            FROM case_details
           `;
         } else {
           query = `SELECT id, name, serial_number, employee_name, submitted_by, location, created_at FROM ${table}`;

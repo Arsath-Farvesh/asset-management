@@ -449,7 +449,7 @@ body.dark-mode .barcode {
                   <select class="form-select" id="asset-category" required>
                     <option value="">Select a category</option>
                     <option value="assets">Assets</option>
-                    <option value="customer_details">Case Details</option>
+                    <option value="case_details">Case Details</option>
                     <option value="depreciation_history">Depreciation History</option>
                     <option value="digital_media">Digital Media</option>
                     <option value="documents">Documents</option>
@@ -693,7 +693,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const categoryAssets = {
         assets: ["Laptop","Printer","Projector","Scanner"],
-      customer_details: [],
+      case_details: [],
         depreciation_history: ["Laptop Depreciation","Vehicle Depreciation"],
         digital_media: ["Camera","Lighting Kit","Microphone","Tripod"],
         documents: ["Contract","Invoice","Policy Document"],
@@ -759,7 +759,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function updatePreview() {
         const category = assetCategory.value || 'Not selected';
-        if (category === 'customer_details') {
+        if (category === 'case_details') {
           previewCategory.textContent = 'Case Details';
         } else if (category === 'equipments_assets') {
           previewCategory.textContent = 'Keys';
@@ -767,7 +767,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           previewCategory.textContent = category;
         }
 
-        if (category === 'customer_details') {
+        if (category === 'case_details') {
             // Case details preview
             const nameEl = document.getElementById('asset-name');
             const caseName = nameEl ? nameEl.value : '';
@@ -829,7 +829,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         dynamicFields.innerHTML = '';
 
         // Handle Case Details category specially
-        if (category === 'customer_details') {
+        if (category === 'case_details') {
             // Show asset name, hide standard fields
             assetNameCol.classList.remove('hidden-field');
             standardFields.style.display = 'none';
@@ -920,7 +920,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const category = assetCategory.value;
         let payload = {};
 
-        if (category === 'customer_details') {
+        if (category === 'case_details') {
             // Case details payload
             const caseName = document.getElementById('asset-name').value;
             payload = {
