@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme-professional.css">
   <style>
     * {
       margin: 0;
@@ -416,8 +418,8 @@
     <i class="bi bi-moon-stars-fill"></i>
   </button>
   
-  <div class="login-container">
-    <div class="login-card">
+  <div class="login-container animate-fade-in">
+    <div class="login-card card-enhanced">
       <div class="brand-header">
         <div class="brand-logo">
           <img src="logo.png" alt="Takhlees Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -430,25 +432,25 @@
       
       <form id="loginForm">
         <div class="form-group">
-          <label for="username" class="form-label">Username</label>
+          <label for="username" class="form-label form-label-enhanced">Username</label>
           <div class="input-wrapper">
             <i class="bi bi-person-circle input-icon"></i>
-            <input type="text" id="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+            <input type="text" id="username" class="form-control form-control-enhanced" placeholder="Enter your username" required autocomplete="username">
           </div>
         </div>
         
         <div class="form-group">
-          <label for="password" class="form-label">Password</label>
+          <label for="password" class="form-label form-label-enhanced">Password</label>
           <div class="password-wrapper input-wrapper">
             <i class="bi bi-lock-fill input-icon"></i>
-            <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
-            <button class="password-toggle" type="button" onclick="togglePassword('password', this)" tabindex="-1">
+            <input type="password" id="password" class="form-control form-control-enhanced" placeholder="Enter your password" required autocomplete="current-password">
+            <button class="password-toggle" type="button" onclick="togglePassword('password', this)" tabindex="-1" aria-label="Toggle password visibility">
               <i class="bi bi-eye"></i>
             </button>
           </div>
         </div>
         
-        <button type="submit" class="btn btn-login w-100">
+        <button type="submit" class="btn btn-login btn-enhanced w-100">
           <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
         </button>
         

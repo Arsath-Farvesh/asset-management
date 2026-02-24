@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme-professional.css">
   
   <style>
     :root {
@@ -409,10 +411,10 @@
   </style>
   <link rel="stylesheet" href="theme.css">
 </head>
-<body>
+<body class="animate-fade-in">
 
   <!-- Navbar -->
-  <nav class="navbar-takhlees">
+  <nav class="navbar-takhlees navbar-enhanced">
     <div class="container-fluid">
       <div class="brand-logo">
         <div class="shield-icon">
@@ -424,13 +426,13 @@
         </div>
       </div>
       <div class="d-flex gap-2">
-        <button class="nav-btn" onclick="window.location.href='/index.html'">
+        <button class="nav-btn btn-enhanced" onclick="window.location.href='/index.html'" title="Home">
           <i class="bi bi-house-fill"></i> Home
         </button>
-        <button class="nav-btn" onclick="window.location.href='/qr-scan.html'">
+        <button class="nav-btn btn-enhanced" onclick="window.location.href='/qr-scan.html'" title="Scan QR Code">
           <i class="bi bi-qr-code-scan"></i> Scan
         </button>
-        <button class="nav-btn" id="logoutBtn">
+        <button class="nav-btn btn-enhanced" id="logoutBtn" title="Logout">
           <i class="bi bi-box-arrow-right"></i> Logout
         </button>
       </div>
