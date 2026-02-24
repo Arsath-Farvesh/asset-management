@@ -167,7 +167,7 @@ body {
   border: none;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  background: white;
+  background: var(--card-bg);
   margin-bottom: 30px;
   transition: all 0.3s;
 }
@@ -185,7 +185,7 @@ body {
 }
 
 .card-header-takhlees h3 {
-  color: var(--takhlees-dark);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 20px;
   margin: 0;
@@ -196,7 +196,7 @@ body {
 }
 
 .form-label {
-  color: var(--takhlees-dark);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 8px;
@@ -269,7 +269,7 @@ body {
   border: 3px solid var(--takhlees-gold);
   border-radius: 12px;
   padding: 8px;
-  background: white;
+  background: white !important;
   object-fit: contain;
 }
 
@@ -302,20 +302,40 @@ body {
 
 /* Dark mode adjustments for cards */
 body.dark-mode .card,
+body.dark-mode .card-takhlees,
 body.dark-mode .preview-section,
 body.dark-mode .login-card {
-  background-color: var(--card-bg);
-  border-color: var(--card-border);
-  color: var(--text-primary);
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text-primary) !important;
+}
+
+body.dark-mode .card-header-takhlees {
+  background: rgba(197, 165, 114, 0.15) !important;
+  border-bottom-color: var(--takhlees-gold) !important;
 }
 
 body.dark-mode .preview-section {
-  background: var(--card-bg);
+  background: var(--card-bg) !important;
 }
 
 body.dark-mode .qr-code,
-body.dark-mode .barcode {
-  background: white;
+body.dark-mode .barcode,
+body.dark-mode .qr-barcode {
+  background: white !important;
+}
+
+body.dark-mode .form-label,
+body.dark-mode .card-header-takhlees h3,
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode h3,
+body.dark-mode label {
+  color: var(--text-primary) !important;
+}
+
+body.dark-mode .page-header {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
 }
 
 .success-alert {
@@ -367,20 +387,20 @@ body.dark-mode .barcode {
 }
 
 .preview-section h4 {
-  color: var(--takhlees-dark);
+  color: var(--text-primary);
   font-weight: 700;
   font-size: 22px;
   margin-bottom: 20px;
 }
 
 .preview-section p {
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 14px;
   margin-bottom: 10px;
 }
 
 .preview-section span {
-  color: var(--takhlees-dark);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
