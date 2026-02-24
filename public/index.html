@@ -701,13 +701,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (category === 'customer_details') {
             // Case details preview
+            const nameEl = document.getElementById('asset-name');
+            const caseName = nameEl ? nameEl.value : '';
             const cName = customerName.value || 'Customer Name';
             const cPhone = customerPhone.value || 'N/A';
             const cDate = caseDate.value || 'N/A';
             const cNum = caseNumber.value || 'N/A';
             const cType = caseType.value || 'N/A';
             
-            previewName.textContent = cName;
+            previewName.textContent = caseName || 'Case Name';
             previewCustomerName.textContent = cName;
             previewCustomerPhone.textContent = cPhone;
             previewCaseNumber.textContent = cNum;
@@ -719,10 +721,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             previewLocationRow.style.display = 'none';
             previewCustomerDetails.style.display = 'block';
             
-            // Generate QR with customer data
-            const qrData = encodeURIComponent(`${cName}-${cPhone}-${cNum}`);
+            // Generate QR with case data
+            const qrData = encodeURIComponent(`${caseName || cName}-${cPhone}-${cNum}`);
                 previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
-                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(cNum || cName)}&scale=2&height=50&includetext`;
+                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(cNum || caseName || cName)}&scale=2&height=50&includetext`;
         } else {
             // Standard asset preview
             const nameEl = document.getElementById('asset-name');
@@ -760,13 +762,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Handle Case Details category specially
         if (category === 'customer_details') {
-            // Hide asset name column and standard fields
-            assetNameCol.classList.add('hidden-field');
+            // Show asset name, hide standard fields
+            assetNameCol.classList.remove('hidden-field');
             standardFields.style.display = 'none';
             customerDetailsSection.style.display = 'block';
             updateLocationManualVisibility();
             
-            // Clear dynamic fields (case details has its own section)
+            // Set case name input
+            assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter case name" required>`;
+            const assetNameEl = document.getElementById('asset-name');
+            if (assetNameEl) {
+                assetNameEl.addEventListener('input', updatePreview);
+                assetNameEl.addEventListener('change', updatePreview);
+            }
+            
             updatePreview();
             return;
         } else {
@@ -845,13 +854,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (category === 'customer_details') {
             // Case details payload
+            const caseName = document.getElementById('asset-name').value;
             payload = {
+                name: caseName, // case name
                 customer_name: customerName.value,
                 customer_phone: customerPhone.value,
                 case_date: caseDate.value,
                 case_number: caseNumber.value,
-                case_type: caseType.value,
-                name: customerName.value // for database compatibility
+                case_type: caseType.value
             };
         } else {
             // Standard asset payload
