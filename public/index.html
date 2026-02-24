@@ -18,6 +18,29 @@
   --takhlees-light: #f9fafb;
   --takhlees-accent: #3b82f6;
   --takhlees-success: #10b981;
+  
+  /* Light mode colors */
+  --body-bg-start: #f8f9fa;
+  --body-bg-end: #e9ecef;
+  --card-bg: #ffffff;
+  --card-border: #e8e8e8;
+  --text-primary: #111827;
+  --text-secondary: #6c757d;
+  --input-bg: #ffffff;
+  --input-border: #ced4da;
+  --input-text: #111827;
+}
+
+body.dark-mode {
+  --body-bg-start: #0a0a0a;
+  --body-bg-end: #1a1a1a;
+  --card-bg: #1f2937;
+  --card-border: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --input-bg: #111827;
+  --input-border: #374151;
+  --input-text: #f9fafb;
 }
 
 * {
@@ -27,10 +50,12 @@
 }
 
 body {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--body-bg-start) 0%, var(--body-bg-end) 100%);
   font-family: 'Poppins', sans-serif;
   min-height: 100vh;
   padding-bottom: 40px;
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .navbar-takhlees {
@@ -184,11 +209,13 @@ body {
 }
 
 .form-control, .form-select {
-  border: 2px solid #e8e8e8;
+  border: 2px solid var(--input-border);
   border-radius: 10px;
   padding: 12px 16px;
   font-size: 14px;
   transition: all 0.3s;
+  background-color: var(--input-bg);
+  color: var(--input-text);
 }
 
 .form-control:focus, .form-select:focus {
@@ -251,6 +278,44 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 200px;
+}
+
+/* Dark Mode Toggle */
+.dark-mode-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+/* Dark mode adjustments for cards */
+body.dark-mode .card,
+body.dark-mode .preview-section,
+body.dark-mode .login-card {
+  background-color: var(--card-bg);
+  border-color: var(--card-border);
+  color: var(--text-primary);
+}
+
+body.dark-mode .preview-section {
+  background: var(--card-bg);
+}
+
+body.dark-mode .qr-code,
+body.dark-mode .barcode {
+  background: white;
 }
 
 .success-alert {
@@ -341,6 +406,9 @@ body {
     </a>
     
     <div class="d-flex align-items-center gap-2 ms-auto">
+      <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+        <i class="bi bi-moon-stars-fill"></i>
+      </button>
       <a href="history.html" class="btn btn-gold btn-sm">
         <i class="bi bi-clock-history me-1"></i>History
       </a>
@@ -912,6 +980,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateDynamicFields();
     updateLocationManualVisibility();
 });
+
+// Dark Mode Toggle
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  localStorage.setItem('darkMode', isDark);
+  
+  const icon = document.querySelector('.dark-mode-toggle i');
+  if (isDark) {
+    icon.classList.remove('bi-moon-stars-fill');
+    icon.classList.add('bi-sun-fill');
+  } else {
+    icon.classList.remove('bi-sun-fill');
+    icon.classList.add('bi-moon-stars-fill');
+  }
+}
+
+// Check for saved dark mode preference on page load
+(function() {
+  const darkMode = localStorage.getItem('darkMode') === 'true';
+  if (darkMode) {
+    document.body.classList.add('dark-mode');
+    const icon = document.querySelector('.dark-mode-toggle i');
+    if (icon) {
+      icon.classList.remove('bi-moon-stars-fill');
+      icon.classList.add('bi-sun-fill');
+    }
+  }
+})();
 </script>
 </body>
 </html>
