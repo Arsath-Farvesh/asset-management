@@ -223,14 +223,6 @@ h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
   box-shadow: var(--shadow-sm);
 }
 
-/* ========== ENHANCED DARK MODE ========== */
-body.dark-mode {
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-}
-
 /* ========== RESPONSIVE GRID SYSTEM ========== */
 .grid-responsive {
   display: grid;
@@ -622,7 +614,6 @@ html {
 /* ========== PRINT STYLES ========== */
 @media print {
   .btn-enhanced,
-  .dark-mode-toggle,
   .navbar-enhanced,
   .fab {
     display: none !important;

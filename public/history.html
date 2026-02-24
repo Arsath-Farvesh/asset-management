@@ -37,18 +37,6 @@
       --input-text: #111827;
     }
 
-    body.dark-mode {
-      --body-bg-start: #0a0a0a;
-      --body-bg-end: #1a1a1a;
-      --card-bg: #1f2937;
-      --card-border: #374151;
-      --text-primary: #f9fafb;
-      --text-secondary: #9ca3af;
-      --input-bg: #111827;
-      --input-border: #374151;
-      --input-text: #f9fafb;
-    }
-
     * {
       margin: 0;
       padding: 0;
@@ -366,50 +354,7 @@
       }
     }
     
-    /* Dark Mode Styles */
-    body.dark-mode .card-container,
-    body.dark-mode .history-section {
-      background-color: var(--card-bg) !important;
-      color: var(--text-primary) !important;
-    }
-    
-    body.dark-mode .table-takhlees {
-      background-color: var(--card-bg) !important;
-      color: var(--text-primary) !important;
-    }
-    
-    body.dark-mode .table-takhlees thead {
-      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%) !important;
-    }
-    
-    body.dark-mode .table-takhlees tbody tr {
-      background-color: var(--card-bg) !important;
-      border-bottom-color: var(--card-border) !important;
-    }
-    
-    body.dark-mode .table-takhlees tbody tr:hover {
-      background-color: var(--input-bg) !important;
-    }
-    
-    body.dark-mode .table-takhlees tbody td {
-      color: var(--text-primary) !important;
-    }
-    
-    body.dark-mode h1, 
-    body.dark-mode h2, 
-    body.dark-mode h3,
-    body.dark-mode h4,
-    body.dark-mode h5,
-    body.dark-mode h6 {
-      color: var(--text-primary) !important;
-    }
-    
-    body.dark-mode .form-control,
-    body.dark-mode .form-select {
-      background-color: var(--input-bg) !important;
-      color: var(--input-text) !important;
-      border-color: var(--input-border) !important;
-    }
+
   </style>
   <link rel="stylesheet" href="theme.css">
 </head>
@@ -661,45 +606,6 @@
       await loadUser();
       await loadHistory();
     })();
-    
-    // Auto Dark Mode based on UAE time
-    function isNightTimeInUAE() {
-      const now = new Date();
-      const uaeTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
-      const hour = uaeTime.getHours();
-      return hour >= 18 || hour < 6; // Night time: 6 PM - 6 AM
-    }
-
-    function applyAutoDarkMode() {
-      const hasManualOverride = localStorage.getItem('darkModeOverride') === 'true';
-      
-      if (hasManualOverride) {
-        const manualDarkMode = localStorage.getItem('darkModeManual') === 'true';
-        if (manualDarkMode) {
-          document.body.classList.add('dark-mode');
-        } else {
-          document.body.classList.remove('dark-mode');
-        }
-      } else {
-        const isNight = isNightTimeInUAE();
-        if (isNight) {
-          document.body.classList.add('dark-mode');
-        } else {
-          document.body.classList.remove('dark-mode');
-        }
-      }
-    }
-
-    // Initialize dark mode on page load
-    applyAutoDarkMode();
-
-    // Check every minute for time changes
-    setInterval(() => {
-      const hasManualOverride = localStorage.getItem('darkModeOverride') === 'true';
-      if (!hasManualOverride) {
-        applyAutoDarkMode();
-      }
-    }, 60000);
   </script>
 </body>
 </html>

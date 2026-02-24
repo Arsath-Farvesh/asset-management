@@ -25,7 +25,6 @@
   --takhlees-accent: #3b82f6;
   --takhlees-success: #10b981;
   
-  /* Light mode colors */
   --body-bg-start: #f8f9fa;
   --body-bg-end: #e9ecef;
   --card-bg: #ffffff;
@@ -35,18 +34,6 @@
   --input-bg: #ffffff;
   --input-border: #ced4da;
   --input-text: #111827;
-}
-
-body.dark-mode {
-  --body-bg-start: #0a0a0a;
-  --body-bg-end: #1a1a1a;
-  --card-bg: #1f2937;
-  --card-border: #374151;
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --input-bg: #111827;
-  --input-border: #374151;
-  --input-text: #f9fafb;
 }
 
 * {
@@ -286,64 +273,6 @@ body {
   min-height: 200px;
 }
 
-/* Dark Mode Toggle */
-.dark-mode-toggle {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dark-mode-toggle:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
-}
-
-/* Dark mode adjustments for cards */
-body.dark-mode .card,
-body.dark-mode .card-takhlees,
-body.dark-mode .preview-section,
-body.dark-mode .login-card {
-  background-color: var(--card-bg) !important;
-  border-color: var(--card-border) !important;
-  color: var(--text-primary) !important;
-}
-
-body.dark-mode .card-header-takhlees {
-  background: rgba(197, 165, 114, 0.15) !important;
-  border-bottom-color: var(--takhlees-gold) !important;
-}
-
-body.dark-mode .preview-section {
-  background: var(--card-bg) !important;
-}
-
-body.dark-mode .qr-code,
-body.dark-mode .barcode,
-body.dark-mode .qr-barcode {
-  background: white !important;
-}
-
-body.dark-mode .form-label,
-body.dark-mode .card-header-takhlees h3,
-body.dark-mode h1, 
-body.dark-mode h2, 
-body.dark-mode h3,
-body.dark-mode label {
-  color: var(--text-primary) !important;
-}
-
-body.dark-mode .page-header {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
-}
-
 .success-alert {
   display: none;
   position: fixed;
@@ -431,9 +360,6 @@ body.dark-mode .page-header {
     </a>
     
     <div class="d-flex align-items-center gap-2 ms-auto">
-      <button class="dark-mode-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" title="Toggle Dark Mode">
-        <i class="bi bi-moon-stars-fill"></i>
-      </button>
       <a href="history.html" class="btn btn-gold btn-sm btn-enhanced" title="View History">
         <i class="bi bi-clock-history me-1"></i><span class="d-none d-md-inline">History</span>
       </a>
@@ -1005,75 +931,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateDynamicFields();
     updateLocationManualVisibility();
 });
-
-// Dark Mode Toggle
-// Auto Dark Mode based on UAE time (after sunset, before sunrise)
-function isNightTimeInUAE() {
-  // Get current time in UAE timezone (UTC+4)
-  const now = new Date();
-  const uaeTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
-  const hour = uaeTime.getHours();
-  
-  // Night time: 6 PM (18:00) to 6 AM (06:00)
-  return hour >= 18 || hour < 6;
-}
-
-function updateDarkModeIcon(isDark) {
-  const icon = document.querySelector('.dark-mode-toggle i');
-  if (icon) {
-    if (isDark) {
-      icon.classList.remove('bi-moon-stars-fill');
-      icon.classList.add('bi-sun-fill');
-    } else {
-      icon.classList.remove('bi-sun-fill');
-      icon.classList.add('bi-moon-stars-fill');
-    }
-  }
-}
-
-function toggleDarkMode() {
-  // Manual toggle overrides auto mode
-  document.body.classList.toggle('dark-mode');
-  const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('darkModeManual', isDark);
-  localStorage.setItem('darkModeOverride', 'true');
-  updateDarkModeIcon(isDark);
-}
-
-function applyAutoDarkMode() {
-  const hasManualOverride = localStorage.getItem('darkModeOverride') === 'true';
-  
-  if (hasManualOverride) {
-    // Use manual preference
-    const manualDarkMode = localStorage.getItem('darkModeManual') === 'true';
-    if (manualDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-    updateDarkModeIcon(manualDarkMode);
-  } else {
-    // Auto mode based on UAE time
-    const isNight = isNightTimeInUAE();
-    if (isNight) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-    updateDarkModeIcon(isNight);
-  }
-}
-
-// Initialize dark mode on page load
-applyAutoDarkMode();
-
-// Check every minute for time changes (for auto mode users)
-setInterval(() => {
-  const hasManualOverride = localStorage.getItem('darkModeOverride') === 'true';
-  if (!hasManualOverride) {
-    applyAutoDarkMode();
-  }
-}, 60000); // Check every 60 seconds
 </script>
 </body>
 </html>
