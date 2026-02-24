@@ -123,7 +123,7 @@ const validTables = [
   "it_hardware","software_license","locations","machinery_equipment","digital_media",
   "vehicles","real_estate","furniture","financial_assets","infrastructure",
   "tools","leased_assets","intellectual_property",
-  "equipments_assets","customer_details"
+  "keys","case_details"
 ];
 
 // ===== DATABASE INITIALIZATION WITH RETRY =====
@@ -163,8 +163,8 @@ async function initDatabase() {
     await createUsersTable();
     await updateUsersTableSchema();
     await createTables();
-    await addEquipmentsAssetsColumns();
-    await createCustomerDetailsTable();
+    await addKeysColumns();
+    await createCaseDetailsTable();
     
     // Create default users (ignore if exist)
     await createDefaultUsers().catch(err => {
@@ -252,7 +252,7 @@ async function createTables() {
   const client = await pool.connect();
   try {
     for (const table of validTables) {
-      if (table === 'customer_details') continue;
+      if (table === 'case_details') continue;
       
       await client.query(`
         CREATE TABLE IF NOT EXISTS ${table} (
@@ -290,18 +290,18 @@ async function createTables() {
   }
 }
 
-async function addEquipmentsAssetsColumns() {
+async function addKeysColumns() {
   await pool.query(`
-    ALTER TABLE equipments_assets 
+    ALTER TABLE keys 
     ADD COLUMN IF NOT EXISTS date DATE,
     ADD COLUMN IF NOT EXISTS keys INTEGER;
   `);
-  console.log("✅ equipments_assets columns ready");
+  console.log("✅ keys columns ready");
 }
 
-async function createCustomerDetailsTable() {
+async function createCaseDetailsTable() {
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS customer_details (
+    CREATE TABLE IF NOT EXISTS case_details (
       id SERIAL PRIMARY KEY,
       customer_name TEXT NOT NULL,
       customer_phone TEXT,
@@ -319,15 +319,15 @@ async function createCustomerDetailsTable() {
   
   try {
     await pool.query(`
-      DROP TRIGGER IF EXISTS update_customer_details_updated_at ON customer_details;
-      CREATE TRIGGER update_customer_details_updated_at
+      DROP TRIGGER IF EXISTS update_case_details_updated_at ON case_details;
+      CREATE TRIGGER update_case_details_updated_at
       BEFORE UPDATE ON customer_details
       FOR EACH ROW
       EXECUTE PROCEDURE update_updated_at_column();
     `);
   } catch (e) { /* Trigger exists */ }
   
-  console.log("✅ customer_details table ready");
+  console.log("✅ case_details table ready");
 }
 
 // ===== MIDDLEWARE =====
@@ -425,16 +425,16 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
 
   const { name, serial_number, employee_name, location, ...extraFields } = req.body;
   
-  if (category === 'customer_details' && !extraFields.customer_name) {
+  if (category === 'case_details' && !extraFields.customer_name) {
     return res.status(400).json({ success: false, error: "Customer name required" });
   }
-  if (category !== 'customer_details' && !name) {
+  if (category !== 'case_details' && !name) {
     return res.status(400).json({ success: false, error: "Name required" });
   }
 
   try {
     let qrText, barcodeText;
-    if (category === 'customer_details') {
+    if (category === 'case_details') {
       qrText = `${extraFields.customer_name}-${extraFields.case_number || ''}`;
       barcodeText = extraFields.case_number || extraFields.customer_name;
     } else {
@@ -453,7 +453,7 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
 
     let columns, values, placeholders;
     
-    if (category === 'customer_details') {
+    if (category === 'case_details') {
       columns = ['customer_name', 'customer_phone', 'case_date', 'case_number', 'case_type', 'qr_code', 'qr_text', 'barcode', 'submitted_by'];
       values = [
         extraFields.customer_name, extraFields.customer_phone || null,
@@ -524,7 +524,7 @@ app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) 
   try {
     let updates, values;
     
-    if (category === 'customer_details') {
+    if (category === 'case_details') {
       updates = ['customer_name=$1', 'customer_phone=$2', 'case_date=$3', 'case_number=$4', 'case_type=$5', 'updated_at=NOW()'];
       values = [extraFields.customer_name, extraFields.customer_phone || null, extraFields.case_date || null, extraFields.case_number || null, extraFields.case_type || null];
     } else {
@@ -596,7 +596,7 @@ app.get("/api/history", isAuthenticated, async (req, res) => {
     for (const table of assetTables) {
       try {
         let query;
-        if (table === 'customer_details') {
+        if (table === 'case_details') {
           query = `
             SELECT id,
                    customer_name AS name,
