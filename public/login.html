@@ -379,10 +379,31 @@
           <label for="password" class="form-label form-label-enhanced">Password</label>
           <div class="password-wrapper input-wrapper">
             <i class="bi bi-lock-fill input-icon"></i>
-            <input type="password" id="password" class="form-control form-control-enhanced" placeholder="Enter your password" required autocomplete="current-password">
+            <input type="password" id="password" class="form-control form-control-enhanced" placeholder="Enter your password" required autocomplete="current-password" oninput="checkPasswordStrength(this.value)">
             <button class="password-toggle" type="button" onclick="togglePassword('password', this)" tabindex="-1" aria-label="Toggle password visibility">
               <i class="bi bi-eye"></i>
             </button>
+          </div>
+          <div id="passwordStrength" style="margin-top: 12px; padding: 10px; border-radius: 8px; background: #f0f0f0; display: none;">
+            <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #666;">Password Requirements:</div>
+            <div id="strengthMessage" style="font-size: 13px; color: #d32f2f; margin-bottom: 6px;"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+              <div class="strength-check" style="font-size: 12px;">
+                <i class="bi bi-circle-fill" id="check-length" style="color: #ccc; margin-right: 6px;"></i><span>8+ characters</span>
+              </div>
+              <div class="strength-check" style="font-size: 12px;">
+                <i class="bi bi-circle-fill" id="check-upper" style="color: #ccc; margin-right: 6px;"></i><span>Uppercase letter</span>
+              </div>
+              <div class="strength-check" style="font-size: 12px;">
+                <i class="bi bi-circle-fill" id="check-lower" style="color: #ccc; margin-right: 6px;"></i><span>Lowercase letter</span>
+              </div>
+              <div class="strength-check" style="font-size: 12px;">
+                <i class="bi bi-circle-fill" id="check-number" style="color: #ccc; margin-right: 6px;"></i><span>Number</span>
+              </div>
+              <div class="strength-check" style="font-size: 12px;">
+                <i class="bi bi-circle-fill" id="check-special" style="color: #ccc; margin-right: 6px;"></i><span>Special char (!@#$%)</span>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -464,6 +485,55 @@
         field.type = 'password';
         icon.classList.remove('bi-eye-slash');
         icon.classList.add('bi-eye');
+      }
+    }
+
+    function checkPasswordStrength(password) {
+      const strengthDiv = document.getElementById('passwordStrength');
+      const strengthMsg = document.getElementById('strengthMessage');
+      
+      if (!password) {
+        strengthDiv.style.display = 'none';
+        return;
+      }
+
+      strengthDiv.style.display = 'block';
+
+      const checks = {
+        length: password.length >= 8,
+        upper: /[A-Z]/.test(password),
+        lower: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*()_+\-=\[\]{};:'"",.<>?\/\\|`~]/.test(password)
+      };
+
+      const checkElements = {
+        length: document.getElementById('check-length'),
+        upper: document.getElementById('check-upper'),
+        lower: document.getElementById('check-lower'),
+        number: document.getElementById('check-number'),
+        special: document.getElementById('check-special')
+      };
+
+      Object.keys(checks).forEach(key => {
+        if (checks[key]) {
+          checkElements[key].style.color = '#4caf50';
+          checkElements[key].classList.remove('bi-circle-fill');
+          checkElements[key].classList.add('bi-check-circle-fill');
+        } else {
+          checkElements[key].style.color = '#ccc';
+          checkElements[key].classList.remove('bi-check-circle-fill');
+          checkElements[key].classList.add('bi-circle-fill');
+        }
+      });
+
+      const allValid = Object.values(checks).every(v => v);
+      if (allValid) {
+        strengthMsg.textContent = '✓ Strong password';
+        strengthMsg.style.color = '#4caf50';
+      } else {
+        strengthMsg.textContent = '✗ Password does not meet all requirements';
+        strengthMsg.style.color = '#d32f2f';
       }
     }
   </script>

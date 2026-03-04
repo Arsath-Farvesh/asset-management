@@ -44,9 +44,10 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 1000 * 60 * 60 * 24
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 1000 * 60 * 60 * 2,
+    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
   }
 }));
 
@@ -129,6 +130,43 @@ const validTables = [
 function normalizeCategory(category) {
   if (category === 'equipments_assets') return 'keys';
   return category;
+}
+
+async function generateCodes(category, payload) {
+  let qrText;
+  let barcodeText;
+
+  if (category === 'case_details') {
+    const customerName = (payload.customer_name || '').toString().trim();
+    const caseNumber = (payload.case_number || '').toString().trim();
+    qrText = `${customerName}-${caseNumber}`;
+    barcodeText = caseNumber || customerName || 'CASE';
+  } else {
+    const name = (payload.name || '').toString().trim();
+    const serialNumber = (payload.serial_number || '').toString().trim();
+    qrText = `${name}-${category}-${serialNumber}`;
+    barcodeText = serialNumber || name || 'ASSET';
+  }
+
+  const safeQrText = (qrText || 'Takhlees').toString().slice(0, 512);
+  const safeBarcodeText = (barcodeText || 'Takhlees').toString().slice(0, 120);
+
+  const qrImage = await QRCode.toDataURL(safeQrText);
+  const barcodePng = await bwipjs.toBuffer({
+    bcid: "code128",
+    text: safeBarcodeText,
+    scale: 3,
+    height: 10,
+    includetext: true,
+    textxalign: "center"
+  });
+
+  return {
+    qrText: safeQrText,
+    barcodeText: safeBarcodeText,
+    qrImage,
+    barcodeImage: `data:image/png;base64,${barcodePng.toString("base64")}`
+  };
 }
 
 // ===== DATABASE INITIALIZATION WITH RETRY =====
@@ -218,6 +256,8 @@ async function updateUsersTableSchema() {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expire TIMESTAMP`);
     
     try {
       await client.query(`
@@ -237,8 +277,8 @@ async function updateUsersTableSchema() {
 
 async function createDefaultUsers() {
   const users = [
-    { username: "admin", password: "admin123", role: "admin", email: "arsathfarvesh02@gmail.com" },
-    { username: "user1", password: "user123", role: "user", email: "developerf07@gmail.com" }
+    { username: "admin", password: "TakhleeAdmin@2024!", role: "admin", email: "arsathfarvesh02@gmail.com" },
+    { username: "user1", password: "TakhleeUser@2024!", role: "user", email: "developerf07@gmail.com" }
   ];
   
   for (const user of users) {
@@ -335,6 +375,26 @@ async function createCaseDetailsTable() {
   console.log("✅ case_details table ready");
 }
 
+// ===== PASSWORD STRENGTH VALIDATION =====
+function validatePasswordStrength(password) {
+  if (!password || password.length < 8) {
+    return { valid: false, message: 'Password must be at least 8 characters long' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one uppercase letter' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one lowercase letter' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one number' };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one special character (!@#$%^&* etc)' };
+  }
+  return { valid: true, message: 'Strong password' };
+}
+
 // ===== MIDDLEWARE =====
 function isAuthenticated(req, res, next) {
   if (req.session.user) next();
@@ -372,15 +432,20 @@ app.post("/api/login", async (req, res) => {
 
     await pool.query("UPDATE users SET last_login=NOW() WHERE id=$1", [user.id]);
 
+    // Check if password strength compliance is needed
+    const passwordCheck = validatePasswordStrength(password);
+    const needsPasswordChange = !passwordCheck.valid;
+
     req.session.user = { 
       id: user.id,
       username: user.username, 
       role: user.role,
       email: user.email,
-      department: user.department
+      department: user.department,
+      needsPasswordChange: needsPasswordChange
     };
     
-    res.json({ success: true, user: req.session.user });
+    res.json({ success: true, user: req.session.user, needsPasswordChange });
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
@@ -438,21 +503,12 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
   }
 
   try {
-    let qrText, barcodeText;
-    if (category === 'case_details') {
-      qrText = `${extraFields.customer_name}-${extraFields.case_number || ''}`;
-      barcodeText = extraFields.case_number || extraFields.customer_name;
-    } else {
-      qrText = `${name}-${category}-${serial_number || ""}`;
-      barcodeText = serial_number || name;
-    }
-    
-    const qrImage = await QRCode.toDataURL(qrText);
-    const barcodePng = await bwipjs.toBuffer({
-      bcid: "code128", text: barcodeText, scale: 3, height: 10,
-      includetext: true, textxalign: "center"
-    });
-    const barcodeImage = `data:image/png;base64,${barcodePng.toString("base64")}`;
+    const codes = await generateCodes(
+      category,
+      category === 'case_details'
+        ? { customer_name: extraFields.customer_name, case_number: extraFields.case_number }
+        : { name, serial_number }
+    );
 
     const submittedBy = req.session.user.username;
 
@@ -463,12 +519,12 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
       values = [
         extraFields.customer_name, extraFields.customer_phone || null,
         extraFields.case_date || null, extraFields.case_number || null,
-        extraFields.case_type || null, qrImage, qrText, barcodeImage, submittedBy
+        extraFields.case_type || null, codes.qrImage, codes.qrText, codes.barcodeImage, submittedBy
       ];
       placeholders = ['$1','$2','$3','$4','$5','$6','$7','$8','$9'];
     } else {
       columns = ['name', 'serial_number', 'employee_name', 'qr_code', 'qr_text', 'barcode', 'submitted_by', 'location'];
-      values = [name, serial_number || null, employee_name || null, qrImage, qrText, barcodeImage, submittedBy, location || null];
+      values = [name, serial_number || null, employee_name || null, codes.qrImage, codes.qrText, codes.barcodeImage, submittedBy, location || null];
       placeholders = ['$1','$2','$3','$4','$5','$6','$7','$8'];
 
       Object.keys(extraFields).forEach((key) => {
@@ -530,14 +586,29 @@ app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) 
   
   try {
     let updates, values;
+    const codes = await generateCodes(
+      category,
+      category === 'case_details'
+        ? { customer_name: extraFields.customer_name, case_number: extraFields.case_number }
+        : { name, serial_number }
+    );
     
     if (category === 'case_details') {
-      updates = ['customer_name=$1', 'customer_phone=$2', 'case_date=$3', 'case_number=$4', 'case_type=$5', 'updated_at=NOW()'];
-      values = [extraFields.customer_name, extraFields.customer_phone || null, extraFields.case_date || null, extraFields.case_number || null, extraFields.case_type || null];
+      updates = ['customer_name=$1', 'customer_phone=$2', 'case_date=$3', 'case_number=$4', 'case_type=$5', 'qr_code=$6', 'qr_text=$7', 'barcode=$8', 'updated_at=NOW()'];
+      values = [
+        extraFields.customer_name,
+        extraFields.customer_phone || null,
+        extraFields.case_date || null,
+        extraFields.case_number || null,
+        extraFields.case_type || null,
+        codes.qrImage,
+        codes.qrText,
+        codes.barcodeImage
+      ];
     } else {
-      updates = ['name=$1', 'serial_number=$2', 'employee_name=$3', 'location=$4', 'updated_at=NOW()'];
-      values = [name, serial_number || null, employee_name || null, location || null];
-      let paramIndex = 5;
+      updates = ['name=$1', 'serial_number=$2', 'employee_name=$3', 'location=$4', 'qr_code=$5', 'qr_text=$6', 'barcode=$7', 'updated_at=NOW()'];
+      values = [name, serial_number || null, employee_name || null, location || null, codes.qrImage, codes.qrText, codes.barcodeImage];
+      let paramIndex = 8;
       Object.keys(extraFields).forEach(key => {
         updates.push(`${key}=$${paramIndex++}`);
         values.push(extraFields[key] || null);
@@ -701,6 +772,152 @@ app.get("/api/history/pdf", isAuthenticated, async (req, res) => {
     doc.end();
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ===== CHANGE PASSWORD (Authenticated) =====
+app.post("/api/change-password", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, error: "Current and new password required" });
+  }
+
+  const strengthCheck = validatePasswordStrength(newPassword);
+  if (!strengthCheck.valid) {
+    return res.status(400).json({ success: false, error: strengthCheck.message });
+  }
+
+  try {
+    const result = await pool.query("SELECT password FROM users WHERE id=$1", [req.session.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const user = result.rows[0];
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.status(400).json({ success: false, error: "Current password is incorrect" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query("UPDATE users SET password=$1 WHERE id=$2", [hashedPassword, req.session.user.id]);
+
+    res.json({ success: true, message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Change password error:", err.message);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// ===== PASSWORD RESET REQUEST (Send reset link) =====
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, error: "Email required" });
+  }
+
+  try {
+    const result = await pool.query("SELECT id, username FROM users WHERE email=$1", [email]);
+    if (result.rows.length === 0) {
+      // Don't reveal if email exists for security
+      return res.json({ success: true, message: "If email exists, reset link sent" });
+    }
+
+    const user = result.rows[0];
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = await bcrypt.hash(resetToken, 10);
+    const resetTokenExpire = new Date(Date.now() + 3600000); // 1 hour
+
+    await pool.query(
+      "UPDATE users SET reset_token=$1, reset_token_expire=$2 WHERE id=$3",
+      [resetTokenHash, resetTokenExpire, user.id]
+    );
+
+    // In production, send email. For now, log the token
+    console.log(`✅ Password reset token for ${user.username}: ${resetToken}`);
+    console.log(`   Reset link: /reset-password.html?token=${resetToken}`);
+
+    res.json({ success: true, message: "If email exists, reset link sent" });
+  } catch (err) {
+    console.error("Forgot password error:", err.message);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// ===== RESET PASSWORD (With token validation) =====
+app.post("/api/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ success: false, error: "Token and password required" });
+  }
+
+  const strengthCheck = validatePasswordStrength(newPassword);
+  if (!strengthCheck.valid) {
+    return res.status(400).json({ success: false, error: strengthCheck.message });
+  }
+
+  try {
+    // First, find users with valid reset tokens
+    const result = await pool.query(
+      "SELECT id, reset_token FROM users WHERE reset_token IS NOT NULL AND reset_token_expire > NOW()"
+    );
+
+    let userFound = false;
+    let userId = null;
+
+    for (const row of result.rows) {
+      const match = await bcrypt.compare(token, row.reset_token);
+      if (match) {
+        userFound = true;
+        userId = row.id;
+        break;
+      }
+    }
+
+    if (!userFound) {
+      return res.status(400).json({ success: false, error: "Invalid or expired reset token" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query(
+      "UPDATE users SET password=$1, reset_token=NULL, reset_token_expire=NULL WHERE id=$2",
+      [hashedPassword, userId]
+    );
+
+    res.json({ success: true, message: "Password reset successfully. Please login." });
+  } catch (err) {
+    console.error("Reset password error:", err.message);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// ===== VALIDATE RESET TOKEN =====
+app.post("/api/validate-reset-token", async (req, res) => {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({ success: false, error: "Token required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT id FROM users WHERE reset_token IS NOT NULL AND reset_token_expire > NOW()"
+    );
+
+    for (const row of result.rows) {
+      const match = await bcrypt.compare(token, row.reset_token);
+      if (match) {
+        return res.json({ success: true, message: "Valid token" });
+      }
+    }
+
+    res.status(400).json({ success: false, error: "Invalid or expired token" });
+  } catch (err) {
+    console.error("Validate token error:", err.message);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 });
 
