@@ -142,6 +142,73 @@ body {
   font-size: 14px;
 }
 
+/* Authentication Indicator */
+.auth-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #f8fafb 100%);
+  border-radius: 10px;
+  border: 1px solid #e0e7ff;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(197, 165, 114, 0.3);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.user-name {
+  color: var(--takhlees-dark);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.user-role {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  width: fit-content;
+}
+
+.role-admin {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.role-user {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.auth-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
 .page-header {
   background: #ffffff;
   color: var(--text-primary);
@@ -376,7 +443,17 @@ body {
       <a href="qr-scan.html" class="btn btn-outline-gold btn-sm btn-enhanced" title="Scan QR Code">
         <i class="bi bi-qr-code me-1"></i><span class="d-none d-md-inline">Scan QR</span>
       </a>
-      <span id="welcomeText" class="welcome-user ms-3 d-none d-md-inline"></span>
+      
+      <!-- Authentication Indicator -->
+      <div class="auth-indicator d-none d-md-flex" id="authIndicator">
+        <div class="auth-status"></div>
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-info">
+          <p class="user-name" id="userName">User</p>
+          <span class="user-role role-user" id="userRole">User</span>
+        </div>
+      </div>
+      
       <button id="logoutBtn" class="btn btn-outline-light btn-sm btn-enhanced" title="Logout">
         <i class="bi bi-box-arrow-right me-1"></i><span class="d-none d-sm-inline">Logout</span>
       </button>
@@ -582,11 +659,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = "/login.html";
     }
 
-    // Display welcome message with username
+    // Display auth indicator with user info
     if (auth.user && auth.user.username) {
-        const welcomeEl = document.getElementById("welcomeText");
-        if (welcomeEl) {
-            welcomeEl.textContent = `Welcome, ${auth.user.username}!`;
+        const authIndicator = document.getElementById("authIndicator");
+        const userAvatar = document.getElementById("userAvatar");
+        const userName = document.getElementById("userName");
+        const userRole = document.getElementById("userRole");
+        
+        if (authIndicator && userAvatar && userName && userRole) {
+          userAvatar.textContent = auth.user.username.charAt(0).toUpperCase();
+          userName.textContent = auth.user.username;
+          const role = auth.user.role || 'user';
+          userRole.textContent = role.toUpperCase();
+          userRole.className = `user-role role-${role}`;
+          authIndicator.classList.remove('d-none');
         }
     }
 

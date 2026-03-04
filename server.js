@@ -457,6 +457,14 @@ app.post("/logout", (req, res) => {
   res.json({ success: true });
 });
 
+app.get("/api/auth-status", (req, res) => {
+  if (req.session.user) {
+    res.json({ authenticated: true, user: req.session.user });
+  } else {
+    res.status(401).json({ authenticated: false });
+  }
+});
+
 app.get("/check-auth", (req, res) => {
   if (req.session.user) {
     res.json({ authenticated: true, user: req.session.user });
