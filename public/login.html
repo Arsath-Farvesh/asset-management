@@ -269,6 +269,65 @@
       left: 100%;
     }
     
+    /* OAuth Buttons */
+    .oauth-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px 12px;
+      border-radius: 12px;
+      border: 2px solid #e8e8e8;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: #ffffff;
+      color: #111827;
+    }
+    
+    .oauth-btn i {
+      font-size: 24px;
+    }
+    
+    .oauth-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      text-decoration: none;
+    }
+    
+    .oauth-google {
+      border-color: #e8e8e8;
+    }
+    
+    .oauth-google:hover {
+      border-color: #4285F4;
+      background: #f0f7ff;
+      color: #4285F4;
+    }
+    
+    .oauth-microsoft {
+      border-color: #e8e8e8;
+    }
+    
+    .oauth-microsoft:hover {
+      border-color: #00A4EF;
+      background: #f0f7ff;
+      color: #00A4EF;
+    }
+    
+    .oauth-github {
+      border-color: #e8e8e8;
+    }
+    
+    .oauth-github:hover {
+      border-color: #1f2937;
+      background: #f5f5f5;
+      color: #1f2937;
+    }
+    
     .btn-login:active {
       transform: translateY(0);
     }
@@ -418,6 +477,29 @@
           </a>
         </div>
       </form>
+
+      <!-- OAuth Divider -->
+      <div style="display: flex; align-items: center; margin: 30px 0 25px; gap: 15px;">
+        <div style="flex: 1; height: 1px; background: #e8e8e8;"></div>
+        <span style="color: #999; font-size: 13px; font-weight: 500;">Or sign in with</span>
+        <div style="flex: 1; height: 1px; background: #e8e8e8;"></div>
+      </div>
+
+      <!-- OAuth Buttons -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 25px;">
+        <a href="/auth/google" class="oauth-btn oauth-google" title="Sign in with Google">
+          <i class="bi bi-google"></i>
+          <span>Google</span>
+        </a>
+        <a href="/auth/microsoft" class="oauth-btn oauth-microsoft" title="Sign in with Microsoft">
+          <i class="bi bi-microsoft"></i>
+          <span>Microsoft</span>
+        </a>
+        <a href="/auth/github" class="oauth-btn oauth-github" title="Sign in with GitHub">
+          <i class="bi bi-github"></i>
+          <span>GitHub</span>
+        </a>
+      </div>
       
       <div id="error"></div>
     </div>

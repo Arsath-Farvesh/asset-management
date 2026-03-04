@@ -12,6 +12,10 @@ const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const cors = require("cors");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const MicrosoftStrategy = require("passport-microsoft").Strategy;
+const GitHubStrategy = require("passport-github2").Strategy;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,6 +52,83 @@ app.use(session({
     sameSite: 'strict',
     maxAge: 1000 * 60 * 60 * 2,
     domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+  }
+}));
+
+// ===== PASSPORT INITIALIZATION =====
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport serialization
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+// ===== GOOGLE OAUTH STRATEGY =====
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID',
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'YOUR_GOOGLE_CLIENT_SECRET',
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const user = {
+      id: profile.id,
+      username: profile.displayName || profile.emails[0].value.split('@')[0],
+      email: profile.emails[0].value,
+      provider: 'google',
+      avatar: profile.photos[0]?.value,
+      role: 'user'
+    };
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+}));
+
+// ===== MICROSOFT OAUTH STRATEGY =====
+passport.use(new MicrosoftStrategy({
+  clientID: process.env.MICROSOFT_CLIENT_ID || 'YOUR_MICROSOFT_CLIENT_ID',
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET || 'YOUR_MICROSOFT_CLIENT_SECRET',
+  callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:3000/auth/microsoft/callback',
+  tenant: process.env.MICROSOFT_TENANT || 'common'
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const user = {
+      id: profile.id,
+      username: profile.displayName || profile.upn.split('@')[0],
+      email: profile.upn,
+      provider: 'microsoft',
+      avatar: null,
+      role: 'user'
+    };
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+}));
+
+// ===== GITHUB OAUTH STRATEGY =====
+passport.use(new GitHubStrategy({
+  clientID: process.env.GITHUB_CLIENT_ID || 'YOUR_GITHUB_CLIENT_ID',
+  clientSecret: process.env.GITHUB_CLIENT_SECRET || 'YOUR_GITHUB_CLIENT_SECRET',
+  callbackURL: process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/auth/github/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const user = {
+      id: profile.id,
+      username: profile.login || profile.displayName,
+      email: profile.emails?.[0]?.value || 'no-email@github.com',
+      provider: 'github',
+      avatar: profile.photos[0]?.value,
+      role: 'user'
+    };
+    done(null, user);
+  } catch (err) {
+    done(err);
   }
 }));
 
@@ -463,6 +544,52 @@ app.get("/api/auth-status", (req, res) => {
   } else {
     res.status(401).json({ authenticated: false });
   }
+});
+
+// ===== OAUTH ROUTES =====
+// Google OAuth
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login.html' }), (req, res) => {
+  req.session.user = {
+    id: req.user.id,
+    username: req.user.username,
+    email: req.user.email,
+    role: req.user.role,
+    provider: 'google',
+    avatar: req.user.avatar
+  };
+  res.redirect('/index.html');
+});
+
+// Microsoft OAuth
+app.get('/auth/microsoft', passport.authenticate('microsoft', { scope: ['user.read'] }));
+
+app.get('/auth/microsoft/callback', passport.authenticate('microsoft', { failureRedirect: '/login.html' }), (req, res) => {
+  req.session.user = {
+    id: req.user.id,
+    username: req.user.username,
+    email: req.user.email,
+    role: req.user.role,
+    provider: 'microsoft',
+    avatar: req.user.avatar
+  };
+  res.redirect('/index.html');
+});
+
+// GitHub OAuth
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/login.html' }), (req, res) => {
+  req.session.user = {
+    id: req.user.id,
+    username: req.user.username,
+    email: req.user.email,
+    role: req.user.role,
+    provider: 'github',
+    avatar: req.user.avatar
+  };
+  res.redirect('/index.html');
 });
 
 app.get("/check-auth", (req, res) => {
