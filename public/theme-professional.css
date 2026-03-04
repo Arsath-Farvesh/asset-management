@@ -13,9 +13,9 @@
   --primary-500: #64748b;
   
   /* Accent Colors - Gold with variations */
-  --accent-gold: #d4af37;
-  --accent-gold-light: #e8c76f;
-  --accent-gold-dark: #b8941f;
+  --accent-gold: #D62828;
+  --accent-gold-light: #ef4444;
+  --accent-gold-dark: #b71c1c;
   
   /* Semantic Colors */
   --success: #10b981;
@@ -42,6 +42,52 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global palette override: force same red accent on all components */
+:root {
+  --takhlees-gold: #D62828 !important;
+  --takhlees-red: #D62828 !important;
+  --accent-gold: #D62828 !important;
+  --accent-gold-light: #ef4444 !important;
+  --accent-gold-dark: #b71c1c !important;
+}
+
+.shield-icon,
+.logo-container,
+.nav-btn,
+.btn-gold,
+.btn-home,
+.btn-login,
+.btn-reset,
+.btn-primary,
+.btn-download {
+  background: linear-gradient(135deg, #D62828 0%, #ef4444 100%) !important;
+}
+
+.nav-btn,
+.btn-gold,
+.btn-home,
+.btn-login,
+.btn-reset,
+.btn-primary,
+.btn-download {
+  box-shadow: 0 8px 18px rgba(214, 40, 40, 0.24) !important;
+}
+
+.card-header-enhanced,
+.preview-section,
+.preview-enhanced {
+  background: linear-gradient(135deg, rgba(214, 40, 40, 0.1) 0%, rgba(214, 40, 40, 0.04) 100%) !important;
+  border-bottom-color: #D62828 !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-control-enhanced:focus,
+.input-group:focus-within {
+  border-color: #D62828 !important;
+  box-shadow: 0 0 0 4px rgba(214, 40, 40, 0.12) !important;
 }
 
 /* ========== ENHANCED TYPOGRAPHY ========== */

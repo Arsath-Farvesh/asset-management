@@ -28,6 +28,62 @@
   --takhlees-red: #a50923;
 }
 
+  /* Global palette override: unify to red accent across pages */
+  :root {
+    --app-brand: #D62828 !important;
+    --app-brand-soft: #ef4444 !important;
+    --app-accent: #D62828 !important;
+    --takhlees-gold: #D62828 !important;
+    --takhlees-red: #D62828 !important;
+  }
+
+  .shield-icon,
+  .logo-container,
+  .nav-btn,
+  .btn-gold,
+  .btn-home,
+  .btn-login,
+  .btn-reset,
+  .btn-primary,
+  .btn-download {
+    background: linear-gradient(135deg, #D62828 0%, #ef4444 100%) !important;
+  }
+
+  .nav-btn,
+  .btn-gold,
+  .btn-home,
+  .btn-login,
+  .btn-reset,
+  .btn-primary,
+  .btn-download {
+    box-shadow: 0 8px 18px rgba(214, 40, 40, 0.24) !important;
+  }
+
+  .nav-btn:hover,
+  .btn-gold:hover,
+  .btn-home:hover,
+  .btn-login:hover,
+  .btn-reset:hover,
+  .btn-primary:hover,
+  .btn-download:hover {
+    box-shadow: 0 12px 24px rgba(214, 40, 40, 0.3) !important;
+  }
+
+  .card-header-enhanced,
+  .preview-section,
+  .preview-enhanced {
+    background: linear-gradient(135deg, rgba(214, 40, 40, 0.1) 0%, rgba(214, 40, 40, 0.04) 100%) !important;
+    border-bottom-color: #D62828 !important;
+  }
+
+  .form-control:focus,
+  .form-select:focus,
+  .form-control-enhanced:focus,
+  .input-group:focus-within {
+    border-color: #D62828 !important;
+    box-shadow: 0 0 0 4px rgba(214, 40, 40, 0.12) !important;
+  }
+
 * {
   box-sizing: border-box;
 }
