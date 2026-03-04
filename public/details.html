@@ -317,8 +317,8 @@
       border-radius: 12px;
       padding: 2rem;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: 1fr;
+      gap: 2rem;
       margin-top: 2rem;
     }
 
@@ -698,12 +698,26 @@
               <div class="media-item">
                 <h6><i class="bi bi-qr-code"></i> QR Code</h6>
                 <img src="${d.qr_code}" alt="QR Code">
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+                  <div class="detail-label" style="margin-bottom: 0.5rem;">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Location
+                  </div>
+                  <div class="detail-value">${d.location || '-'}</div>
+                </div>
               </div>
             ` : ''}
             ${d.barcode ? `
               <div class="media-item">
                 <h6><i class="bi bi-barcode-scan"></i> Barcode</h6>
                 <img src="${d.barcode}" alt="Barcode">
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+                  <div class="detail-label" style="margin-bottom: 0.5rem;">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Location
+                  </div>
+                  <div class="detail-value">${d.location || '-'}</div>
+                </div>
               </div>
             ` : ''}
           </div>
