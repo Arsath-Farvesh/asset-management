@@ -547,6 +547,84 @@ app.get("/api/auth-status", (req, res) => {
   }
 });
 
+// Update user profile
+app.put("/api/user/profile", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Not authenticated' });
+  }
+
+  const { email, department, password } = req.body;
+  const userId = req.session.user.id;
+
+  try {
+    // Validate email format
+    if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+
+    // Check if email already exists for another user
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [email, userId]
+    );
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ success: false, error: 'Email already in use' });
+    }
+
+    // Validate password if provided
+    if (password) {
+      const passwordCheck = validatePasswordStrength(password);
+      if (!passwordCheck.isStrong) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' 
+        });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await pool.query(
+        'UPDATE users SET email = $1, department = $2, password_hash = $3 WHERE id = $4',
+        [email, department || null, hashedPassword, userId]
+      );
+    } else {
+      // Update without password
+      await pool.query(
+        'UPDATE users SET email = $1, department = $2 WHERE id = $3',
+        [email, department || null, userId]
+      );
+    }
+
+    // Update session user
+    const updatedUser = await pool.query(
+      'SELECT id, username, email, role, department FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (updatedUser.rows.length > 0) {
+      const user = updatedUser.rows[0];
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        department: user.department
+      };
+
+      res.json({ 
+        success: true, 
+        user: req.session.user,
+        message: 'Profile updated successfully'
+      });
+    } else {
+      res.status(404).json({ success: false, error: 'User not found' });
+    }
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 // ===== OAUTH ROUTES =====
 // Google OAuth
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
