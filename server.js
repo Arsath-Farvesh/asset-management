@@ -782,6 +782,50 @@ app.delete("/api/assets/:category/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// ===== BULK DELETE =====
+app.post("/api/assets/bulk-delete", isAuthenticated, async (req, res) => {
+  const { items } = req.body;
+  
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, error: "No items to delete" });
+  }
+
+  try {
+    let deletedCount = 0;
+    const errors = [];
+
+    // Delete each item
+    for (const item of items) {
+      const category = normalizeCategory(item.category);
+      const { id } = item;
+
+      // Validate category
+      if (!validTables.includes(category)) {
+        errors.push(`Invalid category: ${category}`);
+        continue;
+      }
+
+      try {
+        const result = await pool.query(`DELETE FROM ${category} WHERE id=$1 RETURNING *`, [id]);
+        if (result.rows.length > 0) {
+          deletedCount++;
+        }
+      } catch (err) {
+        errors.push(`Error deleting ${category}/${id}: ${err.message}`);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      deletedCount: deletedCount,
+      totalRequested: items.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ===== QR LOOKUP =====
 app.get("/api/qr/:code", isAuthenticated, async (req, res) => {
   const code = req.params.code;

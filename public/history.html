@@ -507,10 +507,32 @@
         </div>
         
         <div id="tableContainer" style="display: none;">
+          <!-- Bulk Actions Bar -->
+          <div id="bulkActionsBar" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #f0f7ff; border-radius: 10px; border-left: 4px solid var(--takhlees-gold);">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <span id="selectedCount" style="font-weight: 600; color: var(--takhlees-blue);">0 selected</span>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button id="selectAllBtn" class="btn" style="padding: 8px 16px; background: #dbeafe; color: #1e40af; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
+                  <i class="bi bi-check-square"></i> Select All
+                </button>
+                <button id="deleteSelectedBtn" class="btn" style="padding: 8px 16px; background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
+                  <i class="bi bi-trash-fill"></i> Delete Selected
+                </button>
+                <button id="clearSelectionBtn" class="btn" style="padding: 8px 16px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
+                  <i class="bi bi-x-circle"></i> Clear
+                </button>
+              </div>
+            </div>
+          </div>
           <div class="table-responsive">
             <table class="table table-takhlees" id="historyTable">
               <thead>
                 <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" id="selectAllCheckbox" style="width: 18px; height: 18px; cursor: pointer;">
+                  </th>
                   <th>ID</th>
                   <th>Category</th>
                   <th>Name</th>
@@ -622,7 +644,12 @@
               displayCategory = 'Keys';
           }
           const tr = document.createElement('tr');
+          tr.dataset.rowId = row.id;
+          tr.dataset.rowCategory = row.category;
           tr.innerHTML = `
+            <td>
+              <input type="checkbox" class="row-checkbox" style="width: 18px; height: 18px; cursor: pointer;">
+            </td>
             <td><strong>#${row.id}</strong></td>
             <td><span class="badge-category">${displayCategory}</span></td>
             <td>${row.name || '-'}</td>
@@ -660,6 +687,9 @@
           `;
           tbody.appendChild(tr);
         });
+
+        // Attach checkbox event listeners after table is populated
+        attachCheckboxListeners();
       } catch (error) {
         loadingIndicator.style.display = 'none';
         emptyState.innerHTML = `
@@ -718,6 +748,100 @@
           alert('Delete failed: ' + (j.error || JSON.stringify(j)));
         }
       }).catch(err => alert('Error: ' + err));
+    }
+
+    // ===== BULK DELETE FUNCTIONALITY =====
+    function updateBulkActionsBar() {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const bulkActionsBar = document.getElementById('bulkActionsBar');
+      const selectedCountSpan = document.getElementById('selectedCount');
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+      selectedCountSpan.textContent = `${selectedCount} selected`;
+      
+      if (selectedCount > 0) {
+        bulkActionsBar.style.display = 'block';
+      } else {
+        bulkActionsBar.style.display = 'none';
+        selectAllCheckbox.checked = false;
+      }
+
+      // Update "Select All" checkbox state
+      const allCheckboxes = Array.from(checkboxes).length;
+      if (selectedCount === allCheckboxes && allCheckboxes > 0) {
+        selectAllCheckbox.checked = true;
+      } else if (selectedCount > 0) {
+        selectAllCheckbox.indeterminate = true;
+      } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      }
+    }
+
+    function deleteSelectedRows() {
+      const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+      if (checkboxes.length === 0) {
+        alert('Please select at least one record');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete ${checkboxes.length} record(s)? This action cannot be undone.`)) {
+        return;
+      }
+
+      const itemsToDelete = Array.from(checkboxes).map(cb => {
+        const tr = cb.closest('tr');
+        return {
+          category: tr.dataset.rowCategory,
+          id: tr.dataset.rowId
+        };
+      });
+
+      fetch('/api/assets/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ items: itemsToDelete })
+      }).then(r => r.json()).then(j => {
+        if (j.success) {
+          alert(`${j.deletedCount || itemsToDelete.length} record(s) deleted successfully!`);
+          loadHistory();
+        } else {
+          alert('Delete failed: ' + (j.error || JSON.stringify(j)));
+        }
+      }).catch(err => alert('Error: ' + err));
+    }
+
+    function selectAllRows() {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+      updateBulkActionsBar();
+    }
+
+    function clearSelection() {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      checkboxes.forEach(cb => cb.checked = false);
+      updateBulkActionsBar();
+    }
+
+    // Add event listeners after history loads
+    function attachCheckboxListeners() {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+      const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+      const selectAllBtn = document.getElementById('selectAllBtn');
+      const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+
+      selectAllCheckbox.addEventListener('change', selectAllRows);
+      rowCheckboxes.forEach(cb => cb.addEventListener('change', updateBulkActionsBar));
+      deleteSelectedBtn.addEventListener('click', deleteSelectedRows);
+      selectAllBtn.addEventListener('click', () => {
+        document.getElementById('selectAllCheckbox').checked = true;
+        selectAllRows();
+      });
+      clearSelectionBtn.addEventListener('click', clearSelection);
     }
 
     document.getElementById('downloadPdf').addEventListener('click', () => {
