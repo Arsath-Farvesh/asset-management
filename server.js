@@ -126,6 +126,11 @@ const validTables = [
   "keys","case_details"
 ];
 
+function normalizeCategory(category) {
+  if (category === 'equipments_assets') return 'keys';
+  return category;
+}
+
 // ===== DATABASE INITIALIZATION WITH RETRY =====
 async function waitForDatabase(maxRetries = 10, delay = 3000) {
   for (let i = 0; i < maxRetries; i++) {
@@ -418,7 +423,7 @@ app.get("/api/users", isAuthenticated, isAdmin, async (req, res) => {
 
 // ===== ASSET ROUTES =====
 app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
-  const category = req.params.category;
+  const category = normalizeCategory(req.params.category);
   if (!validTables.includes(category)) {
     return res.status(400).json({ success: false, error: "Invalid category" });
   }
@@ -483,7 +488,7 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
 });
 
 app.get("/api/assets/:category", isAuthenticated, async (req, res) => {
-  const category = req.params.category;
+  const category = normalizeCategory(req.params.category);
   if (!validTables.includes(category)) {
     return res.status(400).json({ success: false, error: "Invalid category" });
   }
@@ -497,7 +502,8 @@ app.get("/api/assets/:category", isAuthenticated, async (req, res) => {
 });
 
 app.get("/api/assets/:category/:id", isAuthenticated, async (req, res) => {
-  const { category, id } = req.params;
+  const category = normalizeCategory(req.params.category);
+  const { id } = req.params;
   if (!validTables.includes(category)) {
     return res.status(400).json({ success: false, error: "Invalid category" });
   }
@@ -514,7 +520,8 @@ app.get("/api/assets/:category/:id", isAuthenticated, async (req, res) => {
 });
 
 app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) => {
-  const { category, id } = req.params;
+  const category = normalizeCategory(req.params.category);
+  const { id } = req.params;
   if (!validTables.includes(category)) {
     return res.status(400).json({ success: false, error: "Invalid category" });
   }
@@ -551,7 +558,8 @@ app.put("/api/assets/:category/:id", isAuthenticated, isAdmin, async (req, res) 
 });
 
 app.delete("/api/assets/:category/:id", isAuthenticated, async (req, res) => {
-  const { category, id } = req.params;
+  const category = normalizeCategory(req.params.category);
+  const { id } = req.params;
   if (!validTables.includes(category)) {
     return res.status(400).json({ success: false, error: "Invalid category" });
   }

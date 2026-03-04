@@ -66,20 +66,26 @@ body {
   gap: 12px;
 }
 
-.brand-logo-small {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--takhlees-gold) 0%, #D4AF37 100%);
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.shield-icon {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 8px rgba(197, 165, 114, 0.3);
+  box-shadow: 0 4px 15px rgba(197, 165, 114, 0.4);
 }
 
-.brand-logo-small i {
-  color: var(--takhlees-dark);
-  font-size: 20px;
+.shield-icon i {
+  font-size: 24px;
+  color: white;
 }
 
 .brand-text {
@@ -352,12 +358,14 @@ body {
 <nav class="navbar navbar-expand-lg navbar-takhlees navbar-enhanced">
   <div class="container-fluid">
     <a class="navbar-brand animate-slide-in" href="#">
-      <div class="brand-logo-small">
-        <!-- <i class="bi bi-shield-check"></i> -->
-      </div>
-      <div class="brand-text">
-        <span class="main">Takhlees</span>
-        <span class="sub">ASSET MANAGEMENT SYSTEM</span>
+      <div class="brand-logo">
+        <div class="shield-icon">
+          <i class="bi bi-shield-fill-check"></i>
+        </div>
+        <div class="brand-text">
+          <span class="main" style="color: var(--text-primary); font-weight: 600;">Takhlees</span>
+          <span class="sub" style="color: var(--text-secondary); font-size: 0.75rem;">ASSET MANAGEMENT SYSTEM</span>
+        </div>
       </div>
     </a>
     
@@ -407,7 +415,7 @@ body {
                     <option value="digital_media">Digital Media</option>
                     <option value="documents">Documents</option>
                     <option value="employees">Employees</option>
-                    <option value="equipments_assets">Keys</option>
+                    <option value="keys">Keys</option>
                     <option value="financial_assets">Financial Assets</option>
                     <option value="furniture">Furniture</option>
                     <option value="infrastructure">Infrastructure</option>
@@ -433,7 +441,7 @@ body {
                 </div>
               </div>
               <div class="col-md-6" id="asset-name-col">
-                <label for="asset-name" class="form-label form-label-enhanced required-field">Asset Name</label>
+                <label for="asset-name" id="asset-name-label" class="form-label form-label-enhanced required-field">Asset Name</label>
                 <div id="asset-name-container">
                   <select class="form-select form-control-enhanced" id="asset-name" disabled required>
                     <option value="">Select a category first</option>
@@ -591,6 +599,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const assetForm = document.getElementById('asset-form');
     const assetCategory = document.getElementById('asset-category');
     const assetNameCol = document.getElementById('asset-name-col');
+    const assetNameLabel = document.getElementById('asset-name-label');
     const assetNameContainer = document.getElementById('asset-name-container');
     const dynamicFields = document.getElementById('dynamic-fields');
     const successAlert = document.getElementById('success-alert');
@@ -688,7 +697,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             { type: 'text', id: 'model', label: 'Model', placeholder: 'Vehicle model' },
             { type: 'text', id: 'year', label: 'Year', placeholder: 'Manufacturing year' }
         ],
-        equipments_assets: [
+        keys: [
           { type: 'date', id: 'date', label: 'Date', placeholder: 'Equip Assign Date' },
           { type: 'number', id: 'keys', label: 'Keys', placeholder: 'No of Quantity' }
         ]
@@ -714,7 +723,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const category = assetCategory.value || 'Not selected';
         if (category === 'case_details') {
           previewCategory.textContent = 'Case Details';
-        } else if (category === 'equipments_assets') {
+        } else if (category === 'keys' || category === 'equipments_assets') {
           previewCategory.textContent = 'Keys';
         } else {
           previewCategory.textContent = category;
@@ -781,6 +790,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const category = assetCategory.value;
         dynamicFields.innerHTML = '';
 
+        if (assetNameLabel) {
+          assetNameLabel.textContent = category === 'case_details' ? 'Case Name' : 'Asset Name';
+        }
+
         // Handle Case Details category specially
         if (category === 'case_details') {
             // Show asset name, hide standard fields
@@ -816,7 +829,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             `;
         } else if (category === 'employees') {
           assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter employee name" required>`;
-        } else if (category === 'equipments_assets') {
+        } else if (category === 'keys' || category === 'equipments_assets') {
           assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter key name" required>`;
         } else if (categoryAssets[category]) {
             let selectHTML = `<select class="form-select" id="asset-name" required>
