@@ -12,6 +12,19 @@ const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const cors = require("cors");
+
+// ===== EMAIL TRANSPORTER CONFIGURATION =====
+const emailTransporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT) || 587,
+  secure: false, // true for 465, false for 587
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  logger: true,
+  debug: true
+});
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const MicrosoftStrategy = require("passport-microsoft").Strategy;
@@ -1095,9 +1108,54 @@ app.post("/api/forgot-password", async (req, res) => {
       [resetTokenHash, resetTokenExpire, user.id]
     );
 
-    // In production, send email. For now, log the token
-    console.log(`✅ Password reset token for ${user.username}: ${resetToken}`);
-    console.log(`   Reset link: /reset-password.html?token=${resetToken}`);
+    // Send email with reset link
+    const resetLink = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password.html?token=${resetToken}`;
+    
+    try {
+      await emailTransporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Takhlees Asset Management - Password Reset Request",
+        html: `
+          <div style="font-family: 'Poppins', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 2rem; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">Takhlees Asset Management</h1>
+              <p style="color: #6b7280; margin: 0.5rem 0 0 0; font-size: 14px;">Government Services</p>
+            </div>
+            <div style="background: white; padding: 2rem; border: 1px solid #e9ecef; border-radius: 0 0 10px 10px;">
+              <h2 style="color: #1f2937; margin-top: 0;">Password Reset Request</h2>
+              <p style="color: #6c757d; line-height: 1.6;">Hello <strong>${user.username}</strong>,</p>
+              <p style="color: #6c757d; line-height: 1.6;">We received a request to reset your password. Click the button below to set a new password:</p>
+              
+              <div style="text-align: center; margin: 2rem 0;">
+                <a href="${resetLink}" style="background: linear-gradient(135deg, #6b7280 0%, #d4af6a 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
+                  Reset Password
+                </a>
+              </div>
+              
+              <p style="color: #6c757d; line-height: 1.6; font-size: 14px;">Or copy and paste this link in your browser:</p>
+              <p style="color: #3b82f6; word-break: break-all; font-size: 12px;"><a href="${resetLink}" style="color: #3b82f6; text-decoration: none;">${resetLink}</a></p>
+              
+              <hr style="border: none; border-top: 1px solid #e9ecef; margin: 2rem 0;">
+              
+              <p style="color: #6c757d; font-size: 13px; line-height: 1.6;">
+                <strong>Security Note:</strong> This link will expire in 1 hour. If you didn't request a password reset, please ignore this email.
+              </p>
+              
+              <p style="color: #6c757d; margin-top: 2rem; font-size: 12px;">
+                Best regards,<br>
+                Takhlees Asset Management System
+              </p>
+            </div>
+          </div>
+        `
+      });
+      
+      console.log(`✅ Password reset email sent to ${email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send reset email to ${email}:`, emailError.message);
+      // Still return success to avoid revealing if email exists
+    }
 
     res.json({ success: true, message: "If email exists, reset link sent" });
   } catch (err) {
