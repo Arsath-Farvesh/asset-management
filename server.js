@@ -359,6 +359,7 @@ async function updateUsersTableSchema() {
 async function createDefaultUsers() {
   const users = [
     { username: "admin", password: "TakhleeAdmin@2024!", role: "admin", email: "arsathfarvesh02@gmail.com" },
+    { username: "admin2", password: "TakhleeAdmin@2024!", role: "admin", email: "Shahulofficial16@gmail.com" },
     { username: "user1", password: "TakhleeUser@2024!", role: "user", email: "developerf07@gmail.com" }
   ];
   
