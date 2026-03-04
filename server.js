@@ -12,6 +12,7 @@ const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const cors = require("cors");
+const pgSession = require("connect-pg-simple")(require("express-session"));
 
 // ===== EMAIL TRANSPORTER CONFIGURATION =====
 const emailTransporter = nodemailer.createTransport({
@@ -56,12 +57,18 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ===== SESSION CONFIGURATION =====
 app.use(session({
+  store: new pgSession({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true,
+    errorLog: (err) => console.error('Session store error:', err)
+  }),
   secret: process.env.SESSION_SECRET || "change_this_secret",
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production',
     sameSite: 'strict',
     maxAge: 1000 * 60 * 60 * 2,
     domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
