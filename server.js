@@ -12,7 +12,58 @@ const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const { body, validationResult } = require("express-validator");
+const winston = require("winston");
+const DailyRotateFile = require("winston-daily-rotate-file");
 const pgSession = require("connect-pg-simple")(require("express-session"));
+
+// ===== LOGGING CONFIGURATION =====
+const logFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
+  winston.format.json()
+);
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: logFormat,
+  transports: [
+    new DailyRotateFile({
+      filename: 'logs/error-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      level: 'error',
+      maxSize: '20m',
+      maxFiles: '14d'
+    }),
+    new DailyRotateFile({
+      filename: 'logs/combined-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d'
+    })
+  ]
+});
+
+// Console logging in development only
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    )
+  }));
+}
+
+// Helper function for backward compatibility
+const log = {
+  info: (msg) => logger.info(msg),
+  error: (msg, err) => logger.error(msg, err),
+  warn: (msg) => logger.warn(msg),
+  debug: (msg) => logger.debug(msg)
+};
 
 // ===== EMAIL TRANSPORTER CONFIGURATION =====
 const emailTransporter = nodemailer.createTransport({
@@ -23,8 +74,8 @@ const emailTransporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  logger: true,
-  debug: true
+  logger: process.env.NODE_ENV !== 'production',
+  debug: process.env.NODE_ENV !== 'production'
 });
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -34,6 +85,40 @@ const GitHubStrategy = require("passport-github2").Strategy;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ===== SECURITY HEADERS =====
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://html2canvas.hertzen.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"]
+    }
+  }
+}));
+
+// ===== RATE LIMITING =====
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: { success: false, error: "Too many requests, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Apply rate limiting to API routes
+app.use('/api/', limiter);
+
+// Stricter rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts
+  message: { success: false, error: "Too many login attempts, please try again later" },
+  skipSuccessfulRequests: true
+});
+
 // ===== CORS CONFIGURATION =====
 app.use(cors({
   origin: "*",
@@ -42,9 +127,11 @@ app.use(cors({
 
 app.set('trust proxy', 1);
 
-// ===== REQUEST LOGGING (for debugging) =====
+// ===== REQUEST LOGGING =====
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+  if (process.env.NODE_ENV !== 'production') {
+    log.info(`${req.method} ${req.path}`);
+  }
   next();
 });
 
@@ -61,7 +148,7 @@ app.use(session({
     pool: pool,
     tableName: 'session',
     createTableIfMissing: true,
-    errorLog: (err) => console.error('Session store error:', err)
+    errorLog: (err) => log.error('Session store error:', err)
   }),
   secret: process.env.SESSION_SECRET || "change_this_secret",
   resave: false,
@@ -171,19 +258,19 @@ if (process.env.NODE_ENV === 'production' || process.env.PGHOST?.includes('railw
 if (dbUrl) {
   poolConfig.connectionString = dbUrl;
   poolConfig.ssl = sslConfig;
-  console.log('🔗 Using DATABASE_URL for connection');
+  log.info('🔗 Using DATABASE_URL for connection');
 } else {
   // Using individual PG* variables (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE)
   poolConfig.ssl = sslConfig;
-  console.log('🔗 Using PG* environment variables for connection');
-  console.log(`   Host: ${process.env.PGHOST}:${process.env.PGPORT}`);
-  console.log(`   SSL: ${sslConfig ? 'enabled' : 'disabled'}`);
+  log.info('🔗 Using PG* environment variables for connection');
+  log.info(`   Host: ${process.env.PGHOST}:${process.env.PGPORT}`);
+  log.info(`   SSL: ${sslConfig ? 'enabled' : 'disabled'}`);
 }
 
 const pool = new Pool(poolConfig);
 
-pool.on("connect", () => console.log("✅ PostgreSQL connected"));
-pool.on("error", (err) => console.error("❌ PostgreSQL error:", err.message));
+pool.on("connect", () => log.info("✅ PostgreSQL connected"));
+pool.on("error", (err) => log.error("❌ PostgreSQL error:", err));
 
 // ===== ROOT ROUTE - REDIRECT TO LOGIN =====
 app.get('/', (req, res) => {
@@ -275,10 +362,10 @@ async function waitForDatabase(maxRetries = 10, delay = 3000) {
   for (let i = 0; i < maxRetries; i++) {
     try {
       await pool.query('SELECT 1');
-      console.log('✅ Database connection verified');
+      log.info('✅ Database connection verified');
       return true;
     } catch (err) {
-      console.log(`⏳ Waiting for database... (attempt ${i + 1}/${maxRetries})`);
+      log.warn(`⏳ Waiting for database... (attempt ${i + 1}/${maxRetries})`);
       if (i === maxRetries - 1) throw err;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -286,7 +373,7 @@ async function waitForDatabase(maxRetries = 10, delay = 3000) {
 }
 
 async function initDatabase() {
-  console.log('🔄 Initializing database...');
+  log.info('🔄 Initializing database...');
   
   try {
     // Wait for database to be ready with retry
@@ -312,13 +399,12 @@ async function initDatabase() {
     
     // Create default users (ignore if exist)
     await createDefaultUsers().catch(err => {
-      console.log('⚠️ Default users may exist:', err.message);
+      log.warn('⚠️ Default users may exist: ' + err.message);
     });
 
-    console.log('✅ Database initialization complete');
+    log.info('✅ Database initialization complete');
   } catch (err) {
-    console.error('❌ Database initialization failed:', err.message);
-    console.error('Full error:', err);
+    log.error('❌ Database initialization failed:', err);
     // Don't throw - let server start anyway for debugging
   }
 }
@@ -341,7 +427,7 @@ async function createUsersTable() {
         is_active BOOLEAN DEFAULT TRUE
       )
     `);
-    console.log("✅ Users table ready");
+    log.info("✅ Users table ready");
   } finally {
     client.release();
   }
@@ -370,7 +456,7 @@ async function updateUsersTableSchema() {
       `);
     } catch (e) { /* Trigger may exist */ }
     
-    console.log("✅ Users schema updated");
+    log.info("✅ Users schema updated");
   } finally {
     client.release();
   }
@@ -392,7 +478,7 @@ async function createDefaultUsers() {
       [user.username, hashedPassword, user.role, user.email]
     );
   }
-  console.log("✅ Default users created");
+  log.info("✅ Default users created");
 }
 
 async function createTables() {
@@ -430,7 +516,7 @@ async function createTables() {
         `);
       } catch (e) { /* Trigger exists */ }
       
-      console.log(`✅ Table ${table} ready`);
+      log.info(`✅ Table ${table} ready`);
     }
   } finally {
     client.release();
@@ -443,7 +529,7 @@ async function addKeysColumns() {
     ADD COLUMN IF NOT EXISTS date DATE,
     ADD COLUMN IF NOT EXISTS keys INTEGER;
   `);
-  console.log("✅ keys columns ready");
+  log.info("✅ keys columns ready");
 }
 
 async function createCaseDetailsTable() {
@@ -474,7 +560,7 @@ async function createCaseDetailsTable() {
     `);
   } catch (e) { /* Trigger exists */ }
   
-  console.log("✅ case_details table ready");
+  log.info("✅ case_details table ready");
 }
 
 // ===== PASSWORD STRENGTH VALIDATION =====
@@ -509,24 +595,32 @@ function isAdmin(req, res, next) {
 }
 
 // ===== AUTH ROUTES =====
-app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ success: false, error: "Credentials required" });
-  }
-
-  try {
-    const result = await pool.query(
-      "SELECT * FROM users WHERE username=$1 AND (is_active=TRUE OR is_active IS NULL)", 
-      [username]
-    );
-    
-    if (result.rows.length === 0) {
-      return res.json({ success: false, error: "Invalid credentials" });
+app.post("/api/login", 
+  authLimiter,
+  [
+    body('username').trim().notEmpty().withMessage('Username is required'),
+    body('password').notEmpty().withMessage('Password is required')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, error: errors.array()[0].msg });
     }
 
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password);
+    const { username, password } = req.body;
+
+    try {
+      const result = await pool.query(
+        "SELECT * FROM users WHERE username=$1 AND (is_active=TRUE OR is_active IS NULL)", 
+        [username]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.json({ success: false, error: "Invalid credentials" });
+      }
+
+      const user = result.rows[0];
+      const match = await bcrypt.compare(password, user.password);
     
     if (!match) {
       return res.json({ success: false, error: "Invalid credentials" });
@@ -549,7 +643,7 @@ app.post("/api/login", async (req, res) => {
     
     res.json({ success: true, user: req.session.user, needsPasswordChange });
   } catch (err) {
-    console.error("Login error:", err.message);
+    log.error("Login error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
@@ -640,7 +734,7 @@ app.put("/api/user/profile", async (req, res) => {
       res.status(404).json({ success: false, error: 'User not found' });
     }
   } catch (err) {
-    console.error('Profile update error:', err);
+    log.error('Profile update error:', err);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 });
@@ -772,7 +866,7 @@ app.post("/api/assets/:category", isAuthenticated, async (req, res) => {
     const result = await pool.query(query, values);
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error("Create asset error:", err.message);
+    log.error("Create asset error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -1086,7 +1180,7 @@ app.post("/api/change-password", async (req, res) => {
 
     res.json({ success: true, message: "Password changed successfully" });
   } catch (err) {
-    console.error("Change password error:", err.message);
+    log.error("Change password error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
@@ -1158,15 +1252,15 @@ app.post("/api/forgot-password", async (req, res) => {
         `
       });
       
-      console.log(`✅ Password reset email sent to ${email}`);
+      log.info(`✅ Password reset email sent to ${email}`);
     } catch (emailError) {
-      console.error(`❌ Failed to send reset email to ${email}:`, emailError.message);
+      log.error(`❌ Failed to send reset email to ${email}:`, emailError.message);
       // Still return success to avoid revealing if email exists
     }
 
     res.json({ success: true, message: "If email exists, reset link sent" });
   } catch (err) {
-    console.error("Forgot password error:", err.message);
+    log.error("Forgot password error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
@@ -1213,7 +1307,7 @@ app.post("/api/reset-password", async (req, res) => {
 
     res.json({ success: true, message: "Password reset successfully. Please login." });
   } catch (err) {
-    console.error("Reset password error:", err.message);
+    log.error("Reset password error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
@@ -1239,7 +1333,7 @@ app.post("/api/validate-reset-token", async (req, res) => {
 
     res.status(400).json({ success: false, error: "Invalid or expired token" });
   } catch (err) {
-    console.error("Validate token error:", err.message);
+    log.error("Validate token error:", err.message);
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
@@ -1260,18 +1354,18 @@ app.get("/api/categories", (req, res) => {
 
 // ===== ERROR HANDLING =====
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  log.error('Error:', err);
   res.status(500).json({ success: false, error: 'Internal server error' });
 });
 
 // ===== START SERVER =====
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
-  console.log(`🌐 Server bound to 0.0.0.0:${PORT}`);
+  log.info(`🚀 Server running on port ${PORT}`);
+  log.info(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
+  log.info(`🌐 Server bound to 0.0.0.0:${PORT}`);
   
   // Initialize database after server starts
   initDatabase().catch(err => {
-    console.error('Database init error:', err.message);
+    log.error('Database init error:', err.message);
   });
 });
