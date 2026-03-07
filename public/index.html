@@ -1126,6 +1126,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!assetForm.reportValidity()) {
         return;
       }
+      
+      // Get CSRF token
+      let csrfToken = '';
+      try {
+        const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+        const csrfData = await csrfRes.json();
+        csrfToken = csrfData.csrfToken;
+      } catch (err) {
+        console.error('Failed to get CSRF token:', err);
+        alert('Security token retrieval failed. Please refresh the page.');
+        return;
+      }
+      
         const category = assetCategory.value;
         let payload = {};
 
@@ -1165,11 +1178,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
             const res = await fetch(`/api/assets/${category}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'csrf-token': csrfToken
+                },
                 body: JSON.stringify(payload),
                 credentials: "include"
             });
           const data = await res.json();
+          
+          // Handle CSRF token errors
+          if (res.status === 403 && data.error && data.error.includes('CSRF')) {
+            alert('Security validation failed. Please refresh and try again.');
+            location.reload();
+            return;
+          }
+          
           if (!res.ok || !data.success || !data.data) {
             throw new Error(data.error || 'Error adding asset');
           }

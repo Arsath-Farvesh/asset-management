@@ -18,6 +18,7 @@ const { body, validationResult } = require("express-validator");
 const winston = require("winston");
 const DailyRotateFile = require("winston-daily-rotate-file");
 const pgSession = require("connect-pg-simple")(require("express-session"));
+const csrf = require("csurf");
 
 // ===== LOGGING CONFIGURATION =====
 const logFormat = winston.format.combine(
@@ -166,6 +167,24 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ===== CSRF PROTECTION =====
+const csrfProtection = csrf({ cookie: false });
+app.use(csrfProtection);
+
+// ===== INPUT SANITIZATION & VALIDATION =====
+app.use((req, res, next) => {
+  // Sanitize inputs
+  if (req.body) {
+    Object.keys(req.body).forEach(key => {
+      if (typeof req.body[key] === 'string') {
+        // Remove HTML tags and dangerous characters
+        req.body[key] = req.body[key].trim().replace(/<[^>]*>/g, '');
+      }
+    });
+  }
+  next();
+});
+
 // Passport serialization
 passport.serializeUser((user, done) => {
   done(null, user);
@@ -275,6 +294,11 @@ pool.on("error", (err) => log.error("❌ PostgreSQL error:", err));
 // ===== ROOT ROUTE - REDIRECT TO LOGIN =====
 app.get('/', (req, res) => {
   res.redirect('/login.html');
+});
+
+// ===== CSRF TOKEN ENDPOINT =====
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
 });
 
 // ===== SIMPLE HEALTH CHECK - FOR RAILWAY (No DB dependency) =====
@@ -1354,8 +1378,23 @@ app.get("/api/categories", (req, res) => {
 
 // ===== ERROR HANDLING =====
 app.use((err, req, res, next) => {
+  // Handle CSRF errors
+  if (err.code === 'EBADCSRFTOKEN') {
+    log.warn(`CSRF token validation failed for ${req.method} ${req.path}`);
+    return res.status(403).json({ 
+      success: false, 
+      error: 'CSRF token validation failed. Please refresh and try again.' 
+    });
+  }
+  
+  // Log all errors
   log.error('Error:', err);
-  res.status(500).json({ success: false, error: 'Internal server error' });
+  
+  // Return error response
+  res.status(err.status || 500).json({ 
+    success: false, 
+    error: err.message || 'Internal server error' 
+  });
 });
 
 // ===== START SERVER =====
