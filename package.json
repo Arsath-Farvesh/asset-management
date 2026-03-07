@@ -6,8 +6,8 @@
     "start": "node server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "test:unit": "jest --testPathPattern=unit",
-    "test:integration": "jest --testPathPattern=integration",
+    "test:unit": "jest --testPathPatterns=unit",
+    "test:integration": "jest --testPathPatterns=integration",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
     "migrate:status": "knex migrate:currentVersion"

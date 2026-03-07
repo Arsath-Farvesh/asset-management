@@ -26,6 +26,11 @@ const routes = require('./src/routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production';
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // ===== SECURITY HEADERS =====
 app.use(helmet({
@@ -57,7 +62,17 @@ app.use('/api/', apiLimiter);
 
 // ===== CORS CONFIGURATION =====
 app.use(cors({
-  origin: "*",
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('CORS not allowed for this origin'));
+  },
   credentials: true
 }));
 
@@ -86,10 +101,10 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production',
-    sameSite: 'strict',
+    secure: isProduction,
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 2,
-    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+    domain: process.env.SESSION_COOKIE_DOMAIN || undefined
   }
 }));
 

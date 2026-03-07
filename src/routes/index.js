@@ -7,6 +7,7 @@ const assetRoutes = require('./assets');
 const healthRoutes = require('./health');
 
 // API routes
+router.use('/api/auth', authRoutes);
 router.use('/api', authRoutes);
 router.use('/api', assetRoutes);
 router.use('/api', healthRoutes);

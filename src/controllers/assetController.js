@@ -71,9 +71,49 @@ class AssetController {
 
   // Bulk delete assets
   async bulkDelete(req, res) {
-    const { ids, category } = req.body;
+    const { ids, category, items } = req.body || {};
 
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    if (Array.isArray(items) && items.length > 0) {
+      const grouped = items.reduce((acc, item) => {
+        if (!item || !item.category || item.id === undefined || item.id === null) {
+          return acc;
+        }
+
+        if (!acc[item.category]) {
+          acc[item.category] = [];
+        }
+
+        acc[item.category].push(item.id);
+        return acc;
+      }, {});
+
+      const categories = Object.keys(grouped);
+      if (categories.length === 0) {
+        return res.status(400).json({ success: false, error: 'No valid items provided' });
+      }
+
+      let deletedCount = 0;
+      const deletedIdsByCategory = {};
+
+      for (const groupedCategory of categories) {
+        const result = await assetService.bulkDeleteAssets(groupedCategory, grouped[groupedCategory]);
+
+        if (!result.success) {
+          return res.status(400).json(result);
+        }
+
+        deletedCount += result.deletedCount || 0;
+        deletedIdsByCategory[groupedCategory] = result.deletedIds || [];
+      }
+
+      return res.json({
+        success: true,
+        deletedCount,
+        deletedIdsByCategory
+      });
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ success: false, error: 'No IDs provided' });
     }
 
@@ -84,10 +124,10 @@ class AssetController {
     const result = await assetService.bulkDeleteAssets(category, ids);
 
     if (!result.success) {
-      return res.status(500).json(result);
+      return res.status(400).json(result);
     }
 
-    res.json(result);
+    return res.json(result);
   }
 
   // Get asset history
