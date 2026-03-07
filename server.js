@@ -19,6 +19,7 @@ const winston = require("winston");
 const DailyRotateFile = require("winston-daily-rotate-file");
 const pgSession = require("connect-pg-simple")(require("express-session"));
 const csrf = require("csurf");
+const compression = require("compression");
 
 // ===== LOGGING CONFIGURATION =====
 const logFormat = winston.format.combine(
@@ -98,6 +99,17 @@ app.use(helmet({
       connectSrc: ["'self'"]
     }
   }
+}));
+
+// ===== COMPRESSION MIDDLEWARE (GZIP) =====
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6 // Balance between speed and compression ratio
 }));
 
 // ===== RATE LIMITING =====
