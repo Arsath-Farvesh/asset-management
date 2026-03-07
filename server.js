@@ -9,11 +9,13 @@ const helmet = require('helmet');
 const csrf = require('csurf');
 const compression = require('compression');
 const pgSession = require('connect-pg-simple')(require('express-session'));
+const swaggerUi = require('swagger-ui-express');
 
 // Import configurations
 const pool = require('./src/config/database');
 const logger = require('./src/config/logger');
 const passport = require('./src/config/passport');
+const swaggerSpec = require('./src/config/swagger');
 
 // Import middleware
 const { requestLogger, sanitizeInput, csrfErrorHandler, errorHandler } = require('./src/middleware/security');
@@ -101,6 +103,13 @@ app.use(csrfProtection);
 
 // ===== INPUT SANITIZATION & VALIDATION =====
 app.use(sanitizeInput);
+
+// ===== API DOCUMENTATION =====
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Asset Management API'
+}));
 
 // ===== ROOT ROUTE =====
 app.get('/', (req, res) => {
