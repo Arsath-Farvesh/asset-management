@@ -117,20 +117,26 @@ app.use(csrfErrorHandler);
 app.use(errorHandler);
 
 // ===== START SERVER =====
-app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
-  logger.info(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
-  logger.info(`🌐 Server bound to 0.0.0.0:${PORT}`);
-  logger.info(`✅ Modular architecture loaded`);
-});
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🚀 Server running on port ${PORT}`);
+    logger.info(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
+    logger.info(`🌐 Server bound to 0.0.0.0:${PORT}`);
+    logger.info(`✅ Modular architecture loaded`);
+  });
 
-// ===== GRACEFUL SHUTDOWN =====
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, closing server gracefully');
-  process.exit(0);
-});
+  // ===== GRACEFUL SHUTDOWN =====
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, closing server gracefully');
+    process.exit(0);
+  });
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, closing server gracefully');
-  process.exit(0);
-});
+  process.on('SIGINT', () => {
+    logger.info('SIGINT received, closing server gracefully');
+    process.exit(0);
+  });
+}
+
+// Export app for testing
+module.exports = app;
