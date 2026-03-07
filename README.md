@@ -143,7 +143,8 @@ Before production deployment, run strict validation:
 npm run preflight:strict
 ```
 
-This validates required environment configuration and blocks deployment on invalid settings.
+This validates required environment configuration and
+blocks deployment on invalid settings.
 
 For complete Railway deployment procedure and production variable matrix,
 see [RAILWAY_DEPLOYMENT_RUNBOOK.md](RAILWAY_DEPLOYMENT_RUNBOOK.md).
