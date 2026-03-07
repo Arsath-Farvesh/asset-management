@@ -15,9 +15,163 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme-professional.css">
-<style>
-:root {
-  --takhlees-gold: #6b7280;
+</head>
+<body>
+
+<!-- Skip to main content for accessibility -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- Navbar -->
+<nav class="navbar-takhlees">
+  <div class="container-fluid">
+    <a class="brand-logo" href="/" aria-label="Takhlees Asset Management System Home">
+      <div class="shield-icon">
+        <i class="bi bi-shield-fill-check" aria-hidden="true"></i>
+      </div>
+      <div class="brand-text">
+        <span class="main">Takhlees</span>
+        <span class="sub">ASSET MANAGEMENT SYSTEM</span>
+      </div>
+    </a>
+    
+    <div class="d-flex align-center gap-2">
+      <a href="history.html" class="nav-btn btn-sm" title="View asset history" aria-label="View asset history">
+        <i class="bi bi-clock-history"></i>
+        <span class="d-none d-md-inline">History</span>
+      </a>
+      <a href="qr-scan.html" class="btn btn-outline-gold btn-sm" title="Scan QR code" aria-label="Scan QR code">
+        <i class="bi bi-qr-code"></i>
+        <span class="d-none d-md-inline">Scan QR</span>
+      </a>
+      
+      <!-- Authentication Indicator -->
+      <div class="auth-indicator d-none d-md-flex" id="authIndicator">
+        <div class="auth-status" aria-label="Online status"></div>
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">User</div>
+          <div class="user-role" id="userRole">User</div>
+        </div>
+      </div>
+      
+      <button id="logoutBtn" class="btn btn-secondary btn-sm" title="Logout" aria-label="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="d-none d-sm-inline">Logout</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<header class="page-header" style="background: var(--color-bg-default); padding: var(--space-5) 0; margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);">
+  <div class="container text-center">
+    <h1 style="font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); margin-bottom: var(--space-2);">
+      <i class="bi bi-plus-circle-fill" style="margin-right: var(--space-2); color: var(--color-gold);"></i>
+      Asset Input Module
+    </h1>
+    <p style="font-size: var(--font-size-lg); color: var(--color-text-secondary); margin: 0;">
+      Add and manage assets for Takhlees Government Services
+    </p>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main id="main-content" class="container" style="padding-bottom: var(--space-6);">
+  <div class="row">
+    <!-- Form Section -->
+    <div class="col-lg-8">
+      <article class="card-takhlees">
+        <header class="card-header-takhlees">
+          <h3 style="margin: 0; display: flex; align-items: center; gap: var(--space-2);">
+            <i class="bi bi-pencil-square"></i>
+            Asset Details
+          </h3>
+        </header>
+        <div class="card-body-takhlees">
+          <form id="asset-form">
+            <!-- Category and Asset Name Row -->
+            <div class="row" style="margin-bottom: var(--space-4);">
+              <div class="col-md-6" id="asset-category-col">
+                <div class="form-group">
+                  <label for="asset-category" class="form-label required-field">
+                    Asset Category
+                  </label>
+                  <div class="input-group">
+                    <select class="form-select" id="asset-category" required aria-label="Select asset category" aria-describedby="categoryHelp">
+                      <option value="">-- Select Category --</option>
+                      <option value="assets">Assets</option>
+                      <option value="case_details">Case Details</option>
+                      <option value="depreciation_history">Depreciation History</option>
+                      <option value="digital_media">Digital Media</option>
+                      <option value="documents">Documents</option>
+                      <option value="employees">Employees</option>
+                      <option value="keys">Keys</option>
+                      <option value="financial_assets">Financial Assets</option>
+                      <option value="furniture">Furniture</option>
+                      <option value="infrastructure">Infrastructure</option>
+                      <option value="intellectual_property">Intellectual Property</option>
+                      <option value="it_hardware">IT Hardware</option>
+                      <option value="leased_assets">Leased Assets</option>
+                      <option value="locations">Locations</option>
+                      <option value="machinery_equipment">Machinery & Equipment</option>
+                      <option value="maintenance_logs">Maintenance Logs</option>
+                      <option value="real_estate">Real Estate</option>
+                      <option value="software_license">Software License</option>
+                      <option value="tools">Tools</option>
+                      <option value="vehicles">Vehicles</option>
+                    </select>
+                    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="More options">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" href="#" id="clear-category"><i class="bi bi-x-circle" style="margin-right: var(--space-1);"></i>Clear</a></li>
+                      <li><a class="dropdown-item" href="qr-scan.html"><i class="bi bi-qr-code" style="margin-right: var(--space-1);"></i>Scan QR</a></li>
+                      <li><a class="dropdown-item" href="history.html"><i class="bi bi-clock-history" style="margin-right: var(--space-1);"></i>View History</a></li>
+                    </ul>
+                  </div>
+                  <small id="categoryHelp" class="form-text text-muted">
+                    Choose the category that best describes this asset
+                  </small>
+                </div>
+              </div>
+              
+              <div class="col-md-6" id="asset-name-col">
+                <div class="form-group">
+                  <label for="asset-name" id="asset-name-label" class="form-label required-field">
+                    Asset Name
+                  </label>
+                  <div id="asset-name-container">
+                    <select class="form-select" id="asset-name" disabled required aria-label="Select asset name">
+                      <option value="">Select a category first</option>
+                    </select>
+                  </div>
+                  <small class="form-text text-muted">
+                    Select a category to enable this field
+                  </small>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Case Details Section -->
+            <div id="customer-details-section" style="display: none;">
+              <div class="row" style="margin-bottom: var(--space-3);">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="customer-name" class="form-label required-field">Customer Name</label>
+                    <input type="text" class="form-control" id="customer-name" placeholder="Enter customer name" aria-label="Customer name">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="customer-phone" class="form-label required-field">Customer Phone</label>
+                    <input type="tel" class="form-control" id="customer-phone" placeholder="+971 XX XXX XXXX" aria-label="Customer phone">
+                  </div>
+                </div>
+              </div>
+              <div class="row" style="margin-bottom: var(--space-3);">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="case-date" class="form-label required-field">Date</label>
   --takhlees-blue: #1f2937;
   --takhlees-dark: #111827;
   --takhlees-light: #f9fafb;
