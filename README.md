@@ -118,7 +118,20 @@ npm run test:unit
 
 # Run only integration tests
 npm run test:integration
+
+# Run environment preflight checks
+npm run preflight
 ```
+
+### Deployment Preflight (Recommended)
+
+Before production deployment, run strict validation:
+
+```bash
+npm run preflight:strict
+```
+
+This validates required environment configuration and blocks deployment on invalid settings.
 
 ## 🔐 Default Users
 

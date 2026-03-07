@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "preflight": "node scripts/preflight.js",
+    "preflight:strict": "node scripts/preflight.js --strict",
     "start": "node server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
