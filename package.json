@@ -5,7 +5,7 @@
   "scripts": {
     "preflight": "node scripts/preflight.js",
     "preflight:strict": "node scripts/preflight.js --strict",
-    "release:check": "npm run preflight:strict && npm test",
+    "release:check": "npm run preflight:strict && npm test && npm run docs:lint",
     "docs:lint": "markdownlint README.md RAILWAY_DEPLOYMENT_RUNBOOK.md",
     "docs:lint:fix": "markdownlint README.md RAILWAY_DEPLOYMENT_RUNBOOK.md --fix",
     "start": "node server.js",
