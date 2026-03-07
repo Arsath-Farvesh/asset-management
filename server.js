@@ -1,5 +1,21 @@
 require('dotenv').config();
 
+const { validateEnvironment } = require('./src/config/env');
+
+const envValidation = validateEnvironment();
+if (envValidation.warnings.length > 0 && process.env.NODE_ENV !== 'test') {
+  envValidation.warnings.forEach((warning) => {
+    console.warn(`[ENV WARNING] ${warning}`);
+  });
+}
+
+if (envValidation.errors.length > 0 && process.env.NODE_ENV !== 'test') {
+  envValidation.errors.forEach((error) => {
+    console.error(`[ENV ERROR] ${error}`);
+  });
+  process.exit(1);
+}
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -31,6 +47,8 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+app.disable('x-powered-by');
 
 // ===== SECURITY HEADERS =====
 app.use(helmet({
@@ -67,7 +85,7 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    if ((!isProduction && allowedOrigins.length === 0) || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
@@ -82,8 +100,8 @@ app.set('trust proxy', 1);
 app.use(requestLogger);
 
 // ===== BODY PARSERS =====
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(bodyParser.json({ limit: '1mb' }));
 
 // ===== STATIC FILES =====
 app.use(express.static(path.join(__dirname, 'public')));
@@ -96,6 +114,7 @@ app.use(session({
     createTableIfMissing: true,
     errorLog: (err) => logger.error('Session store error:', err)
   }),
+  name: process.env.SESSION_COOKIE_NAME || 'takhlees.sid',
   secret: process.env.SESSION_SECRET || "change_this_secret",
   resave: false,
   saveUninitialized: false,
