@@ -121,6 +121,9 @@ npm run test:integration
 
 # Run environment preflight checks
 npm run preflight
+
+# Run strict release gate (preflight + tests)
+npm run release:check
 ```
 
 ### Deployment Preflight (Recommended)
@@ -132,6 +135,8 @@ npm run preflight:strict
 ```
 
 This validates required environment configuration and blocks deployment on invalid settings.
+
+For complete Railway deployment procedure and production variable matrix, see [RAILWAY_DEPLOYMENT_RUNBOOK.md](RAILWAY_DEPLOYMENT_RUNBOOK.md).
 
 ## 🔐 Default Users
 

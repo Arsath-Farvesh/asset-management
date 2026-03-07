@@ -5,6 +5,7 @@
   "scripts": {
     "preflight": "node scripts/preflight.js",
     "preflight:strict": "node scripts/preflight.js --strict",
+    "release:check": "npm run preflight:strict && npm test",
     "start": "node server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
