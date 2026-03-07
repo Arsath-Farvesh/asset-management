@@ -1,9 +1,11 @@
 # Railway Deployment Runbook
 
 ## Purpose
+
 This runbook is the operational checklist for releasing Takhlees Asset Management System to Railway with production-safe defaults.
 
 ## 1) Release Gate (Mandatory)
+
 Run this from the project root before every production deployment:
 
 ```bash
@@ -11,6 +13,7 @@ npm run release:check
 ```
 
 This command enforces:
+
 - Strict environment validation (`preflight:strict`)
 - Full automated test suite (`npm test`)
 
@@ -113,6 +116,7 @@ If OAuth variables are not configured, do not expose OAuth login buttons in prod
 ## 7) Rollback Plan
 
 If deployment fails health or critical smoke checks:
+
 1. Roll back to the previous Railway deployment.
 2. Restore previous env variables (if changed).
 3. Verify `GET /api/health` is green.
