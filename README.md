@@ -1,17 +1,21 @@
 # Takhlees Asset Management System
 
-A professional enterprise-grade asset tracking and management solution for government services in Dubai.
+A professional enterprise-grade asset tracking and management solution
+for government services in Dubai.
 
 ## 🚀 Features
 
 ### Core Functionality
-- **Multi-category Asset Management** - Keys, Laptops, Monitors, Accessories, ID Cards
+
+- **Multi-category Asset Management** - Keys, Laptops, Monitors,
+  Accessories, ID Cards
 - **QR Code & Barcode Generation** - Instant asset identification
 - **Asset History Tracking** - Complete audit trail
 - **PDF Export** - Professional reporting
 - **Responsive UI** - Bootstrap 5 professional theme
 
 ### Authentication & Authorization
+
 - **Session-based Authentication** - Secure login system
 - **OAuth 2.0 Support** - Google, Microsoft, GitHub integration
 - **Role-based Access Control** - User/Admin permissions
@@ -19,6 +23,7 @@ A professional enterprise-grade asset tracking and management solution for gover
 - **CSRF Protection** - Token-based security
 
 ### Security (Enterprise Grade)
+
 - ✅ **Helmet.js** - Security headers (XSS, clickjacking protection)
 - ✅ **Rate Limiting** - API: 100/15min, Auth: 5/15min
 - ✅ **Input Sanitization** - XSS prevention middleware
@@ -28,6 +33,7 @@ A professional enterprise-grade asset tracking and management solution for gover
 - ✅ **Password Hashing** - Bcrypt (10 rounds)
 
 ### Performance & Monitoring
+
 - ✅ **Winston Logging** - Daily rotating file logs (error/combined)
 - ✅ **Database Pooling** - Connection pool (max 20)
 - ✅ **Indexed Queries** - Strategic database indexing
@@ -35,7 +41,7 @@ A professional enterprise-grade asset tracking and management solution for gover
 
 ## 📁 Project Structure
 
-```
+```text
 asset-management/
 ├── public/              # Frontend HTML/CSS/JS
 ├── src/
@@ -55,12 +61,14 @@ asset-management/
 ## 🏗️ Architecture
 
 ### Modular MVC Pattern
+
 - **91% code reduction** - Server.js: 1,412 → 123 lines
 - **Separation of Concerns** - Config, middleware, services, controllers, routes
 - **Testable Code** - Unit & integration test coverage
 - **Maintainable** - Clear module boundaries
 
 ### Technology Stack
+
 - **Runtime**: Node.js 18.x
 - **Framework**: Express.js 4.21.2
 - **Database**: PostgreSQL (pg 8.16.3)
@@ -74,6 +82,7 @@ asset-management/
 ## 🔧 Quick Start
 
 ### Prerequisites
+
 - Node.js 18.x or higher
 - PostgreSQL 12+
 - SMTP server (for email features)
@@ -136,25 +145,29 @@ npm run preflight:strict
 
 This validates required environment configuration and blocks deployment on invalid settings.
 
-For complete Railway deployment procedure and production variable matrix, see [RAILWAY_DEPLOYMENT_RUNBOOK.md](RAILWAY_DEPLOYMENT_RUNBOOK.md).
+For complete Railway deployment procedure and production variable matrix,
+see [RAILWAY_DEPLOYMENT_RUNBOOK.md](RAILWAY_DEPLOYMENT_RUNBOOK.md).
 
 ## 🔐 Default Users
 
-| Username | Password | Role | Permissions |
-|----------|----------|------|-------------|
-| admin | TakhleeAdmin@2024! | Admin | Full access |
-| user1 | TakhleeUser@2024! | User | View, Create, Delete |
+| Username | Password            | Role  | Permissions          |
+| :------- | :------------------ | :---- | :------------------- |
+| admin    | TakhleeAdmin@2024!  | Admin | Full access          |
+| user1    | TakhleeUser@2024!   | User  | View, Create, Delete |
 
 **⚠️ CRITICAL: Change all default passwords before production deployment!**
 
 ## 📊 API Documentation
 
 ### Interactive API Explorer
-Visit `/api-docs` after starting the server for interactive API documentation powered by Swagger UI.
+
+Visit `/api-docs` after starting the server for interactive API
+documentation powered by Swagger UI.
 
 ### Key Endpoints
 
 #### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout  
 - `GET /api/auth/me` - Get current user profile
@@ -162,6 +175,7 @@ Visit `/api-docs` after starting the server for interactive API documentation po
 - `PUT /api/auth/user/profile` - Update profile
 
 #### Assets
+
 - `GET /api/assets/:category` - List assets by category
 - `POST /api/assets/:category` - Create new asset (requires CSRF token)
 - `GET /api/assets/:category/:id` - Get single asset
@@ -170,6 +184,7 @@ Visit `/api-docs` after starting the server for interactive API documentation po
 - `POST /api/assets/bulk-delete` - Bulk delete assets
 
 #### Health
+
 - `GET /api/health` - System health check
 - `GET /api/csrf-token` - Get CSRF token for forms
 
@@ -196,6 +211,7 @@ await fetch('/api/assets/keys', {
 ## 🗄️ Database
 
 ### Schema Documentation
+
 See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for complete schema documentation.
 
 ### Migrations
@@ -212,6 +228,7 @@ npm run migrate:status
 ```
 
 ### Key Tables
+
 - `users` - User accounts
 - `keys`, `laptops`, `monitors`, `accessories`, `id_cards` - Asset categories
 - `audit_logs` - Change tracking
@@ -220,6 +237,7 @@ npm run migrate:status
 ## 🧪 Testing
 
 ### Test Coverage
+
 - **Unit Tests**: Service layer (authService, assetService)
 - **Integration Tests**: API endpoints
 - **Current Coverage**: 46.64% (targeting 70%+)
@@ -239,7 +257,8 @@ npm run test:integration
 ```
 
 ### Test Structure
-```
+
+```text
 __tests__/
 ├── unit/
 │   ├── authService.test.js
@@ -252,30 +271,35 @@ __tests__/
 ## 📈 Recent Improvements (March 2026)
 
 ### Phase 1: Security Hardening ✅
+
 - CSRF protection with csurf middleware
 - Input sanitization (XSS prevention)
 - Gzip compression (60-80% bandwidth savings)
 - Security dependencies resolved
 
 ### Phase 2: Architecture Refactoring ✅
+
 - Modular MVC structure (17 new modules)
 - Server.js reduced 91% (1,412 → 123 lines)
 - Separated concerns (config, middleware, services, controllers, routes)
 - 100% backward compatibility maintained
 
 ### Phase 3: Testing Framework ✅
+
 - Jest + Supertest installed
 - Unit tests for service layer (9 passing)
 - Integration tests for API routes
 - Code coverage reporting
 
 ### Phase 4: Database Optimization ✅
+
 - Knex.js migration system
 - Strategic indexing (location, employee_name, asset_tag, case_name)
 - Audit logs table for change tracking
 - Complete schema documentation
 
 ### Phase 5: Documentation & API Specs ✅
+
 - Swagger/OpenAPI 3.0 specification
 - Interactive API explorer at `/api-docs`
 - JSDoc comments on all routes
@@ -284,6 +308,7 @@ __tests__/
 ## 🔒 Security Best Practices
 
 ### Production Checklist
+
 - [ ] Change all default passwords
 - [ ] Set `NODE_ENV=production`
 - [ ] Enable PostgreSQL SSL (`PGSSLMODE=require`)
@@ -296,6 +321,7 @@ __tests__/
 - [ ] Review CSP directives in helmet config
 
 ### Environment Variables
+
 ```bash
 # Database
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
@@ -335,7 +361,8 @@ MICROSOFT_CLIENT_SECRET=...
 
 ### Common Issues
 
-**Database Connection Failed**
+#### Database Connection Failed
+
 ```bash
 # Check PostgreSQL is running
 pg_isready
@@ -344,12 +371,14 @@ pg_isready
 echo $DATABASE_URL
 ```
 
-**CSRF Token Invalid**
+#### CSRF Token Invalid
+
 - Ensure cookies are enabled
 - Check session is active before getting token
 - Verify token is sent in `CSRF-Token` header
 
-**Tests Failing**
+#### Tests Failing
+
 ```bash
 # Clean install dependencies
 rm -rf node_modules package-lock.json
@@ -366,12 +395,15 @@ ISC License - see LICENSE file for details
 ## 👨‍💻 Maintenance & Support
 
 ### Logging
+
 Logs are stored in the project root:
+
 - `error.log` - Error-level logs only
 - `combined.log` - All logs (info, warn, error)
 - Rotates daily with 14-day retention
 
 ### Monitoring
+
 - Health check: `GET /api/health`
 - Session count: Query `session` table
 - Error tracking: Review `error.log`
@@ -379,6 +411,6 @@ Logs are stored in the project root:
 
 ---
 
-**Built with ❤️ for government services in Dubai**
+Built with ❤️ for government services in Dubai.
 
 Arsath Farvesh, Shahul
