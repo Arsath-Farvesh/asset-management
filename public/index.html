@@ -703,6 +703,7 @@ body {
                     <option value="Management Office">Management Office</option>
                     <option value="Private Notary">Private Notary</option>
                     <option value="RDC">RDC</option>
+                    <option value="RDC Electrical Enforcement">RDC Electrical Enforcement</option>
                     <option value="DDL">DDL</option>
                     <option value="__manual__">Manual entry</option>
                   </select>
@@ -1001,7 +1002,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         dynamicFields.innerHTML = '';
 
         if (assetNameLabel) {
-          assetNameLabel.textContent = category === 'case_details' ? 'Case Name' : 'Asset Name';
+          assetNameLabel.textContent = (category === 'case_details' || category === 'keys') ? 'Case Name' : 'Asset Name';
         }
 
         // Handle Case Details category specially
@@ -1040,7 +1041,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (category === 'employees') {
           assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter employee name" required>`;
         } else if (category === 'keys' || category === 'equipments_assets') {
-          assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter key name" required>`;
+          assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter case name" required>`;
         } else if (categoryAssets[category]) {
             let selectHTML = `<select class="form-select" id="asset-name" required>
                 <option value="">Select ${category.replace(/_/g,' ')} asset</option>`;
