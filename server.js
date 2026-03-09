@@ -81,11 +81,23 @@ app.use('/api/', apiLimiter);
 // ===== CORS CONFIGURATION =====
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (like Postman, server-to-server, mobile apps)
     if (!origin) {
       return callback(null, true);
     }
 
-    if ((!isProduction && allowedOrigins.length === 0) || allowedOrigins.includes(origin)) {
+    // Development: allow all origins
+    if (!isProduction) {
+      return callback(null, true);
+    }
+
+    // Production: if CORS_ORIGINS is not configured, allow all (with warning already logged)
+    if (allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+
+    // Production: check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 

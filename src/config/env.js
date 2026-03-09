@@ -54,7 +54,7 @@ function validateEnvironment() {
   if (isProduction) {
     const corsOrigins = parseOrigins();
     if (corsOrigins.length === 0) {
-      errors.push('CORS_ORIGINS is required in production (comma-separated allowed origins).');
+      warnings.push('CORS_ORIGINS is not set. It is recommended to set allowed origins in production (comma-separated list).');
     }
 
     if (!process.env.DB_SSL_REJECT_UNAUTHORIZED && !process.env.DATABASE_URL) {
