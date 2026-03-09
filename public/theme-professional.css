@@ -12,13 +12,16 @@
   --color-primary-600: #475569;
   --color-primary-500: #64748b;
   
-  /* Brand Colors - Government Professional */
-  --color-gold: #D4AF37;        /* Primary accent */
-  --color-red: #D62828;         /* Secondary accent/error */
+  /* Brand Colors - Takhlees Company Theme */
+  --color-primary: #D62855;     /* Primary pink/magenta */
+  --color-gold: #D62855;        /* Brand color (pink) */
+  --takhlees-gold: #D62855;     /* Alias for compatibility */
+  --takhlees-red: #D62855;      /* Brand accent */
+  --color-red: #D62855;         /* Brand accent */
   --color-success: #10b981;     /* Success/positive actions */
-  --color-warning: #f59e0b;     /* Warnings */
-  --color-error: #D62828;       /* Errors */
-  --color-info: #3b82f6;        /* Information */
+  --color-warning: #D62855;     /* Warnings (brand color) */
+  --color-error: #D62828;       /* Errors (darker red) */
+  --color-info: #D62855;        /* Information (brand color) */
   
   /* Neutral Colors - Clear hierarchy */
   --color-text-primary: #111827;
