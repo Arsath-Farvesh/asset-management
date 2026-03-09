@@ -150,6 +150,17 @@ app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
+// ===== PLATFORM HEALTH CHECK (Compatibility) =====
+// Keep a simple top-level health route so platforms configured for /health
+// can verify liveness even while API routes evolve.
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 // ===== API ROUTES =====
 app.use(routes);
 
