@@ -390,8 +390,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     function updateLocationManualVisibility() {
       if (locationInput.value === '__manual__') {
         locationManual.classList.remove('d-none');
+        locationManual.required = true;
       } else {
         locationManual.classList.add('d-none');
+        locationManual.required = false;
         locationManual.value = '';
       }
     }
@@ -595,21 +597,42 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (isCaseStyleCategory) {
             // Case details payload
-            const caseName = document.getElementById('asset-name').value;
+            const caseName = (document.getElementById('asset-name').value || '').trim();
+            const customerNameVal = (customerName.value || '').trim();
+            const customerPhoneVal = (customerPhone.value || '').trim();
+            const caseDateVal = caseDate.value;
+            const caseNumberVal = (caseNumber.value || '').trim();
+            const caseTypeVal = (caseType.value || '').trim();
+
+            if (!caseName || !customerNameVal || !customerPhoneVal || !caseDateVal || !caseNumberVal || !caseTypeVal) {
+              alert('Please complete all mandatory case fields.');
+              return;
+            }
+
             payload = {
                 name: caseName, // case name
-                customer_name: customerName.value,
-                customer_phone: customerPhone.value,
-                case_date: caseDate.value,
-                case_number: caseNumber.value,
-                case_type: caseType.value
+                customer_name: customerNameVal,
+                customer_phone: customerPhoneVal,
+                case_date: caseDateVal,
+                case_number: caseNumberVal,
+                case_type: caseTypeVal
             };
         } else {
             // Standard asset payload
-            const name = document.getElementById('asset-name').value;
-            const serial = serialNumber.value;
-            const employee = employeeName.value;
+            const name = (document.getElementById('asset-name').value || '').trim();
+            const serial = (serialNumber.value || '').trim();
+            const employee = (employeeName.value || '').trim();
             const locationVal = getLocationValue();
+
+            if (!name) {
+              alert('Asset name is mandatory.');
+              return;
+            }
+
+            if (locationInput.value === '__manual__' && !locationVal) {
+              alert('Manual location is mandatory when Manual entry is selected.');
+              return;
+            }
             
             payload = { 
                 name, 
