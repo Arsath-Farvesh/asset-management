@@ -980,12 +980,20 @@
       const selectAllBtn = document.getElementById('selectAllBtn');
       const clearSelectionBtn = document.getElementById('clearSelectionBtn');
 
+      if (!selectAllCheckbox || !deleteSelectedBtn || !selectAllBtn || !clearSelectionBtn) {
+        console.warn('Warning: Some bulk action buttons not found in DOM');
+        return;
+      }
+
       selectAllCheckbox.addEventListener('change', selectAllRows);
       rowCheckboxes.forEach(cb => cb.addEventListener('change', updateBulkActionsBar));
       deleteSelectedBtn.addEventListener('click', deleteSelectedRows);
       selectAllBtn.addEventListener('click', () => {
-        document.getElementById('selectAllCheckbox').checked = true;
-        selectAllRows();
+        const checkbox = document.getElementById('selectAllCheckbox');
+        if (checkbox) {
+          checkbox.checked = true;
+          selectAllRows();
+        }
       });
       clearSelectionBtn.addEventListener('click', clearSelection);
     }
