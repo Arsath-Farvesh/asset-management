@@ -173,6 +173,11 @@ app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
+// ===== CSRF TOKEN ENDPOINT =====
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
 // ===== API ROUTES =====
 app.use(routes);
 
