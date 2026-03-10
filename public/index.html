@@ -685,7 +685,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           
           // Check for success
           if (!res.ok || !data.success) {
-            throw new Error(data.error || `Server error: ${res.status}`);
+            const errorMsg = data.error || `Server error: ${res.status}`;
+            console.error('API error details:', {
+              status: res.status,
+              statusText: res.statusText,
+              error: errorMsg,
+              fullResponse: data
+            });
+            throw new Error(errorMsg);
           }
           
           // Success - show alert and reset form
@@ -695,6 +702,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           updateDynamicFields();
         } catch (err) {
             console.error('Asset submission error:', err);
+            console.log('📋 To debug, check the database table with: /api/db-schema endpoint');
             alert('Error adding asset: ' + err.message);
         }
     });

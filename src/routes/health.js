@@ -28,4 +28,45 @@ router.get('/csrf-token', (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
+// Database schema check endpoint (for debugging)
+router.get('/db-schema', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+    
+    const tables = result.rows.map(r => r.table_name);
+    const hasCaseDetails = tables.includes('case_details');
+    
+    res.json({
+      status: 'ok',
+      tables,
+      hasCaseDetails,
+      caseDetailsColumns: hasCaseDetails ? await getCaseDetailsColumns() : null
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+async function getCaseDetailsColumns() {
+  try {
+    const result = await pool.query(`
+      SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns
+      WHERE table_name = 'case_details'
+      ORDER BY ordinal_position
+    `);
+    return result.rows;
+  } catch (err) {
+    return null;
+  }
+}
+
 module.exports = router;
