@@ -403,17 +403,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       return locationInput.value;
     }
 
+    function setCaseFieldsRequired(isRequired) {
+      customerName.required = isRequired;
+      customerPhone.required = isRequired;
+      caseDate.required = isRequired;
+      caseNumber.required = isRequired;
+      caseType.required = isRequired;
+    }
+
     function updatePreview() {
         const category = assetCategory.value || 'Not selected';
-        if (category === 'case_details') {
+        const isCaseStyleCategory = category === 'case_details' || category === 'keys';
+
+        if (isCaseStyleCategory) {
           previewCategory.textContent = 'Case Details';
-        } else if (category === 'keys' || category === 'equipments_assets') {
-          previewCategory.textContent = 'Keys';
         } else {
           previewCategory.textContent = category;
         }
 
-        if (category === 'case_details') {
+        if (isCaseStyleCategory) {
             // Case details preview
             const nameEl = document.getElementById('asset-name');
             const caseName = nameEl ? nameEl.value : '';
@@ -472,18 +480,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function updateDynamicFields() {
         const category = assetCategory.value;
+        const isCaseStyleCategory = category === 'case_details' || category === 'keys';
         dynamicFields.innerHTML = '';
 
         if (assetNameLabel) {
-          assetNameLabel.textContent = (category === 'case_details' || category === 'keys') ? 'Case Name' : 'Asset Name';
+          assetNameLabel.textContent = isCaseStyleCategory ? 'Case Name' : 'Asset Name';
         }
 
         // Handle Case Details category specially
-        if (category === 'case_details') {
+        if (isCaseStyleCategory) {
             // Show asset name, hide standard fields
             assetNameCol.classList.remove('hidden-field');
             standardFields.style.display = 'none';
             customerDetailsSection.style.display = 'block';
+          setCaseFieldsRequired(true);
             updateLocationManualVisibility();
             
             // Set case name input
@@ -501,6 +511,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             assetNameCol.classList.remove('hidden-field');
             standardFields.style.display = 'block';
             customerDetailsSection.style.display = 'none';
+          setCaseFieldsRequired(false);
             updateLocationManualVisibility();
         }
 
@@ -513,8 +524,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             `;
         } else if (category === 'employees') {
           assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter employee name" required>`;
-        } else if (category === 'keys' || category === 'equipments_assets') {
-          assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter case name" required>`;
         } else if (categoryAssets[category]) {
             let selectHTML = `<select class="form-select" id="asset-name" required>
                 <option value="">Select ${category.replace(/_/g,' ')} asset</option>`;
@@ -581,9 +590,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       
         const category = assetCategory.value;
+        const isCaseStyleCategory = category === 'case_details' || category === 'keys';
         let payload = {};
 
-        if (category === 'case_details') {
+        if (isCaseStyleCategory) {
             // Case details payload
             const caseName = document.getElementById('asset-name').value;
             payload = {
