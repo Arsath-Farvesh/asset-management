@@ -50,6 +50,17 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
 
 app.disable('x-powered-by');
 
+// ===== FAST LIVENESS HEALTH CHECK =====
+// Keep this route before heavier middleware (session/csrf/logging) so deployment
+// health checks remain fast and don't depend on DB-backed session reads.
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 // ===== SECURITY HEADERS =====
 app.use(helmet({
   contentSecurityPolicy: {
@@ -160,17 +171,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // ===== ROOT ROUTE =====
 app.get('/', (req, res) => {
   res.redirect('/login.html');
-});
-
-// ===== PLATFORM HEALTH CHECK (Compatibility) =====
-// Keep a simple top-level health route so platforms configured for /health
-// can verify liveness even while API routes evolve.
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
 });
 
 // ===== API ROUTES =====
