@@ -529,9 +529,21 @@
       const password = document.getElementById("password").value;
 
       try {
+        let csrfToken = '';
+        try {
+          const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+          const csrfData = await csrfRes.json();
+          csrfToken = csrfData.csrfToken;
+        } catch (csrfErr) {
+          throw new Error('Failed to get security token. Please refresh and try again.');
+        }
+
         const res = await fetch("/api/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "csrf-token": csrfToken
+          },
           body: JSON.stringify({ username, password }),
           credentials: "include"
         });
@@ -541,7 +553,7 @@
           submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Success!';
           submitBtn.classList.add('btn-success');
           setTimeout(() => {
-            window.location.href = "/";
+            window.location.href = "/index.html";
           }, 500);
         } else {
           errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + (data.error || "Invalid credentials");

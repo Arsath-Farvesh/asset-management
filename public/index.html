@@ -24,7 +24,8 @@
     <a class="navbar-brand animate-slide-in" href="#">
       <div class="brand-logo">
         <div class="shield-icon">
-          <i class="bi bi-shield-fill-check"></i>
+          <img src="logo.png" alt="Takhlees company logo" style="width: 30px; height: 30px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <i class="bi bi-shield-fill-check" style="display: none;"></i>
         </div>
         <div class="brand-text">
           <span class="main" style="color: var(--text-primary); font-weight: 600;">Takhlees</span>
@@ -251,10 +252,16 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
     // Check authentication and get user info
-    const authRes = await fetch("/check-auth", { credentials: "include" });
-    const auth = await authRes.json();
+    let auth = { authenticated: false };
+    try {
+      const authRes = await fetch("/api/check-auth", { credentials: "include" });
+      auth = await authRes.json();
+    } catch (err) {
+      console.error('Auth check failed:', err);
+    }
     if (!auth.authenticated) {
-        window.location.href = "/login.html";
+      window.location.href = "/login.html";
+      return;
     }
 
     // Display auth indicator with user info
@@ -275,7 +282,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await fetch("/logout", { method: "POST", credentials: "include" });
+      await fetch("/api/logout", { method: "POST", credentials: "include" });
         window.location.href = "/login.html";
     });
 
