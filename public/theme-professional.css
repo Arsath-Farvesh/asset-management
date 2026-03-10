@@ -197,12 +197,12 @@ small, .text-small {
 .shield-icon {
   width: 45px;
   height: 45px;
-  background: linear-gradient(135deg, var(--color-gold) 0%, #D4AF64 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 15px rgba(214, 40, 85, 0.3);
   flex-shrink: 0;
 }
 
@@ -234,7 +234,7 @@ small, .text-small {
 .nav-btn,
 .btn-gold,
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-gold) 0%, #D4AF64 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
   color: var(--color-primary-900) !important;
   border: none;
   padding: var(--space-1) var(--space-3);
@@ -242,7 +242,7 @@ small, .text-small {
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
   transition: all var(--transition-base);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 4px 12px rgba(214, 40, 85, 0.25);
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -254,7 +254,7 @@ small, .text-small {
 .btn-gold:hover,
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  box-shadow: 0 6px 20px rgba(214, 40, 85, 0.35);
   color: var(--color-primary-900) !important;
   text-decoration: none;
 }
@@ -292,7 +292,7 @@ small, .text-small {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-gold) 0%, #D4AF64 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -384,7 +384,7 @@ small, .text-small {
 .form-select:focus,
 .form-control-enhanced:focus {
   border-color: var(--color-gold);
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 0 4px rgba(214, 40, 85, 0.1);
   outline: none;
 }
 
@@ -584,13 +584,13 @@ small, .text-small {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-gold) 0%, #D4AF64 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
   color: var(--color-primary-900);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 6px 20px rgba(214, 40, 85, 0.3);
 }
 
 .btn-secondary {
@@ -688,7 +688,7 @@ small, .text-small {
 .card-header,
 .card-header-takhlees,
 .card-header-enhanced {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(214, 40, 85, 0.08) 0%, rgba(214, 40, 85, 0.03) 100%);
   border-bottom: 2px solid var(--color-gold);
   padding: var(--space-3);
   font-weight: var(--font-weight-semibold);
@@ -780,7 +780,7 @@ small, .text-small {
 }
 
 .badge-primary {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(214, 40, 85, 0.2);
   color: var(--color-gold);
 }
 
