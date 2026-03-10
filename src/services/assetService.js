@@ -222,12 +222,69 @@ class AssetService {
     }
   }
 
-  // Get asset history
+  // Get asset history — queries all existing category tables
   async getHistory() {
     try {
-      // This would query an asset_history table if it exists
-      // For now, returning a placeholder
-      return { success: true, history: [] };
+      // Find which category tables actually exist in the DB
+      const tablesResult = await pool.query(
+        `SELECT table_name FROM information_schema.tables
+         WHERE table_schema = 'public'
+           AND table_type = 'BASE TABLE'
+           AND table_name = ANY($1)`,
+        [Array.from(allowedCategorySet)]
+      );
+
+      const existingTables = tablesResult.rows.map((r) => r.table_name);
+      const allRows = [];
+
+      for (const table of existingTables) {
+        try {
+          // Discover columns for this table
+          const colResult = await pool.query(
+            `SELECT column_name FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = $1`,
+            [table]
+          );
+          const cols = new Set(colResult.rows.map((r) => r.column_name));
+
+          // Normalise name column across different table schemas
+          const nameExpr = cols.has('name')
+            ? 'name'
+            : cols.has('asset_name')
+            ? 'asset_name'
+            : cols.has('case_name')
+            ? 'case_name'
+            : 'NULL';
+
+          const serialExpr = cols.has('serial_number') ? 'serial_number' : 'NULL';
+          const employeeExpr = cols.has('employee_name') ? 'employee_name' : 'NULL';
+          const locationExpr = cols.has('location') ? 'location' : 'NULL';
+          const submittedByExpr = cols.has('submitted_by') ? 'submitted_by' : 'NULL';
+          const createdAtExpr = cols.has('created_at') ? 'created_at' : 'NOW()';
+
+          const result = await pool.query(
+            `SELECT id,
+                    ${nameExpr}        AS name,
+                    ${serialExpr}      AS serial_number,
+                    ${employeeExpr}    AS employee_name,
+                    ${locationExpr}    AS location,
+                    ${submittedByExpr} AS submitted_by,
+                    ${createdAtExpr}   AS created_at
+             FROM ${table}
+             ORDER BY ${createdAtExpr} DESC
+             LIMIT 500`
+          );
+
+          result.rows.forEach((row) => allRows.push({ ...row, category: table }));
+        } catch (tableError) {
+          logger.warn(`History: skipping table ${table}: ${tableError.message}`);
+        }
+      }
+
+      // Sort combined results newest-first
+      allRows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      return { success: true, data: allRows };
     } catch (error) {
       logger.error('Get history error:', error);
       return { success: false, error: 'Failed to fetch history' };
