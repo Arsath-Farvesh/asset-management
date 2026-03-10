@@ -28,6 +28,22 @@ router.get('/csrf-token', (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
+// Session timeout configuration endpoint
+router.get('/session-config', (req, res) => {
+  // 30 minutes inactivity timeout and 24 hours max session
+  const inactivityTimeout = process.env.SESSION_INACTIVITY_TIMEOUT || 30 * 60 * 1000;
+  const maxSessionAge = process.env.SESSION_MAX_AGE || 24 * 60 * 60 * 1000;
+  const warningTimeout = Math.max(inactivityTimeout - 5 * 60 * 1000, 5 * 60 * 1000); // Show warning 5 min before logout
+  
+  res.json({
+    inactivityTimeout,  // milliseconds until auto-logout
+    maxSessionAge,      // milliseconds until max session age
+    warningTimeout,     // milliseconds until warning shown
+    inactivityTimeoutMin: Math.round(inactivityTimeout / 60000), // minutes
+    warningTimeoutMin: Math.round(warningTimeout / 60000)
+  });
+});
+
 // Database schema check endpoint (for debugging)
 router.get('/db-schema', async (req, res) => {
   try {

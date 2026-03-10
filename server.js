@@ -130,12 +130,18 @@ app.use(bodyParser.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== SESSION CONFIGURATION =====
+// 30 minutes of inactivity = automatic logout (1800000 ms)
+const INACTIVITY_TIMEOUT = process.env.SESSION_INACTIVITY_TIMEOUT || 30 * 60 * 1000;
+// Maximum session duration regardless of activity (24 hours)
+const MAX_SESSION_AGE = process.env.SESSION_MAX_AGE || 24 * 60 * 60 * 1000;
+
 app.use(session({
   store: new pgSession({
     pool: pool,
     tableName: 'session',
     createTableIfMissing: true,
-    errorLog: (err) => logger.error('Session store error:', err)
+    errorLog: (err) => logger.error('Session store error:', err),
+    disableTouch: false
   }),
   name: process.env.SESSION_COOKIE_NAME || 'takhlees.sid',
   secret: process.env.SESSION_SECRET || "change_this_secret",
@@ -145,7 +151,7 @@ app.use(session({
     httpOnly: true,
     secure: isProduction,
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 2,
+    maxAge: MAX_SESSION_AGE,
     domain: process.env.SESSION_COOKIE_DOMAIN || undefined
   }
 }));
@@ -157,6 +163,18 @@ app.use(passport.session());
 // ===== CSRF PROTECTION =====
 const csrfProtection = csrf({ cookie: false });
 app.use(csrfProtection);
+
+// ===== ACTIVITY TRACKING FOR SESSION TIMEOUT =====
+// Middleware to track user activity and extend session on each request
+app.use((req, res, next) => {
+  if (req.isAuthenticated && req.session) {
+    // Touch the session to extend its expiration
+    req.session.touch();
+    // Mark last activity timestamp for client-side timeout tracking
+    req.session.lastActivity = Date.now();
+  }
+  next();
+});
 
 // ===== INPUT SANITIZATION & VALIDATION =====
 app.use(sanitizeInput);
