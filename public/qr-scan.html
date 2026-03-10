@@ -15,30 +15,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="theme-professional.css">
-</head>
-<body>
-
-<!-- Navbar -->
-<nav class="navbar-takhlees">
-  <div class="container-fluid">
-    <a class="brand-logo" href="/" aria-label="Takhlees Asset Management System Home">
-      <div class="shield-icon">
-        <i class="bi bi-shield-fill-check" aria-hidden="true"></i>
-      </div>
-      <div class="brand-text">
-        <h5 style="margin: 0; font-weight: var(--font-weight-bold);">Takhlees</h5>
-        <p style="margin: 0; font-size: var(--font-size-xs); color: var(--color-text-secondary);">ASSET MANAGEMENT</p>
-      </div>
-    </a>
-    <a href="/" class="nav-btn" title="Go to home" aria-label="Go to home">
-      <i class="bi bi-house-fill"></i>
-      <span class="d-none d-md-inline">Home</span>
-    </a>
-  </div>
-</nav>
-
-<main class="container" style="margin-top: var(--space-5); padding-bottom: var(--space-6);">
-  <div
+  
+  <style>
+    :root {
+      --takhlees-gold: #6b7280;
       --takhlees-blue: #1f2937;
       --takhlees-dark: #111827;
       --takhlees-red: #ef4444;
@@ -97,7 +77,7 @@
     .shield-icon {
       width: 45px;
       height: 45px;
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E63E6D 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -127,7 +107,7 @@
     }
 
     .nav-btn {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E63E6D 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
       color: white;
       border: none;
       padding: 10px 24px;
@@ -162,7 +142,7 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E63E6D 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -362,7 +342,7 @@
     }
 
     .btn-home {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E63E6D 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #d4af6a 100%);
       color: white;
       box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
     }
@@ -468,7 +448,7 @@
     .profile-avatar-large {
       width: 80px; height: 80px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #6b7280 0%, #E63E6D 100%);
+      background: linear-gradient(135deg, #6b7280 0%, #d4af6a 100%);
       display: flex;
       align-items: center;
       justify-content: center;
