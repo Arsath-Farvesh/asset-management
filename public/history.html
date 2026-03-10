@@ -580,6 +580,9 @@
         </div>
       </div>
       <div class="d-flex gap-2 align-items-center">
+        <button class="nav-btn btn-enhanced" onclick="window.history.back()" title="Go Back">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
         <button class="nav-btn btn-enhanced" onclick="window.location.href='/index.html'" title="Home">
           <i class="bi bi-house-fill"></i> Home
         </button>
@@ -860,7 +863,7 @@
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': token
+          'csrf-token': token
         },
         body: JSON.stringify({ name: newName, serial_number: newSerial, employee_name: newEmployee, location: newLocation }),
         credentials: 'include'
@@ -881,7 +884,7 @@
         method: 'DELETE',
         credentials: 'include',
         headers: {
-          'CSRF-Token': token
+          'csrf-token': token
         }
       })).then(r => r.json()).then(j => {
         if (j.success) {
@@ -945,7 +948,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': token
+          'csrf-token': token
         },
         credentials: 'include',
         body: JSON.stringify({ items: itemsToDelete })

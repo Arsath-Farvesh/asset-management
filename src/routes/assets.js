@@ -121,7 +121,7 @@ router.put('/assets/:category/:id', isAuthenticated, isAdmin, assetController.up
  * /api/assets/{category}/{id}:
  *   delete:
  *     tags: [Assets]
- *     summary: Delete an asset
+ *     summary: Delete an asset (Admin only)
  *     security:
  *       - sessionAuth: []
  *       - csrfToken: []
@@ -141,15 +141,17 @@ router.put('/assets/:category/:id', isAuthenticated, isAdmin, assetController.up
  *         description: Asset deleted
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Admin access required
  */
-router.delete('/assets/:category/:id', isAuthenticated, assetController.deleteAsset);
+router.delete('/assets/:category/:id', isAuthenticated, isAdmin, assetController.deleteAsset);
 
 /**
  * @swagger
  * /api/assets/bulk-delete:
  *   post:
  *     tags: [Assets]
- *     summary: Bulk delete assets
+ *     summary: Bulk delete assets (Admin only)
  *     security:
  *       - sessionAuth: []
  *       - csrfToken: []
@@ -167,8 +169,10 @@ router.delete('/assets/:category/:id', isAuthenticated, assetController.deleteAs
  *     responses:
  *       200:
  *         description: Assets deleted
+ *       403:
+ *         description: Admin access required
  */
-router.post('/assets/bulk-delete', isAuthenticated, assetController.bulkDelete);
+router.post('/assets/bulk-delete', isAuthenticated, isAdmin, assetController.bulkDelete);
 
 /**
  * @swagger
