@@ -79,13 +79,19 @@ class AssetService {
       const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
 
       const query = `INSERT INTO ${category} (${columns}) VALUES (${placeholders}) RETURNING *`;
+      logger.info(`Executing INSERT for ${category}:`, { columns, query: query.substring(0, 100) });
       const result = await pool.query(query, values);
 
       logger.info(`Asset created in ${category}: ${data.name || data.asset_name || data.case_name || 'unknown'}`);
       return { success: true, data: result.rows[0] };
     } catch (error) {
-      logger.error(`Create asset error in ${category}:`, error);
-      return { success: false, error: 'Failed to create asset' };
+      logger.error(`Create asset error in ${category}:`, {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        table: category
+      });
+      return { success: false, error: error.message || 'Failed to create asset' };
     }
   }
 

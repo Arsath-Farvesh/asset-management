@@ -189,14 +189,19 @@ app.use(errorHandler);
 
 // ===== RUN MIGRATIONS =====
 async function runMigrations() {
+  let migrationKnex = null;
   try {
-    const knex = require('knex')(require('./knexfile'));
+    migrationKnex = require('knex')(require('./knexfile'));
     logger.info('🔄 Running database migrations...');
-    await knex.migrate.latest();
-    logger.info('✅ Migrations completed');
-    await knex.destroy();
+    const migrationsRun = await migrationKnex.migrate.latest();
+    logger.info(`✅ Migrations completed. Files run: ${migrationsRun[1] ? migrationsRun[1].length : 0}`, { files: migrationsRun[1] || [] });
+    await migrationKnex.destroy();
   } catch (err) {
-    logger.error('Migration error:', err);
+    logger.error('Migration error:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail
+    });
     // Don't exit - allow app to start anyway (in case migrations are optional)
   }
 }

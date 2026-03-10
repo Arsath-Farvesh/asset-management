@@ -42,7 +42,7 @@ describe('AssetService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Failed to create asset');
+      expect(result.error).toBe('Database error');
     });
   });
 
