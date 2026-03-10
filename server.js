@@ -187,15 +187,32 @@ app.use(csrfErrorHandler);
 // ===== GLOBAL ERROR HANDLER =====
 app.use(errorHandler);
 
+// ===== RUN MIGRATIONS =====
+async function runMigrations() {
+  try {
+    const knex = require('knex')(require('./knexfile'));
+    logger.info('🔄 Running database migrations...');
+    await knex.migrate.latest();
+    logger.info('✅ Migrations completed');
+    await knex.destroy();
+  } catch (err) {
+    logger.error('Migration error:', err);
+    // Don't exit - allow app to start anyway (in case migrations are optional)
+  }
+}
+
 // ===== START SERVER =====
 // Only start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`🚀 Server running on port ${PORT}`);
-    logger.info(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
-    logger.info(`🌐 Server bound to 0.0.0.0:${PORT}`);
-    logger.info(`✅ Modular architecture loaded`);
-  });
+  (async () => {
+    await runMigrations();
+    app.listen(PORT, '0.0.0.0', () => {
+      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`📁 Serving static files from: ${path.join(__dirname, 'public')}`);
+      logger.info(`🌐 Server bound to 0.0.0.0:${PORT}`);
+      logger.info(`✅ Modular architecture loaded`);
+    });
+  })();
 
   // ===== GRACEFUL SHUTDOWN =====
   process.on('SIGTERM', () => {

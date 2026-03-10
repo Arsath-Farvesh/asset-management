@@ -666,7 +666,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 body: JSON.stringify(payload),
                 credentials: "include"
             });
-          const data = await res.json();
+          let data;
+          try {
+            data = await res.json();
+          } catch (parseErr) {
+            console.error('JSON parse error:', parseErr);
+            throw new Error('Server response was invalid');
+          }
+          
+          console.log('Asset submission response:', { status: res.status, ok: res.ok, data });
           
           // Handle CSRF token errors
           if (res.status === 403 && data.error && data.error.includes('CSRF')) {
@@ -675,19 +683,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
           }
           
-          if (!res.ok || !data.success || !data.data) {
-            throw new Error(data.error || 'Error adding asset');
+          // Check for success
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || `Server error: ${res.status}`);
           }
-          if (data.success) {
-                successAlert.style.display = 'block';
-                setTimeout(() => successAlert.style.display = 'none', 3000);
-                assetForm.reset();
-                updateDynamicFields();
-            } else {
-                alert(data.error || 'Error adding asset');
-            }
+          
+          // Success - show alert and reset form
+          successAlert.style.display = 'block';
+          setTimeout(() => successAlert.style.display = 'none', 3000);
+          assetForm.reset();
+          updateDynamicFields();
         } catch (err) {
-            alert('Server error: ' + err.message);
+            console.error('Asset submission error:', err);
+            alert('Error adding asset: ' + err.message);
         }
     });
 
