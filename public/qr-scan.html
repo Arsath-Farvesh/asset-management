@@ -523,24 +523,27 @@
 <body class="animate-fade-in">
 
   <!-- Navbar -->
-  <nav class="navbar-takhlees navbar-enhanced">
+  <nav class="navbar navbar-expand-lg navbar-takhlees navbar-enhanced">
     <div class="container-fluid">
+      <a class="navbar-brand animate-slide-in" href="/index.html">
       <div class="brand-logo">
         <div class="shield-icon">
-          <i class="bi bi-shield-fill-check"></i>
+          <img src="logo.png" alt="Takhlees company logo" style="width: 30px; height: 30px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <i class="bi bi-shield-fill-check" style="display: none;"></i>
         </div>
         <div class="brand-text">
-          <h5>Takhlees <span style="color: var(--takhlees-gold);">/</span> ASSET MANAGEMENT SYSTEM</h5>
-          <p>GOVERNMENT SERVICES</p>
+          <span class="main" style="color: var(--text-primary); font-weight: 600;">Takhlees</span>
+          <span class="sub" style="color: var(--text-secondary); font-size: 0.75rem;">ASSET MANAGEMENT SYSTEM</span>
         </div>
       </div>
-      <div class="d-flex gap-2 align-items-center">
-        <button class="nav-btn btn-enhanced" onclick="window.location.href='/index.html'">
+      </a>
+      <div class="d-flex gap-2 align-items-center ms-auto">
+        <a href="/index.html" class="nav-btn btn-enhanced">
           <i class="bi bi-house-fill"></i> Home
-        </button>
-        <button class="nav-btn btn-enhanced" onclick="window.location.href='/history.html'">
+        </a>
+        <a href="/history.html" class="nav-btn btn-enhanced">
           <i class="bi bi-clock-history"></i> History
-        </button>
+        </a>
         
         <!-- Authentication Indicator -->
         <div class="auth-indicator" id="authIndicator" style="display: none;">
@@ -552,7 +555,7 @@
           </div>
         </div>
         
-        <button class="nav-btn btn-enhanced" id="logoutBtn">
+        <button type="button" class="nav-btn btn-enhanced" id="logoutBtn">
           <i class="bi bi-box-arrow-right"></i> Logout
         </button>
       </div>
@@ -617,11 +620,21 @@
   <script>
     const statusEl = document.getElementById('status');
 
+    let csrfToken = null;
+
+    async function ensureCsrfToken() {
+      if (csrfToken) return csrfToken;
+      const res = await fetch('/api/csrf-token', { credentials: 'include', cache: 'no-store' });
+      const data = await res.json();
+      csrfToken = data.csrfToken;
+      return csrfToken;
+    }
+
     async function checkLogin() {
       try {
-        const r = await fetch('/me', { credentials:'include' });
+        const r = await fetch('/api/me', { credentials:'include' });
         const j = await r.json();
-        if (!j.loggedIn) {
+        if (!r.ok || !j.success || !j.user) {
           statusEl.className = 'status-message error';
           statusEl.style.display = 'block';
           statusEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please login first. Redirecting...';
@@ -662,8 +675,18 @@
     loadAuthIndicator();
     
     document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await fetch("/logout", { method: "POST", credentials: "include" });
-      window.location.href = "/login.html";
+      try {
+        const token = await ensureCsrfToken();
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'csrf-token': token }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = '/login.html';
+      }
     });
 
     checkLogin();

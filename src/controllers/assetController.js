@@ -1,5 +1,6 @@
 const assetService = require('../services/assetService');
 const logger = require('../config/logger');
+const PDFDocument = require('pdfkit');
 
 class AssetController {
   // Create asset
@@ -144,6 +145,78 @@ class AssetController {
     }
 
     res.json(result);
+  }
+
+  // Download asset history as PDF
+  async getHistoryPdf(req, res) {
+    const result = await assetService.getHistory();
+
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    const rows = result.data || [];
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="asset-history-${Date.now()}.pdf"`);
+
+    doc.pipe(res);
+
+    doc.fontSize(18).text('Takhlees Asset History Report', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.moveDown(1.2);
+
+    const headers = ['ID', 'Category', 'Name', 'Serial', 'Employee', 'Location', 'Created At'];
+    const widths = [40, 80, 90, 65, 75, 80, 90];
+
+    const drawHeader = () => {
+      let x = doc.page.margins.left;
+      const y = doc.y;
+      doc.font('Helvetica-Bold').fontSize(9);
+      headers.forEach((h, i) => {
+        doc.text(h, x, y, { width: widths[i], lineBreak: false });
+        x += widths[i];
+      });
+      doc.moveDown(0.8);
+      doc.moveTo(doc.page.margins.left, doc.y)
+        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+        .strokeColor('#cccccc')
+        .stroke();
+      doc.moveDown(0.4);
+    };
+
+    drawHeader();
+    doc.font('Helvetica').fontSize(8.5);
+
+    rows.forEach((row) => {
+      if (doc.y > doc.page.height - 60) {
+        doc.addPage();
+        drawHeader();
+        doc.font('Helvetica').fontSize(8.5);
+      }
+
+      const values = [
+        String(row.id || '-'),
+        String(row.category || '-').replace(/_/g, ' '),
+        String(row.name || '-'),
+        String(row.serial_number || '-'),
+        String(row.employee_name || '-'),
+        String(row.location || '-'),
+        row.created_at ? new Date(row.created_at).toLocaleString() : '-'
+      ];
+
+      let x = doc.page.margins.left;
+      const y = doc.y;
+      values.forEach((v, i) => {
+        doc.text(v, x, y, { width: widths[i], lineBreak: false, ellipsis: true });
+        x += widths[i];
+      });
+      doc.moveDown(1);
+    });
+
+    doc.end();
   }
 }
 

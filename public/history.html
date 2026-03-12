@@ -568,27 +568,30 @@
 <body class="animate-fade-in">
 
   <!-- Navbar -->
-  <nav class="navbar-takhlees navbar-enhanced">
+  <nav class="navbar navbar-expand-lg navbar-takhlees navbar-enhanced">
     <div class="container-fluid">
+      <a class="navbar-brand animate-slide-in" href="/index.html">
       <div class="brand-logo">
         <div class="shield-icon">
-          <i class="bi bi-shield-fill-check"></i>
+          <img src="logo.png" alt="Takhlees company logo" style="width: 30px; height: 30px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <i class="bi bi-shield-fill-check" style="display: none;"></i>
         </div>
         <div class="brand-text">
-          <h5>Takhlees <span style="color: var(--takhlees-gold);">/</span> ASSET MANAGEMENT SYSTEM</h5>
-          <p>GOVERNMENT SERVICES</p>
+          <span class="main" style="color: var(--text-primary); font-weight: 600;">Takhlees</span>
+          <span class="sub" style="color: var(--text-secondary); font-size: 0.75rem;">ASSET MANAGEMENT SYSTEM</span>
         </div>
       </div>
-      <div class="d-flex gap-2 align-items-center">
-        <button class="nav-btn btn-enhanced" onclick="window.history.back()" title="Go Back">
+      </a>
+      <div class="d-flex gap-2 align-items-center ms-auto">
+        <button id="backBtn" type="button" class="nav-btn btn-enhanced" title="Go Back">
           <i class="bi bi-arrow-left"></i> Back
         </button>
-        <button class="nav-btn btn-enhanced" onclick="window.location.href='/index.html'" title="Home">
+        <a href="/index.html" class="nav-btn btn-enhanced" title="Home">
           <i class="bi bi-house-fill"></i> Home
-        </button>
-        <button class="nav-btn btn-enhanced" onclick="window.location.href='/qr-scan.html'" title="Scan QR Code">
+        </a>
+        <a href="/qr-scan.html" class="nav-btn btn-enhanced" title="Scan QR Code">
           <i class="bi bi-qr-code-scan"></i> Scan
-        </button>
+        </a>
         
         <!-- Authentication Indicator -->
         <div class="auth-indicator" id="authIndicator" style="display: none;">
@@ -600,7 +603,7 @@
           </div>
         </div>
         
-        <button class="nav-btn btn-enhanced" id="logoutBtn" title="Logout">
+        <button type="button" class="nav-btn btn-enhanced" id="logoutBtn" title="Logout">
           <i class="bi bi-box-arrow-right"></i> Logout
         </button>
       </div>
@@ -739,14 +742,27 @@
 
     loadAuthIndicator();
 
+    document.getElementById('backBtn').addEventListener('click', () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/index.html';
+      }
+    });
+
     document.getElementById('logoutBtn').addEventListener('click', async () => {
-      const token = await ensureCsrfToken();
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'CSRF-Token': token }
-      });
-      window.location.href = "/login.html";
+      try {
+        const token = await ensureCsrfToken();
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'csrf-token': token }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = "/login.html";
+      }
     });
 
     async function loadHistory() {
@@ -1001,8 +1017,19 @@
       clearSelectionBtn.addEventListener('click', clearSelection);
     }
 
-    document.getElementById('downloadPdf').addEventListener('click', () => {
-      window.open('/api/history/pdf', '_blank');
+    document.getElementById('downloadPdf').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/history/pdf', { credentials: 'include' });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || 'Unable to generate PDF report');
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        alert('Download failed: ' + err.message);
+      }
     });
 
     (async function init(){

@@ -36,6 +36,7 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
+router.post('/assets/bulk-delete', isAuthenticated, isAdmin, assetController.bulkDelete);
 router.post('/assets/:category', isAuthenticated, assetController.createAsset);
 
 /**
@@ -172,8 +173,6 @@ router.delete('/assets/:category/:id', isAuthenticated, isAdmin, assetController
  *       403:
  *         description: Admin access required
  */
-router.post('/assets/bulk-delete', isAuthenticated, isAdmin, assetController.bulkDelete);
-
 /**
  * @swagger
  * /api/history:
@@ -187,5 +186,6 @@ router.post('/assets/bulk-delete', isAuthenticated, isAdmin, assetController.bul
  *         description: Asset history
  */
 router.get('/history', isAuthenticated, assetController.getHistory);
+router.get('/history/pdf', isAuthenticated, assetController.getHistoryPdf);
 
 module.exports = router;
