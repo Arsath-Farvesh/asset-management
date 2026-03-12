@@ -921,9 +921,14 @@
       const payload = { username, email, department, confirmPassword };
       if (password) payload.password = password;
 
+      const token = await ensureCsrfToken();
+
       const resp = await fetch('/api/user/profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'csrf-token': token
+        },
         body: JSON.stringify(payload),
         credentials: 'include'
       });

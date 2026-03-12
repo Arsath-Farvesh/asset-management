@@ -1057,25 +1057,14 @@
   let currentProfileUser = null;
   let isEditMode = false;
 
-  async function loadAuthIndicator() {
+  async function loadProfileUserData() {
     try {
       const resp = await fetch('/api/auth-status', { credentials: 'include' });
       const data = await resp.json();
       if (data.authenticated && data.user) {
         currentProfileUser = data.user;
-        const username = data.user.username || 'User';
-        const role = data.user.role || 'user';
-        const avatar = username.charAt(0).toUpperCase();
-        
         const indicator = document.getElementById('authIndicator');
         if (indicator) {
-          indicator.innerHTML = `
-            <span class="auth-avatar">${avatar}</span>
-            <span class="auth-text">
-              <span class="auth-username">${username}</span>
-              <span class="auth-role">${role}</span>
-            </span>
-          `;
           indicator.style.display = 'flex';
           indicator.addEventListener('click', openProfileModal);
         }
@@ -1113,6 +1102,10 @@
       contentDiv.innerHTML = `
         <form id="profileEditForm">
           <div class="profile-field">
+            <label class="profile-label">Username</label>
+            <input type="text" id="editUsername" class="profile-input" value="${username}" required>
+          </div>
+          <div class="profile-field">
             <label class="profile-label">Email</label>
             <input type="email" id="editEmail" class="profile-input" value="${email}" required>
           </div>
@@ -1139,6 +1132,10 @@
       document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
     } else {
       contentDiv.innerHTML = `
+        <div class="profile-field">
+          <label class="profile-label">Username</label>
+          <div class="profile-value">${username}</div>
+        </div>
         <div class="profile-field">
           <label class="profile-label">Email</label>
           <div class="profile-value">${email}</div>
@@ -1168,6 +1165,7 @@
   async function saveProfileChanges(e) {
     e.preventDefault();
     
+    const username = document.getElementById('editUsername').value.trim();
     const email = document.getElementById('editEmail').value.trim();
     const department = document.getElementById('editDepartment').value.trim();
     const password = document.getElementById('editPassword').value;
@@ -1175,6 +1173,11 @@
     const messageDiv = document.getElementById('formMessage');
 
     // Validation
+    if (!username) {
+      showFormMessage('Username is required', 'error');
+      return;
+    }
+
     if (!email) {
       showFormMessage('Email is required', 'error');
       return;
@@ -1191,12 +1194,17 @@
     }
 
     try {
-      const payload = { email, department };
+      const payload = { username, email, department, confirmPassword };
       if (password) payload.password = password;
+
+      const token = await ensureCsrfToken();
 
       const resp = await fetch('/api/user/profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'csrf-token': token
+        },
         body: JSON.stringify(payload),
         credentials: 'include'
       });
@@ -1235,7 +1243,7 @@
   });
 
   // Load auth indicator when page loads
-  window.addEventListener('load', loadAuthIndicator);
+  window.addEventListener('load', loadProfileUserData);
   </script>
 
 <!-- Inactivity Timeout Warning Modal -->
