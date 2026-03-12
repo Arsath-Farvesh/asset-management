@@ -207,45 +207,81 @@
         <div class="card-header-takhlees card-header-enhanced">
           <h3><i class="bi bi-eye-fill me-2"></i>Asset Preview</h3>
         </div>
-        <div class="card-body-takhlees text-center">
-          <div class="preview-section">
-            <h4 id="preview-name" class="mb-3" style="font-weight: 700; color: var(--text-primary);">Asset Name</h4>
-            <p class="mb-2"><strong>Category:</strong> <span class="category-badge badge-enhanced" id="preview-category">Not selected</span></p>
-            <p id="preview-serial-row" class="mb-2"><strong>Serial:</strong> <span id="preview-serial">N/A</span></p>
-            <p id="preview-employee-row" class="mb-2"><strong>Employee:</strong> <span id="preview-employee">N/A</span></p>
-            <p id="preview-location-row" class="mb-2"><strong>Location:</strong> <span id="preview-location">N/A</span></p>
-            
-            <div id="preview-customer-details" style="display: none;">
-              <p class="mb-2"><strong>Customer:</strong> <span id="preview-customer-name">N/A</span></p>
-              <p class="mb-2"><strong>Phone:</strong> <span id="preview-customer-phone">N/A</span></p>
-              <p class="mb-2"><strong>Case #:</strong> <span id="preview-case-number">N/A</span></p>
-              <p class="mb-2"><strong>Case Type:</strong> <span id="preview-case-type">N/A</span></p>
+        <div class="card-body-takhlees" style="padding: 1rem;">
+
+          <!-- Asset Title -->
+          <div class="text-center pb-3 mb-3" style="border-bottom: 1px solid var(--color-border-default);">
+            <h5 id="preview-name" style="font-weight: 700; color: var(--color-text-primary); font-size: 1rem; margin-bottom: 0.5rem; word-break: break-word;">Asset Name</h5>
+            <span id="preview-category" style="display:inline-block; background: var(--color-primary); color: white; font-size: 0.65rem; letter-spacing: 0.08em; padding: 0.25em 0.85em; border-radius: 100px; text-transform: uppercase; font-weight: 600;">NOT SELECTED</span>
+          </div>
+
+          <!-- Standard Fields -->
+          <div class="preview-info-table mb-3">
+            <div class="preview-row" id="preview-serial-row">
+              <span class="preview-key">Serial</span>
+              <span class="preview-val" id="preview-serial">N/A</span>
             </div>
-            
-            <div class="row mt-4 g-3">
-              <div class="col-md-6 d-flex flex-column align-items-center">
-                <h6 class="text-center w-100 mb-3" style="color: var(--text-primary); font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">QR Code</h6>
-                <div class="qr-barcode-container">
-                  <img id="preview-qr" class="qr-barcode" alt="QR Code" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Takhlees">
+            <div class="preview-row" id="preview-employee-row">
+              <span class="preview-key">Employee</span>
+              <span class="preview-val" id="preview-employee">N/A</span>
+            </div>
+            <div class="preview-row" id="preview-location-row">
+              <span class="preview-key">Location</span>
+              <span class="preview-val" id="preview-location">N/A</span>
+            </div>
+          </div>
+
+          <!-- Case / Keys Fields -->
+          <div id="preview-customer-details" class="preview-info-table mb-3" style="display: none;">
+            <div class="preview-row">
+              <span class="preview-key">Customer</span>
+              <span class="preview-val" id="preview-customer-name">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Phone</span>
+              <span class="preview-val" id="preview-customer-phone">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Case #</span>
+              <span class="preview-val" id="preview-case-number">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Case Type</span>
+              <span class="preview-val" id="preview-case-type">N/A</span>
+            </div>
+          </div>
+
+          <!-- QR & Barcode -->
+          <div style="border-top: 1px solid var(--color-border-default); padding-top: 0.9rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+              <div>
+                <p class="preview-code-label">QR CODE</p>
+                <div class="preview-code-box">
+                  <img id="preview-qr" style="max-height: 88px; width: auto; max-width: 100%;" alt="QR Code" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=Takhlees">
                 </div>
               </div>
-              <div class="col-md-6 d-flex flex-column align-items-center">
-                <h6 class="text-center w-100 mb-3" style="color: var(--text-primary); font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Barcode</h6>
-                <div class="qr-barcode-container">
-                  <img id="preview-barcode" class="qr-barcode" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=2&height=50&includetext">
+              <div>
+                <p class="preview-code-label">BARCODE</p>
+                <div class="preview-code-box">
+                  <img id="preview-barcode" style="max-height: 88px; width: auto; max-width: 100%;" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=2&height=40&includetext">
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="alert success-alert alert-enhanced" role="alert" id="success-alert" style="display:none;">
-  <i class="bi bi-check-circle-fill me-2"></i>
-  <strong>Success!</strong> Asset has been added successfully.
+<!-- Success Toast (fixed, top-center) -->
+<div id="success-alert" role="alert" style="display:none;">
+  <i class="bi bi-check-circle-fill" style="font-size:1.25rem; color: var(--color-success); flex-shrink:0;"></i>
+  <div>
+    <strong style="display:block; margin-bottom:0.1rem;">Asset Added</strong>
+    <span style="font-size:0.875rem; font-weight:400; color:#374151;">Asset has been saved successfully.</span>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -696,8 +732,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
           
           // Success - show alert and reset form
-          successAlert.style.display = 'block';
-          setTimeout(() => successAlert.style.display = 'none', 3000);
+          successAlert.style.display = 'flex';
+          successAlert.classList.remove('toast-hide');
+          setTimeout(() => {
+            successAlert.classList.add('toast-hide');
+            setTimeout(() => {
+              successAlert.style.display = 'none';
+              successAlert.classList.remove('toast-hide');
+            }, 320);
+          }, 3000);
           assetForm.reset();
           updateDynamicFields();
         } catch (err) {

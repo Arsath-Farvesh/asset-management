@@ -4,16 +4,21 @@ const logger = require('../config/logger');
 class AssetController {
   // Create asset
   async createAsset(req, res) {
-    const { category } = req.params;
-    const data = req.body;
+    try {
+      const { category } = req.params;
+      const data = req.body;
 
-    const result = await assetService.createAsset(category, data);
+      const result = await assetService.createAsset(category, data);
 
-    if (!result.success) {
-      return res.status(500).json(result);
+      if (!result.success) {
+        return res.status(500).json(result);
+      }
+
+      res.status(201).json(result);
+    } catch (err) {
+      logger.error('Asset controller createAsset error:', err);
+      res.status(500).json({ success: false, error: err.message || 'Failed to create asset' });
     }
-
-    res.status(201).json(result);
   }
 
   // Get all assets from category

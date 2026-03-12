@@ -87,12 +87,12 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// Helper functions for backward compatibility
-logger.log = {
-  info: (msg) => logger.info(msg),
-  error: (msg, err) => logger.error(msg, err),
-  warn: (msg) => logger.warn(msg),
-  debug: (msg) => logger.debug(msg)
+// Backward compatibility alias without overriding Winston's internal logger.log() method.
+logger.legacy = {
+  info: (msg, ...meta) => logger.info(msg, ...meta),
+  error: (msg, ...meta) => logger.error(msg, ...meta),
+  warn: (msg, ...meta) => logger.warn(msg, ...meta),
+  debug: (msg, ...meta) => logger.debug(msg, ...meta)
 };
 
 module.exports = logger;

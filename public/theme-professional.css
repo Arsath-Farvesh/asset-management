@@ -766,6 +766,118 @@ small, .text-small {
   }
 }
 
+/* ========== SUCCESS TOAST (fixed, centered horizontally, top of screen) ========== */
+#success-alert {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  min-width: 300px;
+  max-width: 500px;
+  width: auto;
+  background: #ffffff;
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 5px solid var(--color-success);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  color: #065f46;
+  animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+#success-alert.toast-hide {
+  animation: toastSlideOut 0.3s ease-in forwards;
+}
+
+@keyframes toastSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+}
+
+/* ========== ASSET PREVIEW - PROFESSIONAL LAYOUT ========== */
+.preview-info-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.625rem;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  gap: 0.5rem;
+}
+
+.preview-key {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.preview-val {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+.preview-code-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: 0.4rem;
+}
+
+.preview-code-box {
+  background: #ffffff;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 95px;
+}
+
+.preview-code-box img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* ========== BADGES ========== */
 .badge,
 .badge-enhanced {
