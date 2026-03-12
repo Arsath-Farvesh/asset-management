@@ -1124,12 +1124,16 @@
           <div id="formMessage" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; display: none;"></div>
           <div style="display: flex; gap: 0.75rem;">
             <button type="submit" class="profile-btn profile-btn-save">Save Changes</button>
-            <button type="button" class="profile-btn profile-btn-cancel" onclick="cancelEditMode()">Cancel</button>
-            <button type="button" class="profile-btn profile-btn-close" onclick="closeProfileModal()">Close</button>
+            <button type="button" id="profileCancelBtn" class="profile-btn profile-btn-cancel">Cancel</button>
+            <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
           </div>
         </form>
       `;
       document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
+      const cancelBtn = document.getElementById('profileCancelBtn');
+      const closeBtn = document.getElementById('profileCloseBtn');
+      if (cancelBtn) cancelBtn.addEventListener('click', cancelEditMode);
+      if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
     } else {
       contentDiv.innerHTML = `
         <div class="profile-field">
@@ -1145,10 +1149,14 @@
           <div class="profile-value">${department}</div>
         </div>
         <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-          <button class="profile-btn profile-btn-edit" onclick="enterEditMode()" style="background: #6b7280; color: white; flex: 1;">Edit Profile</button>
-          <button class="profile-btn profile-btn-close" onclick="closeProfileModal()" style="flex: 1;">Close</button>
+          <button id="profileEditBtn" class="profile-btn profile-btn-edit" style="background: #6b7280; color: white; flex: 1;">Edit Profile</button>
+          <button id="profileCloseBtn" class="profile-btn profile-btn-close" style="flex: 1;">Close</button>
         </div>
       `;
+      const editBtn = document.getElementById('profileEditBtn');
+      const closeBtn = document.getElementById('profileCloseBtn');
+      if (editBtn) editBtn.addEventListener('click', enterEditMode);
+      if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
     }
   }
 
