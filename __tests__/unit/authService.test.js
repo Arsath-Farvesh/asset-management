@@ -73,4 +73,67 @@ describe('AuthService', () => {
       expect(result.users).toHaveLength(2);
     });
   });
+
+  describe('updateProfile', () => {
+    it('should update only email and department for self profile without username changes', async () => {
+      pool.query = jest.fn()
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({
+          rows: [{ id: 1, username: 'user1', email: 'updated@test.com', role: 'user', department: 'Ops' }]
+        });
+
+      const result = await authService.updateProfile(1, {
+        email: 'updated@test.com',
+        department: 'Ops'
+      });
+
+      expect(result.success).toBe(true);
+      expect(pool.query).toHaveBeenNthCalledWith(
+        1,
+        'UPDATE users SET email = $1, department = $2 WHERE id = $3',
+        ['updated@test.com', 'Ops', 1]
+      );
+      expect(result.user.username).toBe('user1');
+    });
+  });
+
+  describe('updateUserAsAdmin', () => {
+    it('should reject duplicate usernames', async () => {
+      pool.query = jest.fn().mockResolvedValueOnce({ rows: [{ id: 99 }] });
+
+      const result = await authService.updateUserAsAdmin(2, {
+        username: 'existing',
+        email: 'user@test.com',
+        department: 'IT',
+        role: 'user'
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Username already exists');
+    });
+
+    it('should update a managed user including username and role', async () => {
+      pool.query = jest.fn()
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({
+          rows: [{ id: 2, username: 'renamed', email: 'renamed@test.com', role: 'admin', department: 'Finance' }]
+        });
+
+      const result = await authService.updateUserAsAdmin(2, {
+        username: 'renamed',
+        email: 'renamed@test.com',
+        department: 'Finance',
+        role: 'admin'
+      });
+
+      expect(result.success).toBe(true);
+      expect(pool.query).toHaveBeenNthCalledWith(
+        2,
+        'UPDATE users SET username = $1, email = $2, department = $3, role = $4 WHERE id = $5',
+        ['renamed', 'renamed@test.com', 'Finance', 'admin', 2]
+      );
+      expect(result.user.role).toBe('admin');
+    });
+  });
 });

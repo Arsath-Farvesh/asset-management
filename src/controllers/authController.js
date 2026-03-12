@@ -69,7 +69,7 @@ class AuthController {
 
   // Update user profile
   async updateProfile(req, res) {
-    const { username, email, department, password, confirmPassword } = req.body;
+    const { email, department, password, confirmPassword } = req.body;
 
     if (password && password !== confirmPassword) {
       return res.status(400).json({ success: false, error: 'Passwords do not match' });
@@ -80,7 +80,7 @@ class AuthController {
     }
 
     const userId = req.session.user.id;
-    const result = await authService.updateProfile(userId, { username, email, department, password });
+    const result = await authService.updateProfile(userId, { email, department, password });
 
     if (!result.success) {
       return res.status(500).json(result);
@@ -89,6 +89,43 @@ class AuthController {
     // Update session
     req.session.user = { ...req.session.user, ...result.user };
     res.json(result);
+  }
+
+  async updateUser(req, res) {
+    const { id } = req.params;
+    const { username, email, department, role, password, confirmPassword } = req.body;
+
+    if (password && password !== confirmPassword) {
+      return res.status(400).json({ success: false, error: 'Passwords do not match' });
+    }
+
+    if (password && password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+
+    const targetUserId = Number.parseInt(id, 10);
+    if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid user id' });
+    }
+
+    const result = await authService.updateUserAsAdmin(targetUserId, {
+      username,
+      email,
+      department,
+      role,
+      password
+    });
+
+    if (!result.success) {
+      const status = result.error === 'User not found' ? 404 : 400;
+      return res.status(status).json(result);
+    }
+
+    if (req.session?.user?.id === targetUserId) {
+      req.session.user = { ...req.session.user, ...result.user };
+    }
+
+    return res.json(result);
   }
 }
 
