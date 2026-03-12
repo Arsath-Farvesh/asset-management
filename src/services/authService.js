@@ -55,18 +55,33 @@ logger.info(`User logged in: ${username}`);
   // Update user profile
   async updateProfile(userId, updates) {
     try {
-      const { email, department, password } = updates;
+      const { username, email, department, password } = updates;
+
+      if (!username || !String(username).trim()) {
+        return { success: false, error: 'Username is required' };
+      }
+
+      const normalizedUsername = String(username).trim();
+
+      const exists = await pool.query(
+        'SELECT id FROM users WHERE lower(username) = lower($1) AND id <> $2 LIMIT 1',
+        [normalizedUsername, userId]
+      );
+
+      if (exists.rows.length > 0) {
+        return { success: false, error: 'Username already exists' };
+      }
       
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
         await pool.query(
-          'UPDATE users SET email = $1, department = $2, password = $3 WHERE id = $4',
-          [email, department, hashedPassword, userId]
+          'UPDATE users SET username = $1, email = $2, department = $3, password = $4 WHERE id = $5',
+          [normalizedUsername, email, department, hashedPassword, userId]
         );
       } else {
         await pool.query(
-          'UPDATE users SET email = $1, department = $2 WHERE id = $3',
-          [email, department, userId]
+          'UPDATE users SET username = $1, email = $2, department = $3 WHERE id = $4',
+          [normalizedUsername, email, department, userId]
         );
       }
 

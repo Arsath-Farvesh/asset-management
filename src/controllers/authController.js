@@ -69,7 +69,7 @@ class AuthController {
 
   // Update user profile
   async updateProfile(req, res) {
-    const { email, department, password, confirmPassword } = req.body;
+    const { username, email, department, password, confirmPassword } = req.body;
 
     if (password && password !== confirmPassword) {
       return res.status(400).json({ success: false, error: 'Passwords do not match' });
@@ -80,7 +80,7 @@ class AuthController {
     }
 
     const userId = req.session.user.id;
-    const result = await authService.updateProfile(userId, { email, department, password });
+    const result = await authService.updateProfile(userId, { username, email, department, password });
 
     if (!result.success) {
       return res.status(500).json(result);

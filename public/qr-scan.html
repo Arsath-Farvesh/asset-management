@@ -90,20 +90,24 @@
       color: white;
     }
 
-    .brand-text h5 {
+    .brand-text .main {
+      display: block;
       margin: 0;
       color: var(--text-primary);
       font-weight: 600;
       font-size: 1.1rem;
       letter-spacing: 0.5px;
+      line-height: 1.2;
     }
 
-    .brand-text p {
+    .brand-text .sub {
+      display: block;
       margin: 0;
-      color: var(--takhlees-gold);
+      color: var(--text-secondary);
       font-size: 0.75rem;
-      font-weight: 400;
-      letter-spacing: 1px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      line-height: 1.2;
     }
 
     .nav-btn {
@@ -115,11 +119,14 @@
       font-weight: 500;
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
+      text-decoration: none;
+      cursor: pointer;
     }
 
     .nav-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(197, 165, 114, 0.5);
+      color: white;
     }
 
     .nav-btn i {
@@ -253,10 +260,13 @@
     #reader {
       width: 100%;
       max-width: 420px;
+      min-height: 260px;
       margin: 0 auto 2rem auto;
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 8px 25px rgba(0, 48, 73, 0.15);
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
     }
 
     .status-message {
@@ -538,10 +548,10 @@
       </div>
       </a>
       <div class="d-flex gap-2 align-items-center ms-auto">
-        <a href="/index.html" class="nav-btn btn-enhanced">
+        <a id="homeNavBtn" href="/index.html" class="nav-btn btn-enhanced">
           <i class="bi bi-house-fill"></i> Home
         </a>
-        <a href="/history.html" class="nav-btn btn-enhanced">
+        <a id="historyNavBtn" href="/history.html" class="nav-btn btn-enhanced">
           <i class="bi bi-clock-history"></i> History
         </a>
         
@@ -619,8 +629,12 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
     const statusEl = document.getElementById('status');
+    const homeNavBtn = document.getElementById('homeNavBtn');
+    const historyNavBtn = document.getElementById('historyNavBtn');
+    const authIndicatorEl = document.getElementById('authIndicator');
 
     let csrfToken = null;
+    let scannerInstance = null;
 
     async function ensureCsrfToken() {
       if (csrfToken) return csrfToken;
@@ -648,13 +662,12 @@
     }
     
     // ===== Authentication Indicator =====
-    async function loadAuthIndicator() {
+    async function loadNavbarUser() {
       try {
         const res = await fetch('/api/auth-status', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
-            const authIndicator = document.getElementById('authIndicator');
             const userAvatar = document.getElementById('userAvatar');
             const userName = document.getElementById('userName');
             const userRole = document.getElementById('userRole');
@@ -664,7 +677,7 @@
             const role = data.user.role || 'user';
             userRole.textContent = role.toUpperCase();
             userRole.className = `user-role role-${role}`;
-            authIndicator.style.display = 'flex';
+            authIndicatorEl.style.display = 'flex';
           }
         }
       } catch (err) {
@@ -672,7 +685,17 @@
       }
     }
 
-    loadAuthIndicator();
+    loadNavbarUser();
+
+    homeNavBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/index.html';
+    });
+
+    historyNavBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/history.html';
+    });
     
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       try {
@@ -691,7 +714,6 @@
 
     checkLogin();
 
-    const reader = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -699,7 +721,7 @@
       statusEl.style.display = 'block';
       statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> QR Code detected! Redirecting...';
       
-      reader.stop().then(() => {
+      scannerInstance.stop().then(() => {
         window.location.href = `/details.html?qr=${encodeURIComponent(decodedText)}`;
       }).catch(()=> {
         window.location.href = `/details.html?qr=${encodeURIComponent(decodedText)}`;
@@ -710,34 +732,34 @@
       // ignore noisy scan errors
     }
 
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length) {
-        const cam = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
-        reader.start({ deviceId: { exact: cam.id } }, config, onScanSuccess, onScanError)
-          .catch(err => {
-            reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(err => {
-              statusEl.className = 'status-message error';
-              statusEl.style.display = 'block';
-              statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera access denied or unavailable';
-              console.error(err);
-            });
-          });
-      } else {
-        reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(err => {
-          statusEl.className = 'status-message error';
-          statusEl.style.display = 'block';
-          statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera access denied or unavailable';
-          console.error(err);
-        });
-      }
-    }).catch(err => {
-      reader.start({ facingMode: "environment" }, config, onScanSuccess, onScanError).catch(err => {
+    async function startScanner() {
+      try {
+        if (typeof Html5Qrcode === 'undefined') {
+          throw new Error('QR camera library blocked by browser security policy');
+        }
+
+        scannerInstance = new Html5Qrcode('reader');
+        const devices = await Html5Qrcode.getCameras();
+
+        if (devices && devices.length) {
+          const cam = devices.find((d) => /back|rear|environment/i.test(d.label)) || devices[0];
+          try {
+            await scannerInstance.start({ deviceId: { exact: cam.id } }, config, onScanSuccess, onScanError);
+          } catch (firstErr) {
+            await scannerInstance.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
+          }
+        } else {
+          await scannerInstance.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
+        }
+      } catch (err) {
         statusEl.className = 'status-message error';
         statusEl.style.display = 'block';
-        statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera access denied or unavailable';
-        console.error(err);
-      });
-    });
+        statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera unavailable. Please allow camera access and reload.';
+        console.error('Scanner init failed:', err);
+      }
+    }
+
+    startScanner();
   </script>
 
   <!-- Profile Modal -->
@@ -759,25 +781,14 @@
   let currentProfileUser = null;
   let isEditMode = false;
 
-  async function loadAuthIndicator() {
+  async function loadProfileUserData() {
     try {
       const resp = await fetch('/api/auth-status', { credentials: 'include' });
       const data = await resp.json();
       if (data.authenticated && data.user) {
         currentProfileUser = data.user;
-        const username = data.user.username || 'User';
-        const role = data.user.role || 'user';
-        const avatar = username.charAt(0).toUpperCase();
-        
         const indicator = document.getElementById('authIndicator');
         if (indicator) {
-          indicator.innerHTML = `
-            <span class="auth-avatar">${avatar}</span>
-            <span class="auth-text">
-              <span class="auth-username">${username}</span>
-              <span class="auth-role">${role}</span>
-            </span>
-          `;
           indicator.style.display = 'flex';
           indicator.addEventListener('click', openProfileModal);
         }
@@ -815,6 +826,10 @@
       contentDiv.innerHTML = `
         <form id="profileEditForm">
           <div class="profile-field">
+            <label class="profile-label">Username</label>
+            <input type="text" id="editUsername" class="profile-input" value="${username}" required>
+          </div>
+          <div class="profile-field">
             <label class="profile-label">Email</label>
             <input type="email" id="editEmail" class="profile-input" value="${email}" required>
           </div>
@@ -841,6 +856,10 @@
       document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
     } else {
       contentDiv.innerHTML = `
+        <div class="profile-field">
+          <label class="profile-label">Username</label>
+          <div class="profile-value">${username}</div>
+        </div>
         <div class="profile-field">
           <label class="profile-label">Email</label>
           <div class="profile-value">${email}</div>
@@ -870,6 +889,7 @@
   async function saveProfileChanges(e) {
     e.preventDefault();
     
+    const username = document.getElementById('editUsername').value.trim();
     const email = document.getElementById('editEmail').value.trim();
     const department = document.getElementById('editDepartment').value.trim();
     const password = document.getElementById('editPassword').value;
@@ -877,6 +897,11 @@
     const messageDiv = document.getElementById('formMessage');
 
     // Validation
+    if (!username) {
+      showFormMessage('Username is required', 'error');
+      return;
+    }
+
     if (!email) {
       showFormMessage('Email is required', 'error');
       return;
@@ -893,7 +918,7 @@
     }
 
     try {
-      const payload = { email, department };
+      const payload = { username, email, department, confirmPassword };
       if (password) payload.password = password;
 
       const resp = await fetch('/api/user/profile', {
@@ -937,7 +962,7 @@
   });
 
   // Load auth indicator when page loads
-  window.addEventListener('load', loadAuthIndicator);
+  window.addEventListener('load', loadProfileUserData);
   </script>
 </body>
 </html>
