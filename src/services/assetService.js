@@ -59,6 +59,81 @@ function normalizeId(id) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+function getTodayDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getFallbackValue(column) {
+  const dataType = String(column.data_type || '').toLowerCase();
+
+  if (dataType.includes('date') || dataType.includes('time')) {
+    return getTodayDateString();
+  }
+
+  if (
+    dataType.includes('int') ||
+    dataType.includes('numeric') ||
+    dataType.includes('decimal') ||
+    dataType.includes('real') ||
+    dataType.includes('double')
+  ) {
+    return 0;
+  }
+
+  if (dataType.includes('bool')) {
+    return false;
+  }
+
+  return 'N/A';
+}
+
+function addAlias(target, toKey, fromValue) {
+  if (fromValue !== undefined && fromValue !== null && fromValue !== '' && target[toKey] === undefined) {
+    target[toKey] = fromValue;
+  }
+}
+
+function normalizePayloadForLegacySchemas(category, payload) {
+  const normalized = { ...(payload || {}) };
+
+  // Generic aliases used by mixed/legacy tables
+  addAlias(normalized, 'asset_name', normalized.name);
+  addAlias(normalized, 'name', normalized.asset_name);
+  addAlias(normalized, 'case_name', normalized.name);
+  addAlias(normalized, 'name', normalized.case_name);
+
+  addAlias(normalized, 'collection_date', normalized.case_date);
+  addAlias(normalized, 'case_date', normalized.collection_date);
+
+  addAlias(normalized, 'key_reference', normalized.case_number);
+  addAlias(normalized, 'case_number', normalized.key_reference);
+
+  addAlias(normalized, 'employee_name', normalized.customer_name);
+  addAlias(normalized, 'customer_name', normalized.employee_name);
+
+  addAlias(normalized, 'location', normalized.case_type);
+  addAlias(normalized, 'case_type', normalized.location);
+
+  // Extra handling for legacy keys table shape
+  if (category === 'keys') {
+    addAlias(normalized, 'case_name', normalized.name);
+    addAlias(normalized, 'key_reference', normalized.case_number || normalized.customer_phone);
+    addAlias(normalized, 'employee_name', normalized.customer_name);
+    addAlias(normalized, 'location', normalized.case_type);
+    addAlias(normalized, 'collection_date', normalized.case_date);
+
+    if (!normalized.remarks) {
+      const parts = [];
+      if (normalized.customer_phone) parts.push(`phone:${normalized.customer_phone}`);
+      if (normalized.case_type) parts.push(`type:${normalized.case_type}`);
+      if (normalized.case_number) parts.push(`case_no:${normalized.case_number}`);
+      normalized.remarks = parts.join(' | ') || undefined;
+    }
+  }
+
+  return normalized;
+}
+
 class AssetService {
   // Create asset
   async createAsset(category, data) {
@@ -67,7 +142,40 @@ class AssetService {
         return { success: false, error: 'Invalid asset category' };
       }
 
-      const entries = Object.entries(data || {}).filter(([, value]) => value !== undefined);
+      const normalizedData = normalizePayloadForLegacySchemas(category, data);
+
+      const colResult = await pool.query(
+        `SELECT column_name, data_type, is_nullable, column_default
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = $1`,
+        [category]
+      );
+
+      if (!colResult.rows || colResult.rows.length === 0) {
+        return { success: false, error: `Table not found or has no columns: ${category}` };
+      }
+
+      const tableColumns = colResult.rows;
+      const entries = [];
+
+      tableColumns.forEach((column) => {
+        const key = column.column_name;
+        if (key === 'id') {
+          return;
+        }
+
+        const incoming = normalizedData[key];
+        if (incoming !== undefined) {
+          entries.push([key, incoming]);
+          return;
+        }
+
+        const isRequired = column.is_nullable === 'NO' && !column.column_default;
+        if (isRequired) {
+          entries.push([key, getFallbackValue(column)]);
+        }
+      });
+
       const columnsArray = entries.map(([key]) => key);
       const values = entries.map(([, value]) => value);
 
