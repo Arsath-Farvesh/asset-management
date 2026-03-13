@@ -11,7 +11,11 @@ const sslConfig = process.env.DB_SSL_REJECT_UNAUTHORIZED === 'false'
 const poolConfig = {
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000
+  connectionTimeoutMillis: 5000,
+  // Keep TCP connections alive so Railway's internal network
+  // doesn't silently drop idle pool connections.
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000
 };
 
 // Use DATABASE_URL if available, otherwise pg will use PG* env vars
@@ -51,7 +55,8 @@ function isRetryableDbError(error) {
     'the database system is starting up',
     'Connection terminated unexpectedly',
     'ECONNRESET',
-    'ETIMEDOUT'
+    'ETIMEDOUT',
+    'ECONNREFUSED'
   ];
 
   const message = String(error.message || '');
