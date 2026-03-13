@@ -87,6 +87,17 @@
 
     indicator.style.display = 'flex';
     indicator.addEventListener('click', openProfileModal);
+
+    // Hide add-asset form on index page for non-admin users
+    const addAssetHeader = document.getElementById('addAssetHeader');
+    const addAssetMain   = document.getElementById('addAssetMain');
+    const addAssetNoAccess = document.getElementById('addAssetNoAccess');
+    if (addAssetHeader && addAssetMain) {
+      const isAdmin = state.viewer?.role === 'admin';
+      addAssetHeader.style.display  = isAdmin ? '' : 'none';
+      addAssetMain.style.display    = isAdmin ? '' : 'none';
+      if (addAssetNoAccess) addAssetNoAccess.style.display = isAdmin ? 'none' : '';
+    }
   }
 
   async function loadViewer() {
