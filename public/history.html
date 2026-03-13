@@ -18,7 +18,7 @@
   
   <style>
     :root {
-      --takhlees-gold: #D62855;
+      --takhlees-gold: var(--brand-500);
       --takhlees-blue: #1f2937;
       --takhlees-dark: #111827;
       --takhlees-red: #ef4444;
@@ -77,12 +77,12 @@
     .shield-icon {
       width: 45px;
       height: 45px;
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.4);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
     }
 
     .shield-icon i {
@@ -107,19 +107,19 @@
     }
 
     .nav-btn {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       color: white;
       border: none;
       padding: 10px 24px;
       border-radius: 8px;
       font-weight: 500;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
     }
 
     .nav-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(197, 165, 114, 0.5);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
     }
 
     .nav-btn i {
@@ -142,14 +142,14 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 600;
       font-size: 0.9rem;
-      box-shadow: 0 2px 8px rgba(197, 165, 114, 0.3);
+      box-shadow: 0 2px 8px rgba(136, 1, 14, 0.3);
     }
 
     .user-info {
@@ -299,12 +299,32 @@
     }
 
     .badge-category {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       color: white;
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 500;
+    }
+
+    .code-thumb {
+      width: 56px;
+      height: 56px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+      padding: 2px;
+    }
+
+    .barcode-thumb {
+      width: 110px;
+      height: 40px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+      padding: 2px;
     }
 
     /* Action Buttons */
@@ -431,7 +451,7 @@
       outline: none;
       box-sizing: border-box;
     }
-    .edit-field input:focus { border-color: #D62855; }
+    .edit-field input:focus { border-color: var(--brand-500); }
     .edit-modal-footer {
       padding: 1rem 1.5rem;
       border-top: 1px solid #f3f4f6;
@@ -452,7 +472,7 @@
       padding: 0.55rem 1.5rem;
       border-radius: 8px;
       border: none;
-      background: linear-gradient(135deg, #D62855 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-hover) 100%);
       color: #fff;
       font-weight: 600;
       cursor: pointer;
@@ -570,7 +590,7 @@
     .profile-avatar-large {
       width: 80px; height: 80px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #6b7280 0%, #E8186A 100%);
+      background: linear-gradient(135deg, #6b7280 0%, var(--brand-hover) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -578,7 +598,7 @@
       font-weight: 600;
       font-size: 2rem;
       margin: 0 auto 1rem;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.4);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
     }
 
     .profile-body {
@@ -618,7 +638,7 @@
     .profile-input:focus {
       outline: none;
       border-color: #6b7280;
-      box-shadow: 0 0 0 3px rgba(197, 165, 114, 0.1);
+      box-shadow: 0 0 0 3px rgba(136, 1, 14, 0.1);
     }
 
     .profile-btn {
@@ -746,6 +766,8 @@
                   <th>Serial</th>
                   <th>Employee</th>
                   <th>Location</th>
+                  <th>QR</th>
+                  <th>Barcode</th>
                   <th>Submitted By</th>
                   <th>Created At</th>
                   <th>Actions</th>
@@ -869,6 +891,20 @@
         
         const tbody = document.querySelector('#historyTable tbody');
         tbody.innerHTML = '';
+
+        const buildQrData = (row) => {
+          const base = [row.name || '', row.category || '', row.serial_number || '', row.employee_name || '', row.id || '']
+            .join('-')
+            .replace(/^-+|-+$/g, '');
+          return base || `asset-${row.id}`;
+        };
+
+        const buildBarcodeText = (row) => {
+          return row.serial_number || row.name || `${row.category || 'asset'}-${row.id}`;
+        };
+
+        const qrSrc = (row) => `https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(buildQrData(row))}`;
+        const barcodeSrc = (row) => `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(buildBarcodeText(row))}&scale=2&height=28&includetext`;
         
         rows.forEach(row => {
             displayCategory = row.category.replace(/_/g, ' ').toUpperCase();
@@ -891,6 +927,12 @@
             <td>${row.serial_number || '-'}</td>
             <td>${row.employee_name || '-'}</td>
             <td>${row.location || '-'}</td>
+            <td>
+              <img class="code-thumb" src="${qrSrc(row)}" alt="QR ${row.id}" loading="lazy" />
+            </td>
+            <td>
+              <img class="barcode-thumb" src="${barcodeSrc(row)}" alt="Barcode ${row.id}" loading="lazy" />
+            </td>
             <td>${row.submitted_by || '-'}</td>
             <td>${new Date(row.created_at).toLocaleString()}</td>
             <td>
@@ -1041,7 +1083,6 @@
       const id       = modal._editId;
       const saveBtn  = document.getElementById('editSaveBtn');
       const caseStyle = isCaseStyleCategory(category);
-      const original = modal._originalRecord || {};
 
       const name = document.getElementById('editName').value.trim();
       const location = document.getElementById('editLocation').value.trim();
@@ -1064,26 +1105,16 @@
         const caseNumberInput = document.getElementById('editCaseNumber').value.trim();
         const caseTypeInput = document.getElementById('editCaseType').value.trim();
 
-        const customerName = customerNameInput || original.customer_name || '';
-        const customerPhone = customerPhoneInput || original.customer_phone || '';
-        const caseDate = caseDateInput || (original.case_date ? String(original.case_date).slice(0, 10) : '');
-        const caseNumber = caseNumberInput || original.case_number || '';
-        const caseType = caseTypeInput || original.case_type || '';
-
-        if (!customerName || !customerPhone || !caseDate || !caseNumber || !caseType) {
-          alert('Please complete all case fields (or keep existing values).');
-          return;
-        }
-
         payload = {
           name,
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          case_date: caseDate,
-          case_number: caseNumber,
-          case_type: caseType,
           location
         };
+
+        if (customerNameInput) payload.customer_name = customerNameInput;
+        if (customerPhoneInput) payload.customer_phone = customerPhoneInput;
+        if (caseDateInput) payload.case_date = caseDateInput;
+        if (caseNumberInput) payload.case_number = caseNumberInput;
+        if (caseTypeInput) payload.case_type = caseTypeInput;
       } else {
         payload = {
           name,
@@ -1482,15 +1513,15 @@
 
 <!-- Inactivity Timeout Warning Modal -->
 <div class="profile-modal-overlay" id="timeoutModalOverlay" style="display:none; background: rgba(0, 0, 0, 0.7);">
-  <div class="profile-modal" style="background: #fff; border: 2px solid #D62855; max-width: 400px;">
-    <div class="profile-header" style="background: #D62855; color: white; border-radius: 8px 8px 0 0;">
+  <div class="profile-modal" style="background: #fff; border: 2px solid var(--brand-500); max-width: 400px;">
+    <div class="profile-header" style="background: var(--brand-500); color: white; border-radius: 8px 8px 0 0;">
       <h3 style="margin: 0; font-size: 1.3rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Session Timeout Warning</h3>
     </div>
     <div class="profile-body" style="text-align: center; padding: 2rem;">
-      <p style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Your session will expire due to inactivity in <span id="timeoutCountdown" style="font-weight: bold; color: #D62855;">5:00</span></p>
+      <p style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Your session will expire due to inactivity in <span id="timeoutCountdown" style="font-weight: bold; color: var(--brand-500);">5:00</span></p>
       <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">Activity such as mouse movements, clicks, or typing will extend your session.</p>
       <div style="display: flex; gap: 1rem;">
-        <button class="profile-btn" id="continueSessionBtn" style="flex: 1; background: #D62855; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Continue Session</button>
+        <button class="profile-btn" id="continueSessionBtn" style="flex: 1; background: var(--brand-500); color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Continue Session</button>
         <button class="profile-btn" id="logoutNowBtn" style="flex: 1; background: #6b7280; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Logout Now</button>
       </div>
     </div>

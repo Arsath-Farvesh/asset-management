@@ -12,16 +12,32 @@
   --color-primary-600: #475569;
   --color-primary-500: #64748b;
   
-  /* Brand Colors - Takhlees Company Theme */
-  --color-primary: #D62855;     /* Primary pink/magenta */
-  --color-gold: #D62855;        /* Brand color (pink) */
-  --takhlees-gold: #D62855;     /* Alias for compatibility */
-  --takhlees-red: #D62855;      /* Brand accent */
-  --color-red: #D62855;         /* Brand accent */
+  /* Brand Scale - Company color system */
+  --brand-50: #f6e6e8;
+  --brand-100: #ebcdd1;
+  --brand-200: #d69ba3;
+  --brand-300: #c16a75;
+  --brand-400: #a30a1a;
+  --brand-500: #88010E;
+  --brand-600: #77010c;
+  --brand-700: #66010a;
+  --brand-800: #550108;
+  --brand-900: #440106;
+
+  --brand-hover: var(--brand-400);
+  --brand-active: var(--brand-600);
+  --brand-focus-ring: rgba(214, 155, 163, 0.45);
+
+  /* Brand aliases for compatibility */
+  --color-primary: var(--brand-500);
+  --color-gold: var(--brand-500);
+  --takhlees-gold: var(--brand-500);
+  --takhlees-red: var(--brand-500);
+  --color-red: var(--brand-500);
   --color-success: #10b981;     /* Success/positive actions */
-  --color-warning: #D62855;     /* Warnings (brand color) */
+  --color-warning: var(--brand-500);     /* Warnings (brand color) */
   --color-error: #D62828;       /* Errors (darker red) */
-  --color-info: #D62855;        /* Information (brand color) */
+  --color-info: var(--brand-500);        /* Information (brand color) */
   
   /* Neutral Colors - Clear hierarchy */
   --color-text-primary: #111827;
@@ -197,12 +213,12 @@ small, .text-small {
 .shield-icon {
   width: 45px;
   height: 45px;
-  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-hover) 100%);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(214, 40, 85, 0.3);
+  box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
   flex-shrink: 0;
 }
 
@@ -234,15 +250,15 @@ small, .text-small {
 .nav-btn,
 .btn-gold,
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
-  color: var(--color-primary-900) !important;
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-hover) 100%);
+  color: #ffffff !important;
   border: none;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
   transition: all var(--transition-base);
-  box-shadow: 0 4px 12px rgba(214, 40, 85, 0.25);
+  box-shadow: 0 4px 12px rgba(136, 1, 14, 0.25);
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -253,9 +269,10 @@ small, .text-small {
 .nav-btn:hover,
 .btn-gold:hover,
 .btn-primary:hover {
+  background: linear-gradient(135deg, var(--brand-hover) 0%, var(--brand-300) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(214, 40, 85, 0.35);
-  color: var(--color-primary-900) !important;
+  box-shadow: 0 6px 20px rgba(136, 1, 14, 0.35);
+  color: #ffffff !important;
   text-decoration: none;
 }
 
@@ -273,8 +290,8 @@ small, .text-small {
 }
 
 .btn-outline-gold:hover {
-  background: var(--color-gold);
-  color: var(--color-primary-900);
+  background: var(--brand-500);
+  color: #ffffff;
 }
 
 /* Authentication Status */
@@ -292,7 +309,7 @@ small, .text-small {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-hover) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,7 +364,7 @@ small, .text-small {
 
 .navbar-toggler:focus {
   box-shadow: none;
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--brand-hover);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -383,8 +400,8 @@ small, .text-small {
 .form-control:focus,
 .form-select:focus,
 .form-control-enhanced:focus {
-  border-color: var(--color-gold);
-  box-shadow: 0 0 0 4px rgba(214, 40, 85, 0.1);
+  border-color: var(--brand-hover);
+  box-shadow: 0 0 0 4px var(--brand-focus-ring);
   outline: none;
 }
 
@@ -448,7 +465,7 @@ small, .text-small {
 }
 
 .password-toggle:focus {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--brand-hover);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -584,13 +601,13 @@ small, .text-small {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #A30A1A 100%);
   color: var(--color-primary-900);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(214, 40, 85, 0.3);
+  box-shadow: 0 6px 20px rgba(136, 1, 14, 0.3);
 }
 
 .btn-secondary {
@@ -688,7 +705,7 @@ small, .text-small {
 .card-header,
 .card-header-takhlees,
 .card-header-enhanced {
-  background: linear-gradient(135deg, rgba(214, 40, 85, 0.08) 0%, rgba(214, 40, 85, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(136, 1, 14, 0.08) 0%, rgba(136, 1, 14, 0.03) 100%);
   border-bottom: 2px solid var(--color-gold);
   padding: var(--space-3);
   font-weight: var(--font-weight-semibold);
@@ -892,7 +909,7 @@ small, .text-small {
 }
 
 .badge-primary {
-  background: rgba(214, 40, 85, 0.2);
+  background: rgba(136, 1, 14, 0.2);
   color: var(--color-gold);
 }
 
@@ -1190,7 +1207,7 @@ small, .text-small {
 }
 
 .profile-header {
-  background: linear-gradient(135deg, var(--color-gold) 0%, #E8186A 100%);
+  background: linear-gradient(135deg, var(--color-gold) 0%, #A30A1A 100%);
   padding: var(--space-4) var(--space-3);
   text-align: center;
   color: white;
@@ -1264,7 +1281,7 @@ small, .text-small {
 .profile-input:focus {
   outline: none;
   border-color: var(--color-gold);
-  box-shadow: 0 0 0 3px rgba(214, 40, 85, 0.1);
+  box-shadow: 0 0 0 3px rgba(136, 1, 14, 0.1);
 }
 
 .profile-btn {

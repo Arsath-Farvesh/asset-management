@@ -1004,15 +1004,15 @@ function showFormMessage(msg, type) {
 
 <!-- Inactivity Timeout Warning Modal -->
 <div class="profile-modal-overlay" id="timeoutModalOverlay" style="display:none; background: rgba(0, 0, 0, 0.7);">
-  <div class="profile-modal" style="background: #fff; border: 2px solid #D62855; max-width: 400px;">
-    <div class="profile-header" style="background: #D62855; color: white; border-radius: 8px 8px 0 0;">
+  <div class="profile-modal" style="background: #fff; border: 2px solid var(--brand-500); max-width: 400px;">
+    <div class="profile-header" style="background: var(--brand-500); color: white; border-radius: 8px 8px 0 0;">
       <h3 style="margin: 0; font-size: 1.3rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Session Timeout Warning</h3>
     </div>
     <div class="profile-body" style="text-align: center; padding: 2rem;">
-      <p style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Your session will expire due to inactivity in <span id="timeoutCountdown" style="font-weight: bold; color: #D62855;">5:00</span></p>
+      <p style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Your session will expire due to inactivity in <span id="timeoutCountdown" style="font-weight: bold; color: var(--brand-500);">5:00</span></p>
       <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">Activity such as mouse movements, clicks, or typing will extend your session.</p>
       <div style="display: flex; gap: 1rem;">
-        <button class="profile-btn" id="continueSessionBtn" style="flex: 1; background: #D62855; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Continue Session</button>
+        <button class="profile-btn" id="continueSessionBtn" style="flex: 1; background: var(--brand-500); color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Continue Session</button>
         <button class="profile-btn" id="logoutNowBtn" style="flex: 1; background: #6b7280; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Logout Now</button>
       </div>
     </div>

@@ -18,7 +18,7 @@
   
   <style>
     :root {
-      --takhlees-gold: #D62855;
+      --takhlees-gold: var(--brand-500);
       --takhlees-blue: #1f2937;
       --takhlees-dark: #111827;
       --takhlees-red: #ef4444;
@@ -77,12 +77,12 @@
     .shield-icon {
       width: 45px;
       height: 45px;
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.4);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
     }
 
     .shield-icon i {
@@ -111,21 +111,21 @@
     }
 
     .nav-btn {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       color: white;
       border: none;
       padding: 10px 24px;
       border-radius: 8px;
       font-weight: 500;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
       text-decoration: none;
       cursor: pointer;
     }
 
     .nav-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(197, 165, 114, 0.5);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
       color: white;
     }
 
@@ -149,14 +149,14 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 600;
       font-size: 0.9rem;
-      box-shadow: 0 2px 8px rgba(197, 165, 114, 0.3);
+      box-shadow: 0 2px 8px rgba(136, 1, 14, 0.3);
     }
 
     .user-info {
@@ -352,14 +352,14 @@
     }
 
     .btn-home {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
       color: white;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.3);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
     }
 
     .btn-home:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(197, 165, 114, 0.5);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
       color: white;
     }
 
@@ -458,7 +458,7 @@
     .profile-avatar-large {
       width: 80px; height: 80px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #6b7280 0%, #E8186A 100%);
+      background: linear-gradient(135deg, #6b7280 0%, var(--brand-hover) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -466,7 +466,7 @@
       font-weight: 600;
       font-size: 2rem;
       margin: 0 auto 1rem;
-      box-shadow: 0 4px 15px rgba(197, 165, 114, 0.4);
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
     }
 
     .profile-body {
@@ -506,7 +506,7 @@
     .profile-input:focus {
       outline: none;
       border-color: #6b7280;
-      box-shadow: 0 0 0 3px rgba(197, 165, 114, 0.1);
+      box-shadow: 0 0 0 3px rgba(136, 1, 14, 0.1);
     }
 
     .profile-btn {

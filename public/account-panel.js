@@ -212,7 +212,7 @@
         ? `${escapeHtml(user.first_name)} ${escapeHtml(user.last_name || '')}`
         : escapeHtml(user.username);
       return `
-        <button type="button" class="managed-user-btn" data-user-id="${user.id}" style="width:100%; text-align:left; border:1px solid ${active ? '#D62855' : '#e5e7eb'}; background:${active ? '#111827' : '#ffffff'}; color:${active ? '#ffffff' : '#111827'}; border-radius:10px; padding:0.75rem 0.9rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.6rem;">
+        <button type="button" class="managed-user-btn" data-user-id="${user.id}" style="width:100%; text-align:left; border:1px solid ${active ? 'var(--brand-500)' : '#e5e7eb'}; background:${active ? '#111827' : '#ffffff'}; color:${active ? '#ffffff' : '#111827'}; border-radius:10px; padding:0.75rem 0.9rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.6rem;">
           <div style="width:32px; height:32px; border-radius:50%; background:${active ? 'rgba(255,255,255,0.2)' : '#f3f4f6'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">${initials}</div>
           <div>
             <div style="font-weight:600; font-size:0.9rem;">${displayName}</div>
@@ -286,7 +286,7 @@
     return `
       <div style="display:grid; grid-template-columns:240px 1fr; gap:1rem; align-items:start;">
         <div>
-          <button type="button" id="addUserBtn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.4rem; border:2px dashed #D62855; background:transparent; color:#D62855; border-radius:10px; padding:0.65rem 0.9rem; margin-bottom:0.75rem; font-weight:600; cursor:pointer; font-size:0.9rem;">
+          <button type="button" id="addUserBtn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.4rem; border:2px dashed var(--brand-500); background:transparent; color:var(--brand-500); border-radius:10px; padding:0.65rem 0.9rem; margin-bottom:0.75rem; font-weight:600; cursor:pointer; font-size:0.9rem;">
             <span style="font-size:1.1rem;">+</span> Add User
           </button>
           <div style="max-height:340px; overflow:auto; padding-right:0.25rem;">
@@ -307,7 +307,7 @@
       const num = i + 1;
       const active = num === step;
       const done = num < step;
-      const bg = done ? '#10b981' : active ? '#D62855' : '#e5e7eb';
+      const bg = done ? '#10b981' : active ? 'var(--brand-500)' : '#e5e7eb';
       const color = done || active ? '#fff' : '#9ca3af';
       return `
         <div style="display:flex; align-items:center; gap:0.4rem;">
@@ -333,11 +333,11 @@
             </div>
           </div>
           <div>
-            <label class="profile-label">Display Name / Username <span style="color:#D62855">*</span></label>
+            <label class="profile-label">Display Name / Username <span style="color:var(--brand-500)">*</span></label>
             <input type="text" id="wUsername" class="profile-input" value="${escapeHtml(d.username || '')}" placeholder="e.g. john.doe" required>
           </div>
           <div>
-            <label class="profile-label">Email Address <span style="color:#D62855">*</span></label>
+            <label class="profile-label">Email Address <span style="color:var(--brand-500)">*</span></label>
             <input type="email" id="wEmail" class="profile-input" value="${escapeHtml(d.email || '')}" placeholder="user@company.com" required>
           </div>
           <div id="wizardMsg" style="display:none; padding:0.65rem; border-radius:8px; font-size:0.85rem;"></div>
@@ -375,11 +375,11 @@
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
             <div>
-              <label class="profile-label">Password <span style="color:#D62855">*</span></label>
+              <label class="profile-label">Password <span style="color:var(--brand-500)">*</span></label>
               <input type="password" id="wPassword" class="profile-input" placeholder="Min 8 characters">
             </div>
             <div>
-              <label class="profile-label">Confirm Password <span style="color:#D62855">*</span></label>
+              <label class="profile-label">Confirm Password <span style="color:var(--brand-500)">*</span></label>
               <input type="password" id="wConfirmPassword" class="profile-input" placeholder="Repeat password">
             </div>
           </div>
