@@ -114,6 +114,15 @@ function normalizePayloadForLegacySchemas(category, payload) {
   addAlias(normalized, 'location', normalized.case_type);
   addAlias(normalized, 'case_type', normalized.location);
 
+  addAlias(normalized, 'asset_tag', normalized.serial_number);
+  addAlias(normalized, 'serial_number', normalized.asset_tag);
+
+  addAlias(normalized, 'employee_id', normalized.serial_number);
+  addAlias(normalized, 'serial_number', normalized.employee_id);
+
+  addAlias(normalized, 'key_reference', normalized.serial_number);
+  addAlias(normalized, 'serial_number', normalized.key_reference);
+
   // Extra handling for legacy keys table shape
   if (category === 'keys') {
     addAlias(normalized, 'case_name', normalized.name);
@@ -139,6 +148,10 @@ function normalizeRecordForLegacySchemas(record) {
 
   if ((normalized.location === undefined || normalized.location === null || normalized.location === '') && normalized.case_type) {
     normalized.location = normalized.case_type;
+  }
+
+  if ((normalized.serial_number === undefined || normalized.serial_number === null || normalized.serial_number === '')) {
+    normalized.serial_number = normalized.asset_tag || normalized.employee_id || normalized.key_reference || normalized.serial_number;
   }
 
   return normalized;
@@ -401,7 +414,15 @@ class AssetService {
             ? 'case_name'
             : 'NULL';
 
-          const serialExpr = cols.has('serial_number') ? 'serial_number' : 'NULL';
+          const serialExpr = cols.has('serial_number')
+            ? 'serial_number'
+            : cols.has('asset_tag')
+            ? 'asset_tag'
+            : cols.has('employee_id')
+            ? 'employee_id'
+            : cols.has('key_reference')
+            ? 'key_reference'
+            : 'NULL';
           const employeeExpr = cols.has('employee_name') ? 'employee_name' : 'NULL';
           const locationExpr = cols.has('location') ? 'location' : cols.has('case_type') ? 'case_type' : 'NULL';
           const submittedByExpr = cols.has('submitted_by') ? 'submitted_by' : 'NULL';

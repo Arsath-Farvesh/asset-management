@@ -1116,12 +1116,16 @@
         if (caseNumberInput) payload.case_number = caseNumberInput;
         if (caseTypeInput) payload.case_type = caseTypeInput;
       } else {
+        const serialInput = document.getElementById('editSerial').value.trim();
+        const employeeInput = document.getElementById('editEmployee').value.trim();
+
         payload = {
           name,
-          serial_number: document.getElementById('editSerial').value.trim(),
-          employee_name: document.getElementById('editEmployee').value.trim(),
           location
         };
+
+        if (serialInput) payload.serial_number = serialInput;
+        if (employeeInput) payload.employee_name = employeeInput;
       }
 
       saveBtn.disabled = true;
