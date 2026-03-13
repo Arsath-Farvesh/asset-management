@@ -77,9 +77,10 @@ describe('AuthService', () => {
   describe('updateProfile', () => {
     it('should update only email and department for self profile without username changes', async () => {
       pool.query = jest.fn()
+        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rowCount: 1 })
         .mockResolvedValueOnce({
-          rows: [{ id: 1, username: 'user1', email: 'updated@test.com', role: 'user', department: 'Ops' }]
+          rows: [{ id: 1, username: 'user1', email: 'updated@test.com', role: 'user', department: 'Ops', avatar_url: null }]
         });
 
       const result = await authService.updateProfile(1, {
@@ -90,8 +91,21 @@ describe('AuthService', () => {
       expect(result.success).toBe(true);
       expect(pool.query).toHaveBeenNthCalledWith(
         1,
-        'UPDATE users SET email = $1, department = $2 WHERE id = $3',
-        ['updated@test.com', 'Ops', 1]
+        'SELECT id FROM users WHERE lower(email) = lower($1) AND id <> $2 LIMIT 1',
+        ['updated@test.com', 1]
+      );
+      expect(pool.query).toHaveBeenNthCalledWith(
+        2,
+        `UPDATE users
+           SET email = $1,
+               department = $2,
+               first_name = $3,
+               last_name = $4,
+               office_location = $5,
+               phone = $6,
+               avatar_url = $7
+           WHERE id = $8`,
+        ['updated@test.com', 'Ops', null, null, null, null, null, 1]
       );
       expect(result.user.username).toBe('user1');
     });
@@ -115,9 +129,10 @@ describe('AuthService', () => {
     it('should update a managed user including username and role', async () => {
       pool.query = jest.fn()
         .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rowCount: 1 })
         .mockResolvedValueOnce({
-          rows: [{ id: 2, username: 'renamed', email: 'renamed@test.com', role: 'admin', department: 'Finance' }]
+          rows: [{ id: 2, username: 'renamed', email: 'renamed@test.com', role: 'admin', department: 'Finance', avatar_url: null }]
         });
 
       const result = await authService.updateUserAsAdmin(2, {
@@ -130,8 +145,23 @@ describe('AuthService', () => {
       expect(result.success).toBe(true);
       expect(pool.query).toHaveBeenNthCalledWith(
         2,
-        'UPDATE users SET username = $1, email = $2, department = $3, role = $4 WHERE id = $5',
-        ['renamed', 'renamed@test.com', 'Finance', 'admin', 2]
+        'SELECT id FROM users WHERE lower(email) = lower($1) AND id <> $2 LIMIT 1',
+        ['renamed@test.com', 2]
+      );
+      expect(pool.query).toHaveBeenNthCalledWith(
+        3,
+        `UPDATE users
+           SET username = $1,
+               email = $2,
+               department = $3,
+               role = $4,
+               first_name = $5,
+               last_name = $6,
+               office_location = $7,
+               phone = $8,
+               avatar_url = $9
+           WHERE id = $10`,
+        ['renamed', 'renamed@test.com', 'Finance', 'admin', null, null, null, null, null, 2]
       );
       expect(result.user.role).toBe('admin');
     });

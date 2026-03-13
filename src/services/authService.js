@@ -3,6 +3,34 @@ const pool = require('../config/database');
 const logger = require('../config/logger');
 
 class AuthService {
+  normalizeText(value) {
+    if (value === undefined || value === null) {
+      return null;
+    }
+
+    const normalized = String(value).trim();
+    return normalized ? normalized : null;
+  }
+
+  normalizeAvatarUrl(value) {
+    const normalized = this.normalizeText(value);
+    if (!normalized) {
+      return { value: null };
+    }
+
+    const isHttpsUrl = /^https?:\/\//i.test(normalized);
+    const isRelativePath = normalized.startsWith('/');
+    const isDataImage = /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/i.test(normalized);
+
+    if (!isHttpsUrl && !isRelativePath && !isDataImage) {
+      return {
+        error: 'Avatar must be an https URL, a site-relative path, or a valid image data URL'
+      };
+    }
+
+    return { value: normalized };
+  }
+
   sanitizeUser(user) {
     if (!user) {
       return null;
@@ -17,7 +45,8 @@ class AuthService {
       first_name: user.first_name || null,
       last_name: user.last_name || null,
       office_location: user.office_location || null,
-      phone: user.phone || null
+      phone: user.phone || null,
+      avatar_url: user.avatar_url || user.avatar || null
     };
   }
 
@@ -148,9 +177,9 @@ class AuthService {
 
       const result = await pool.query(
         `INSERT INTO users
-           (username, email, password, role, department, first_name, last_name, office_location, phone)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING id, username, email, role, department, first_name, last_name, office_location, phone`,
+           (username, email, password, role, department, first_name, last_name, office_location, phone, avatar_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         RETURNING id, username, email, role, department, first_name, last_name, office_location, phone, avatar_url`,
         [
           normalizedUsername,
           String(email).trim(),
@@ -160,7 +189,8 @@ class AuthService {
           first_name || null,
           last_name || null,
           office_location || null,
-          phone || null
+          phone || null,
+          null
         ]
       );
 
@@ -177,11 +207,11 @@ class AuthService {
     try {
       const result = await pool.query(
         `SELECT id, username, email, role, department,
-                first_name, last_name, office_location, phone,
+                first_name, last_name, office_location, phone, avatar_url,
                 created_at
          FROM users ORDER BY created_at DESC`
       );
-      return { success: true, users: result.rows };
+      return { success: true, users: result.rows.map((user) => this.sanitizeUser(user)) };
     } catch (error) {
       logger.error('Get users error:', error);
       return { success: false, error: 'Failed to fetch users' };
@@ -191,23 +221,91 @@ class AuthService {
   // Update user profile
   async updateProfile(userId, updates) {
     try {
-      const { email, department, password } = updates;
-      
+      const {
+        email,
+        department,
+        password,
+        first_name,
+        last_name,
+        office_location,
+        phone,
+        avatar_url
+      } = updates;
+
+      const normalizedEmail = this.normalizeText(email);
+      const normalizedDepartment = this.normalizeText(department);
+      const normalizedFirstName = this.normalizeText(first_name);
+      const normalizedLastName = this.normalizeText(last_name);
+      const normalizedOfficeLocation = this.normalizeText(office_location);
+      const normalizedPhone = this.normalizeText(phone);
+      const avatarNormalization = this.normalizeAvatarUrl(avatar_url);
+
+      if (avatarNormalization.error) {
+        return { success: false, error: avatarNormalization.error };
+      }
+
+      const duplicateEmail = await pool.query(
+        'SELECT id FROM users WHERE lower(email) = lower($1) AND id <> $2 LIMIT 1',
+        [normalizedEmail, userId]
+      );
+
+      if (duplicateEmail.rows.length > 0) {
+        return { success: false, error: 'Email already exists' };
+      }
+
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
         await pool.query(
-          'UPDATE users SET email = $1, department = $2, password = $3 WHERE id = $4',
-          [email, department, hashedPassword, userId]
+          `UPDATE users
+           SET email = $1,
+               department = $2,
+               first_name = $3,
+               last_name = $4,
+               office_location = $5,
+               phone = $6,
+               avatar_url = $7,
+               password = $8
+           WHERE id = $9`,
+          [
+            normalizedEmail,
+            normalizedDepartment,
+            normalizedFirstName,
+            normalizedLastName,
+            normalizedOfficeLocation,
+            normalizedPhone,
+            avatarNormalization.value,
+            hashedPassword,
+            userId
+          ]
         );
       } else {
         await pool.query(
-          'UPDATE users SET email = $1, department = $2 WHERE id = $3',
-          [email, department, userId]
+          `UPDATE users
+           SET email = $1,
+               department = $2,
+               first_name = $3,
+               last_name = $4,
+               office_location = $5,
+               phone = $6,
+               avatar_url = $7
+           WHERE id = $8`,
+          [
+            normalizedEmail,
+            normalizedDepartment,
+            normalizedFirstName,
+            normalizedLastName,
+            normalizedOfficeLocation,
+            normalizedPhone,
+            avatarNormalization.value,
+            userId
+          ]
         );
       }
 
       const result = await pool.query(
-        'SELECT id, username, email, role, department FROM users WHERE id = $1',
+        `SELECT id, username, email, role, department,
+                first_name, last_name, office_location, phone, avatar_url
+         FROM users WHERE id = $1`,
         [userId]
       );
 
@@ -221,14 +319,36 @@ class AuthService {
 
   async updateUserAsAdmin(targetUserId, updates) {
     try {
-      const { username, email, department, role, password } = updates;
+      const {
+        username,
+        email,
+        department,
+        role,
+        password,
+        first_name,
+        last_name,
+        office_location,
+        phone,
+        avatar_url
+      } = updates;
 
       if (!username || !String(username).trim()) {
         return { success: false, error: 'Username is required' };
       }
 
       const normalizedUsername = String(username).trim();
+      const normalizedEmail = this.normalizeText(email);
       const normalizedRole = ['admin', 'user', 'guest'].includes(role) ? role : 'user';
+      const normalizedDepartment = this.normalizeText(department);
+      const normalizedFirstName = this.normalizeText(first_name);
+      const normalizedLastName = this.normalizeText(last_name);
+      const normalizedOfficeLocation = this.normalizeText(office_location);
+      const normalizedPhone = this.normalizeText(phone);
+      const avatarNormalization = this.normalizeAvatarUrl(avatar_url);
+
+      if (avatarNormalization.error) {
+        return { success: false, error: avatarNormalization.error };
+      }
 
       const exists = await pool.query(
         'SELECT id FROM users WHERE lower(username) = lower($1) AND id <> $2 LIMIT 1',
@@ -239,21 +359,76 @@ class AuthService {
         return { success: false, error: 'Username already exists' };
       }
 
+      const duplicateEmail = await pool.query(
+        'SELECT id FROM users WHERE lower(email) = lower($1) AND id <> $2 LIMIT 1',
+        [normalizedEmail, targetUserId]
+      );
+
+      if (duplicateEmail.rows.length > 0) {
+        return { success: false, error: 'Email already exists' };
+      }
+
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
         await pool.query(
-          'UPDATE users SET username = $1, email = $2, department = $3, role = $4, password = $5 WHERE id = $6',
-          [normalizedUsername, email, department, normalizedRole, hashedPassword, targetUserId]
+          `UPDATE users
+           SET username = $1,
+               email = $2,
+               department = $3,
+               role = $4,
+               first_name = $5,
+               last_name = $6,
+               office_location = $7,
+               phone = $8,
+               avatar_url = $9,
+               password = $10
+           WHERE id = $11`,
+          [
+            normalizedUsername,
+            normalizedEmail,
+            normalizedDepartment,
+            normalizedRole,
+            normalizedFirstName,
+            normalizedLastName,
+            normalizedOfficeLocation,
+            normalizedPhone,
+            avatarNormalization.value,
+            hashedPassword,
+            targetUserId
+          ]
         );
       } else {
         await pool.query(
-          'UPDATE users SET username = $1, email = $2, department = $3, role = $4 WHERE id = $5',
-          [normalizedUsername, email, department, normalizedRole, targetUserId]
+          `UPDATE users
+           SET username = $1,
+               email = $2,
+               department = $3,
+               role = $4,
+               first_name = $5,
+               last_name = $6,
+               office_location = $7,
+               phone = $8,
+               avatar_url = $9
+           WHERE id = $10`,
+          [
+            normalizedUsername,
+            normalizedEmail,
+            normalizedDepartment,
+            normalizedRole,
+            normalizedFirstName,
+            normalizedLastName,
+            normalizedOfficeLocation,
+            normalizedPhone,
+            avatarNormalization.value,
+            targetUserId
+          ]
         );
       }
 
       const result = await pool.query(
-        'SELECT id, username, email, role, department FROM users WHERE id = $1',
+        `SELECT id, username, email, role, department,
+                first_name, last_name, office_location, phone, avatar_url
+         FROM users WHERE id = $1`,
         [targetUserId]
       );
 

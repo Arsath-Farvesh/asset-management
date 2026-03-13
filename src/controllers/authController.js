@@ -69,7 +69,17 @@ class AuthController {
 
   // Update user profile
   async updateProfile(req, res) {
-    const { email, department, password, confirmPassword } = req.body;
+    const {
+      email,
+      department,
+      password,
+      confirmPassword,
+      first_name,
+      last_name,
+      office_location,
+      phone,
+      avatar_url
+    } = req.body;
 
     if (password && password !== confirmPassword) {
       return res.status(400).json({ success: false, error: 'Passwords do not match' });
@@ -80,10 +90,24 @@ class AuthController {
     }
 
     const userId = req.session.user.id;
-    const result = await authService.updateProfile(userId, { email, department, password });
+    const result = await authService.updateProfile(userId, {
+      email,
+      department,
+      password,
+      first_name,
+      last_name,
+      office_location,
+      phone,
+      avatar_url
+    });
 
     if (!result.success) {
-      return res.status(500).json(result);
+      const status = result.error === 'Avatar must be an https URL, a site-relative path, or a valid image data URL'
+        ? 400
+        : result.error === 'Email already exists'
+          ? 409
+          : 500;
+      return res.status(status).json(result);
     }
 
     // Update session
@@ -136,7 +160,19 @@ class AuthController {
 
   async updateUser(req, res) {
     const { id } = req.params;
-    const { username, email, department, role, password, confirmPassword } = req.body;
+    const {
+      username,
+      email,
+      department,
+      role,
+      password,
+      confirmPassword,
+      first_name,
+      last_name,
+      office_location,
+      phone,
+      avatar_url
+    } = req.body;
 
     if (password && password !== confirmPassword) {
       return res.status(400).json({ success: false, error: 'Passwords do not match' });
@@ -156,11 +192,20 @@ class AuthController {
       email,
       department,
       role,
-      password
+      password,
+      first_name,
+      last_name,
+      office_location,
+      phone,
+      avatar_url
     });
 
     if (!result.success) {
-      const status = result.error === 'User not found' ? 404 : 400;
+      const status = result.error === 'User not found'
+        ? 404
+        : result.error === 'Email already exists'
+          ? 409
+          : 400;
       return res.status(status).json(result);
     }
 

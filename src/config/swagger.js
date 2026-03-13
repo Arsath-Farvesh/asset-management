@@ -52,6 +52,11 @@ const options = {
             password: { type: 'string', minLength: 8, writeOnly: true },
             role: { type: 'string', enum: ['user', 'admin'], default: 'user' },
             department: { type: 'string', maxLength: 100 },
+            first_name: { type: 'string', maxLength: 100 },
+            last_name: { type: 'string', maxLength: 100 },
+            office_location: { type: 'string', maxLength: 150 },
+            phone: { type: 'string', maxLength: 50 },
+            avatar_url: { type: 'string', description: 'Profile photo URL or image data URL' },
             oauth_provider: { type: 'string', enum: ['google', 'microsoft', 'github'] },
             created_at: { type: 'string', format: 'date-time', readOnly: true },
             updated_at: { type: 'string', format: 'date-time', readOnly: true }

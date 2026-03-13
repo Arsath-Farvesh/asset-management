@@ -19,6 +19,125 @@
     wizardData: {}
   };
 
+  const MAX_AVATAR_FILE_SIZE = 350 * 1024;
+
+  function getAvatarSource(user) {
+    const source = user?.avatar_url || user?.avatar || '';
+    return String(source || '').trim();
+  }
+
+  function applyAvatar(element, user, fallbackText) {
+    if (!element) {
+      return;
+    }
+
+    const source = getAvatarSource(user);
+    if (source) {
+      const safeSource = source.replace(/"/g, '%22');
+      element.textContent = '';
+      element.style.backgroundImage = `url("${safeSource}")`;
+      element.style.backgroundSize = 'cover';
+      element.style.backgroundPosition = 'center';
+      element.style.backgroundRepeat = 'no-repeat';
+      element.style.color = 'transparent';
+    } else {
+      element.textContent = fallbackText;
+      element.style.backgroundImage = '';
+      element.style.backgroundSize = '';
+      element.style.backgroundPosition = '';
+      element.style.backgroundRepeat = '';
+      element.style.color = '';
+    }
+  }
+
+  function renderAvatarField(prefix, user) {
+    const fallback = (user?.username || 'U').charAt(0).toUpperCase();
+    const avatarUrl = escapeHtml(getAvatarSource(user));
+    return `
+      <div style="display:grid; gap:0.75rem; padding:0.9rem; border:1px solid #e5e7eb; border-radius:12px; background:#f9fafb;">
+        <div style="display:flex; align-items:center; gap:0.9rem;">
+          <div id="${prefix}AvatarPreview" class="profile-avatar-large" style="width:64px; height:64px; margin:0; font-size:1.35rem;">${fallback}</div>
+          <div>
+            <div style="font-weight:600; color:#111827; margin-bottom:0.2rem;">Profile Photo</div>
+            <div style="font-size:0.85rem; color:#6b7280;">Upload a JPG, PNG, or WebP image up to 350 KB, or paste an image URL.</div>
+          </div>
+        </div>
+        <div>
+          <label class="profile-label">Photo URL</label>
+          <input type="url" id="${prefix}AvatarUrl" class="profile-input" value="${avatarUrl}" placeholder="https://example.com/photo.jpg or leave blank">
+        </div>
+        <div>
+          <label class="profile-label">Upload Photo</label>
+          <input type="file" id="${prefix}AvatarFile" class="profile-input" accept="image/png,image/jpeg,image/webp,image/gif">
+        </div>
+      </div>
+    `;
+  }
+
+  function getPreviewUser(prefix, fallbackUser) {
+    const previewUser = { ...fallbackUser };
+    const avatarInput = document.getElementById(`${prefix}AvatarUrl`);
+    previewUser.avatar_url = avatarInput ? avatarInput.value.trim() : getAvatarSource(fallbackUser);
+    return previewUser;
+  }
+
+  function refreshAvatarPreview(prefix, fallbackUser) {
+    const preview = document.getElementById(`${prefix}AvatarPreview`);
+    if (!preview) {
+      return;
+    }
+
+    const previewUser = getPreviewUser(prefix, fallbackUser);
+    const fallback = (fallbackUser?.username || 'U').charAt(0).toUpperCase();
+    applyAvatar(preview, previewUser, fallback);
+  }
+
+  function bindAvatarField(prefix, fallbackUser, messageElementId) {
+    const urlInput = document.getElementById(`${prefix}AvatarUrl`);
+    const fileInput = document.getElementById(`${prefix}AvatarFile`);
+
+    refreshAvatarPreview(prefix, fallbackUser);
+
+    if (urlInput) {
+      urlInput.addEventListener('input', () => {
+        refreshAvatarPreview(prefix, fallbackUser);
+      });
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+          setMessage(messageElementId, 'Please choose an image file', 'error');
+          fileInput.value = '';
+          return;
+        }
+
+        if (file.size > MAX_AVATAR_FILE_SIZE) {
+          setMessage(messageElementId, 'Profile photo must be 350 KB or smaller', 'error');
+          fileInput.value = '';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (urlInput) {
+            urlInput.value = String(reader.result || '');
+          }
+          refreshAvatarPreview(prefix, fallbackUser);
+        };
+        reader.onerror = () => {
+          setMessage(messageElementId, 'Failed to read the selected photo', 'error');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
   function escapeHtml(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -75,7 +194,7 @@
     const userRole = document.getElementById('userRole');
 
     if (userAvatar) {
-      userAvatar.textContent = state.viewer.username.charAt(0).toUpperCase();
+      applyAvatar(userAvatar, state.viewer, state.viewer.username.charAt(0).toUpperCase());
     }
     if (userName) {
       userName.textContent = state.viewer.username;
@@ -129,7 +248,7 @@
   function renderHeader() {
     const username = state.viewer?.username || 'User';
     const role = state.viewer?.role || 'user';
-    avatarLarge.textContent = username.charAt(0).toUpperCase();
+    applyAvatar(avatarLarge, state.viewer, username.charAt(0).toUpperCase());
     usernameEl.textContent = username;
     roleEl.textContent = role.charAt(0).toUpperCase() + role.slice(1);
   }
@@ -158,6 +277,10 @@
     const department = escapeHtml(user.department || '');
     const username = escapeHtml(user.username || '');
     const role = escapeHtml((user.role || 'user').toUpperCase());
+    const firstName = escapeHtml(user.first_name || '');
+    const lastName = escapeHtml(user.last_name || '');
+    const officeLocation = escapeHtml(user.office_location || '');
+    const phone = escapeHtml(user.phone || '');
 
     return `
       <div style="display:grid; gap:1rem;">
@@ -172,13 +295,34 @@
           </div>
         </div>
         <form id="selfProfileForm" style="display:grid; gap:0.9rem;">
+          ${renderAvatarField('self', user)}
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <div>
+              <label class="profile-label">First Name</label>
+              <input type="text" id="selfFirstName" class="profile-input" value="${firstName}">
+            </div>
+            <div>
+              <label class="profile-label">Last Name</label>
+              <input type="text" id="selfLastName" class="profile-input" value="${lastName}">
+            </div>
+          </div>
           <div>
             <label class="profile-label">Email</label>
             <input type="email" id="selfEmail" class="profile-input" value="${email}" required>
           </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <div>
+              <label class="profile-label">Department</label>
+              <input type="text" id="selfDepartment" class="profile-input" value="${department}">
+            </div>
+            <div>
+              <label class="profile-label">Office Location</label>
+              <input type="text" id="selfOfficeLocation" class="profile-input" value="${officeLocation}">
+            </div>
+          </div>
           <div>
-            <label class="profile-label">Department</label>
-            <input type="text" id="selfDepartment" class="profile-input" value="${department}">
+            <label class="profile-label">Phone</label>
+            <input type="text" id="selfPhone" class="profile-input" value="${phone}">
           </div>
           <div>
             <label class="profile-label">New Password</label>
@@ -211,9 +355,13 @@
       const displayName = user.first_name
         ? `${escapeHtml(user.first_name)} ${escapeHtml(user.last_name || '')}`
         : escapeHtml(user.username);
+      const avatarUrl = getAvatarSource(user);
+      const avatarStyle = avatarUrl
+        ? `background-image:url('${escapeHtml(avatarUrl)}'); background-size:cover; background-position:center; background-repeat:no-repeat; color:transparent;`
+        : `background:${active ? 'rgba(255,255,255,0.2)' : '#f3f4f6'};`;
       return `
         <button type="button" class="managed-user-btn" data-user-id="${user.id}" style="width:100%; text-align:left; border:1px solid ${active ? 'var(--brand-500)' : '#e5e7eb'}; background:${active ? '#111827' : '#ffffff'}; color:${active ? '#ffffff' : '#111827'}; border-radius:10px; padding:0.75rem 0.9rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.6rem;">
-          <div style="width:32px; height:32px; border-radius:50%; background:${active ? 'rgba(255,255,255,0.2)' : '#f3f4f6'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">${initials}</div>
+          <div style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0; ${avatarStyle}">${initials}</div>
           <div>
             <div style="font-weight:600; font-size:0.9rem;">${displayName}</div>
             <div style="font-size:0.75rem; opacity:0.75;">${escapeHtml(user.role || 'user')} &bull; ${escapeHtml(user.email || '')}</div>
@@ -224,6 +372,7 @@
 
     const selectedMarkup = selected ? `
       <form id="adminUserForm" style="display:grid; gap:0.9rem;">
+        ${renderAvatarField('admin', selected)}
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
           <div>
             <label class="profile-label">First Name</label>
@@ -461,6 +610,11 @@
 
     const email = document.getElementById('selfEmail').value.trim();
     const department = document.getElementById('selfDepartment').value.trim();
+    const firstName = document.getElementById('selfFirstName').value.trim();
+    const lastName = document.getElementById('selfLastName').value.trim();
+    const officeLocation = document.getElementById('selfOfficeLocation').value.trim();
+    const phone = document.getElementById('selfPhone').value.trim();
+    const avatarUrl = document.getElementById('selfAvatarUrl').value.trim();
     const password = document.getElementById('selfPassword').value;
     const confirmPassword = document.getElementById('selfConfirmPassword').value;
 
@@ -481,7 +635,16 @@
 
     try {
       const token = await getCsrfToken();
-      const payload = { email, department, confirmPassword };
+      const payload = {
+        email,
+        department,
+        confirmPassword,
+        first_name: firstName,
+        last_name: lastName,
+        office_location: officeLocation,
+        phone,
+        avatar_url: avatarUrl
+      };
       if (password) {
         payload.password = password;
       }
@@ -498,7 +661,8 @@
       state.viewer = result.user;
       syncNavbarIndicator();
       setMessage('selfProfileMessage', 'Profile updated successfully', 'success');
-      renderHeader();
+      renderContent();
+      setMessage('selfProfileMessage', 'Profile updated successfully', 'success');
     } catch (error) {
       setMessage('selfProfileMessage', error.message, 'error');
     }
@@ -551,6 +715,11 @@
     const username = document.getElementById('adminUsername').value.trim();
     const email = document.getElementById('adminEmail').value.trim();
     const department = document.getElementById('adminDepartment').value.trim();
+    const firstName = document.getElementById('adminFirstName').value.trim();
+    const lastName = document.getElementById('adminLastName').value.trim();
+    const officeLocation = document.getElementById('adminOffice').value.trim();
+    const phone = document.getElementById('adminPhone').value.trim();
+    const avatarUrl = document.getElementById('adminAvatarUrl').value.trim();
     const role = document.getElementById('adminRole').value;
     const password = document.getElementById('adminPassword').value;
     const confirmPassword = document.getElementById('adminConfirmPassword').value;
@@ -577,7 +746,18 @@
 
     try {
       const token = await getCsrfToken();
-      const payload = { username, email, department, role, confirmPassword };
+      const payload = {
+        username,
+        email,
+        department,
+        role,
+        confirmPassword,
+        first_name: firstName,
+        last_name: lastName,
+        office_location: officeLocation,
+        phone,
+        avatar_url: avatarUrl
+      };
       if (password) {
         payload.password = password;
       }
@@ -595,10 +775,9 @@
       if (state.viewer && state.viewer.id === result.user.id) {
         state.viewer = result.user;
         syncNavbarIndicator();
-        renderHeader();
       }
-      setMessage('adminUserMessage', 'User updated successfully', 'success');
       renderContent();
+      setMessage('adminUserMessage', 'User updated successfully', 'success');
     } catch (error) {
       setMessage('adminUserMessage', error.message, 'error');
     }
@@ -645,6 +824,7 @@
     const selfForm = document.getElementById('selfProfileForm');
     if (selfForm) {
       selfForm.addEventListener('submit', saveSelfProfile);
+      bindAvatarField('self', state.viewer, 'selfProfileMessage');
     }
 
     const tabProfile = document.getElementById('accountTabProfile');
@@ -754,6 +934,7 @@
     const adminForm = document.getElementById('adminUserForm');
     if (adminForm) {
       adminForm.addEventListener('submit', saveManagedUser);
+      bindAvatarField('admin', getSelectedUser(), 'adminUserMessage');
     }
 
     const refreshBtn = document.getElementById('refreshUsersBtn');
