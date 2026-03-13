@@ -264,7 +264,7 @@
     const usersColor = state.activeTab === 'users' ? '#ffffff' : '#374151';
 
     return `
-      <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem;">
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
         <button type="button" id="accountTabProfile" style="flex:1; border:none; border-radius:10px; padding:0.75rem 1rem; font-weight:600; background:${profileActive}; color:${profileColor};">My Profile</button>
         <button type="button" id="accountTabUsers" style="flex:1; border:none; border-radius:10px; padding:0.75rem 1rem; font-weight:600; background:${usersActive}; color:${usersColor};">User Management</button>
       </div>
@@ -284,7 +284,7 @@
 
     return `
       <div style="display:grid; gap:1rem;">
-        <div style="display:grid; gap:0.75rem; grid-template-columns:repeat(2, minmax(0, 1fr));">
+        <div style="display:grid; gap:0.75rem; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));">
           <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:0.9rem;">
             <div style="font-size:0.75rem; color:#6b7280; text-transform:uppercase; font-weight:600; margin-bottom:0.35rem;">Username</div>
             <div style="font-weight:600; color:#111827;">${username}</div>
@@ -296,7 +296,7 @@
         </div>
         <form id="selfProfileForm" style="display:grid; gap:0.9rem;">
           ${renderAvatarField('self', user)}
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
             <div>
               <label class="profile-label">First Name</label>
               <input type="text" id="selfFirstName" class="profile-input" value="${firstName}">
@@ -310,7 +310,7 @@
             <label class="profile-label">Email</label>
             <input type="email" id="selfEmail" class="profile-input" value="${email}" required>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
             <div>
               <label class="profile-label">Department</label>
               <input type="text" id="selfDepartment" class="profile-input" value="${department}">
@@ -333,7 +333,7 @@
             <input type="password" id="selfConfirmPassword" class="profile-input" placeholder="Confirm new password">
           </div>
           <div id="selfProfileMessage" style="display:none; padding:0.75rem; border-radius:10px; font-size:0.9rem;"></div>
-          <div style="display:flex; gap:0.75rem;">
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
             <button type="submit" class="profile-btn profile-btn-save">Save Profile</button>
             <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
           </div>
@@ -373,7 +373,7 @@
     const selectedMarkup = selected ? `
       <form id="adminUserForm" style="display:grid; gap:0.9rem;">
         ${renderAvatarField('admin', selected)}
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
           <div>
             <label class="profile-label">First Name</label>
             <input type="text" id="adminFirstName" class="profile-input" value="${escapeHtml(selected.first_name || '')}" placeholder="First name">
@@ -391,7 +391,7 @@
           <label class="profile-label">Email</label>
           <input type="email" id="adminEmail" class="profile-input" value="${escapeHtml(selected.email || '')}" required>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
           <div>
             <label class="profile-label">Department</label>
             <input type="text" id="adminDepartment" class="profile-input" value="${escapeHtml(selected.department || '')}">
@@ -401,7 +401,7 @@
             <input type="text" id="adminOffice" class="profile-input" value="${escapeHtml(selected.office_location || '')}">
           </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
           <div>
             <label class="profile-label">Phone</label>
             <input type="text" id="adminPhone" class="profile-input" value="${escapeHtml(selected.phone || '')}">
@@ -424,7 +424,7 @@
           </div>
         </div>
         <div id="adminUserMessage" style="display:none; padding:0.75rem; border-radius:10px; font-size:0.9rem;"></div>
-        <div style="display:flex; gap:0.75rem;">
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
           <button type="submit" class="profile-btn profile-btn-save">Save User</button>
           <button type="button" id="refreshUsersBtn" class="profile-btn profile-btn-cancel">Refresh</button>
           <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
@@ -433,7 +433,7 @@
     ` : '<div style="padding:1rem; border:1px dashed #d1d5db; border-radius:12px; color:#6b7280;">Select a user from the list.</div>';
 
     return `
-      <div style="display:grid; grid-template-columns:240px 1fr; gap:1rem; align-items:start;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; align-items:start;">
         <div>
           <button type="button" id="addUserBtn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.4rem; border:2px dashed var(--brand-500); background:transparent; color:var(--brand-500); border-radius:10px; padding:0.65rem 0.9rem; margin-bottom:0.75rem; font-weight:600; cursor:pointer; font-size:0.9rem;">
             <span style="font-size:1.1rem;">+</span> Add User
@@ -471,7 +471,7 @@
     if (step === 1) {
       bodyHtml = `
         <div style="display:grid; gap:0.85rem;">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
             <div>
               <label class="profile-label">First Name</label>
               <input type="text" id="wFirstName" class="profile-input" value="${escapeHtml(d.first_name || '')}" placeholder="First name">
@@ -498,7 +498,7 @@
     } else if (step === 2) {
       bodyHtml = `
         <div style="display:grid; gap:0.85rem;">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
             <div>
               <label class="profile-label">Role</label>
               <select id="wRole" class="profile-input">
@@ -512,7 +512,7 @@
               <input type="text" id="wDepartment" class="profile-input" value="${escapeHtml(d.department || '')}" placeholder="e.g. IT, HR">
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
             <div>
               <label class="profile-label">Office Location</label>
               <input type="text" id="wOffice" class="profile-input" value="${escapeHtml(d.office_location || '')}" placeholder="e.g. Dubai HQ">
@@ -522,7 +522,7 @@
               <input type="text" id="wPhone" class="profile-input" value="${escapeHtml(d.phone || '')}" placeholder="+971 ...">
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
             <div>
               <label class="profile-label">Password <span style="color:var(--brand-500)">*</span></label>
               <input type="password" id="wPassword" class="profile-input" placeholder="Min 8 characters">

@@ -138,6 +138,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ========== TYPOGRAPHY ========== */
@@ -1309,6 +1318,65 @@ small, .text-small {
 .profile-btn-close {
   background: var(--color-bg-muted);
   color: var(--color-text-primary);
+}
+
+/* ========== RESPONSIVE HARDENING ========== */
+@media (max-width: 992px) {
+  .navbar-takhlees,
+  .navbar-enhanced {
+    padding: 0.75rem;
+  }
+
+  .navbar-takhlees .container-fluid {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .brand-logo,
+  .brand-text,
+  .user-info {
+    min-width: 0;
+  }
+
+  .brand-text .main {
+    font-size: 0.95rem;
+  }
+
+  .brand-text .sub {
+    font-size: 0.68rem;
+    letter-spacing: 0.3px;
+  }
+
+  .auth-indicator {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .user-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .profile-modal.profile-modal--wide {
+    max-width: calc(100vw - 1rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-modal {
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+
+  .profile-body {
+    max-height: calc(100vh - 180px);
+  }
+
+  .profile-btn {
+    min-height: 44px;
+  }
 }
 
 /* ========== QR CODE & BARCODE STYLING ========== */
