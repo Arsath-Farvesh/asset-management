@@ -218,10 +218,10 @@ asset-management/
 
 | Username | Password | Role |
 |----------|----------|------|
-| admin | TakhleeAdmin@2024! | Admin |
-| user1 | TakhleeUser@2024! | User |
+| admin | Set via secure environment/seed | Admin |
+| user1 | Set via secure environment/seed | User |
 
-⚠️ **Production:** Change all default passwords
+⚠️ **Production:** Rotate any seeded or temporary credentials before go-live
 
 ---
 

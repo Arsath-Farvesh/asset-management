@@ -1,4 +1,17 @@
 const logger = require('../config/logger');
+const crypto = require('crypto');
+
+// Correlate logs and responses with a request identifier.
+const attachRequestContext = (req, res, next) => {
+  const incomingRequestId = req.headers['x-request-id'];
+  const requestId = typeof incomingRequestId === 'string' && incomingRequestId.trim()
+    ? incomingRequestId.trim()
+    : crypto.randomUUID();
+
+  req.requestId = requestId;
+  res.setHeader('X-Request-Id', requestId);
+  next();
+};
 
 // Input sanitization middleware
 const sanitizeInput = (req, res, next) => {
@@ -35,15 +48,31 @@ const csrfErrorHandler = (err, req, res, next) => {
 
 // Global error handler
 const errorHandler = (err, req, res, next) => {
-  logger.error('Error:', err);
-  
-  res.status(err.status || 500).json({ 
-    success: false, 
-    error: err.message || 'Internal server error' 
+  const status = err.status || 500;
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production';
+
+  logger.error('Unhandled request error', {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.originalUrl,
+    status,
+    message: err.message,
+    stack: err.stack
+  });
+
+  const responseError = status >= 500 && isProduction
+    ? 'Internal server error'
+    : (err.message || 'Internal server error');
+
+  res.status(status).json({
+    success: false,
+    error: responseError,
+    requestId: req.requestId
   });
 };
 
 module.exports = {
+  attachRequestContext,
   sanitizeInput,
   requestLogger,
   csrfErrorHandler,

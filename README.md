@@ -151,12 +151,12 @@ see [RAILWAY_DEPLOYMENT_RUNBOOK.md](RAILWAY_DEPLOYMENT_RUNBOOK.md).
 
 ## 🔐 Default Users
 
-| Username | Password            | Role  | Permissions          |
-| :------- | :------------------ | :---- | :------------------- |
-| admin    | TakhleeAdmin@2024!  | Admin | Full access          |
-| user1    | TakhleeUser@2024!   | User  | View, Create, Delete |
+| Username | Password | Role  | Permissions          |
+| :------- | :------- | :---- | :------------------- |
+| admin    | Set via environment/seed in your deployment | Admin | Full access          |
+| user1    | Set via environment/seed in your deployment | User  | View, Create, Delete |
 
-**⚠️ CRITICAL: Change all default passwords before production deployment!**
+**⚠️ CRITICAL: Never commit or share real credentials. Rotate passwords before production deployment.**
 
 ## 📊 API Documentation
 
@@ -310,7 +310,7 @@ __tests__/
 
 ### Production Checklist
 
-- [ ] Change all default passwords
+- [ ] Rotate all seeded or temporary passwords
 - [ ] Set `NODE_ENV=production`
 - [ ] Enable PostgreSQL SSL (`PGSSLMODE=require`)
 - [ ] Configure firewall rules

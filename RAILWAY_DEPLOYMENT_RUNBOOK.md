@@ -43,6 +43,8 @@ Do not deploy if this command fails.
 | `SESSION_COOKIE_DOMAIN` | `.example.gov.ae` | Optional; set only if needed |
 | `DB_SSL_REJECT_UNAUTHORIZED` | `false` or `true` | Depends on DB cert policy |
 | `LOG_LEVEL` | `info` | Use `warn`/`error` for lower verbosity |
+| `CSP_MODE` | `compat` or `strict` | Use `strict` after inline scripts/styles are removed or nonced |
+| `CSP_REPORT_ONLY` | `true` or `false` | Use `true` to validate stricter policy without blocking traffic |
 
 ### Optional Features
 
@@ -113,7 +115,21 @@ If OAuth variables are not configured, do not expose OAuth login buttons in prod
 
 ---
 
-## 7) Rollback Plan
+## 7) CSP Strict Rollout (Staging First)
+
+Use this process before enforcing strict CSP in production:
+
+1. Configure staging with `CSP_MODE=strict` and `CSP_REPORT_ONLY=true`.
+1. Exercise full UI flows: login/logout, account profile updates, create/update/delete asset actions, and history/PDF export.
+1. Inspect browser console and CSP report telemetry for blocked inline scripts and styles.
+1. Remediate violations by removing inline blocks or migrating to nonce/hash-based policies.
+1. Re-test staging until violations are resolved.
+1. Enforce in production by keeping `CSP_MODE=strict` and setting `CSP_REPORT_ONLY=false`.
+1. Monitor error logs and user-reported regressions for at least one full release cycle.
+
+---
+
+## 8) Rollback Plan
 
 If deployment fails health or critical smoke checks:
 
@@ -124,7 +140,7 @@ If deployment fails health or critical smoke checks:
 
 ---
 
-## 8) Emergency Commands
+## 9) Emergency Commands
 
 ```bash
 # Strict environment validation

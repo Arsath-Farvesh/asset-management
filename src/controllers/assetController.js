@@ -7,13 +7,19 @@ class AssetController {
   async createAsset(req, res) {
     try {
       const { category } = req.params;
+      const actor = {
+        userId: req.session?.user?.id || null,
+        username: req.session?.user?.username || null,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null
+      };
       // Inject the logged-in user's username so history shows who submitted it
       const data = {
         ...req.body,
         submitted_by: req.session?.user?.username || null
       };
 
-      const result = await assetService.createAsset(category, data);
+      const result = await assetService.createAsset(category, data, actor);
 
       if (!result.success) {
         return res.status(500).json(result);
@@ -56,8 +62,14 @@ class AssetController {
   async updateAsset(req, res) {
     const { category, id } = req.params;
     const data = req.body;
+    const actor = {
+      userId: req.session?.user?.id || null,
+      username: req.session?.user?.username || null,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || null
+    };
 
-    const result = await assetService.updateAsset(category, id, data);
+    const result = await assetService.updateAsset(category, id, data, actor);
 
     if (!result.success) {
       return res.status(404).json(result);
@@ -69,8 +81,14 @@ class AssetController {
   // Delete asset
   async deleteAsset(req, res) {
     const { category, id } = req.params;
+    const actor = {
+      userId: req.session?.user?.id || null,
+      username: req.session?.user?.username || null,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || null
+    };
 
-    const result = await assetService.deleteAsset(category, id);
+    const result = await assetService.deleteAsset(category, id, actor);
 
     if (!result.success) {
       return res.status(404).json(result);
@@ -82,6 +100,12 @@ class AssetController {
   // Bulk delete assets
   async bulkDelete(req, res) {
     const { ids, category, items } = req.body || {};
+    const actor = {
+      userId: req.session?.user?.id || null,
+      username: req.session?.user?.username || null,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || null
+    };
 
     if (Array.isArray(items) && items.length > 0) {
       const grouped = items.reduce((acc, item) => {
@@ -106,7 +130,7 @@ class AssetController {
       const deletedIdsByCategory = {};
 
       for (const groupedCategory of categories) {
-        const result = await assetService.bulkDeleteAssets(groupedCategory, grouped[groupedCategory]);
+        const result = await assetService.bulkDeleteAssets(groupedCategory, grouped[groupedCategory], actor);
 
         if (!result.success) {
           return res.status(400).json(result);
@@ -131,7 +155,7 @@ class AssetController {
       return res.status(400).json({ success: false, error: 'Category is required' });
     }
 
-    const result = await assetService.bulkDeleteAssets(category, ids);
+    const result = await assetService.bulkDeleteAssets(category, ids, actor);
 
     if (!result.success) {
       return res.status(400).json(result);

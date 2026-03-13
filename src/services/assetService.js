@@ -158,8 +158,35 @@ function normalizeRecordForLegacySchemas(record) {
 }
 
 class AssetService {
+  async writeAuditLog({ tableName, recordId, action, actor, oldData = null, newData = null }) {
+    try {
+      await pool.query(
+        `INSERT INTO audit_logs (table_name, record_id, action, user_id, username, old_data, new_data, ip_address, user_agent)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          tableName,
+          recordId,
+          action,
+          actor?.userId || null,
+          actor?.username || null,
+          oldData,
+          newData,
+          actor?.ipAddress || null,
+          actor?.userAgent || null
+        ]
+      );
+    } catch (auditError) {
+      logger.warn('Audit log write skipped', {
+        table: tableName,
+        recordId,
+        action,
+        error: auditError.message
+      });
+    }
+  }
+
   // Create asset
-  async createAsset(category, data) {
+  async createAsset(category, data, actor = null) {
     try {
       if (!validateCategory(category)) {
         return { success: false, error: 'Invalid asset category' };
@@ -212,9 +239,19 @@ class AssetService {
       const query = `INSERT INTO ${category} (${columns}) VALUES (${placeholders}) RETURNING *`;
       logger.info(`Executing INSERT for ${category}:`, { columns, query: query.substring(0, 100) });
       const result = await pool.query(query, values);
+      const createdRecord = result.rows[0];
+
+      await this.writeAuditLog({
+        tableName: category,
+        recordId: createdRecord.id,
+        action: 'CREATE',
+        actor,
+        oldData: null,
+        newData: createdRecord
+      });
 
       logger.info(`Asset created in ${category}: ${data.name || data.asset_name || data.case_name || 'unknown'}`);
-      return { success: true, data: result.rows[0] };
+      return { success: true, data: createdRecord };
     } catch (error) {
       logger.error(`Create asset error in ${category}:`, {
         message: error.message,
@@ -267,7 +304,7 @@ class AssetService {
   }
 
   // Update asset
-  async updateAsset(category, id, data) {
+  async updateAsset(category, id, data, actor = null) {
     try {
       if (!validateCategory(category)) {
         return { success: false, error: 'Invalid asset category' };
@@ -313,11 +350,22 @@ class AssetService {
       const queryValues = [...values, normalizedId];
 
       const query = `UPDATE ${category} SET ${setClause} WHERE id = $${queryValues.length} RETURNING *`;
+      const previousStateResult = await pool.query(`SELECT * FROM ${category} WHERE id = $1`, [normalizedId]);
+      const previousState = previousStateResult.rows[0] || null;
       const result = await pool.query(query, queryValues);
 
       if (result.rows.length === 0) {
         return { success: false, error: 'Asset not found' };
       }
+
+      await this.writeAuditLog({
+        tableName: category,
+        recordId: normalizedId,
+        action: 'UPDATE',
+        actor,
+        oldData: previousState,
+        newData: result.rows[0]
+      });
 
       logger.info(`Asset updated in ${category}: ID ${normalizedId}`);
       return { success: true, data: result.rows[0] };
@@ -328,7 +376,7 @@ class AssetService {
   }
 
   // Delete asset
-  async deleteAsset(category, id) {
+  async deleteAsset(category, id, actor = null) {
     try {
       if (!validateCategory(category)) {
         return { success: false, error: 'Invalid asset category' };
@@ -345,6 +393,15 @@ class AssetService {
         return { success: false, error: 'Asset not found' };
       }
 
+      await this.writeAuditLog({
+        tableName: category,
+        recordId: normalizedId,
+        action: 'DELETE',
+        actor,
+        oldData: result.rows[0],
+        newData: null
+      });
+
       logger.info(`Asset deleted from ${category}: ID ${normalizedId}`);
       return { success: true, message: 'Asset deleted successfully' };
     } catch (error) {
@@ -354,7 +411,7 @@ class AssetService {
   }
 
   // Bulk delete assets
-  async bulkDeleteAssets(category, ids) {
+  async bulkDeleteAssets(category, ids, actor = null) {
     try {
       if (!validateCategory(category)) {
         return { success: false, error: 'Invalid asset category' };
@@ -368,9 +425,26 @@ class AssetService {
         return { success: false, error: 'No valid asset IDs provided' };
       }
 
+      const existingRowsResult = await pool.query(
+        `SELECT * FROM ${category} WHERE id = ANY($1::int[])`,
+        [normalizedIds]
+      );
+      const existingRowsById = new Map(existingRowsResult.rows.map((row) => [row.id, row]));
+
       const placeholders = normalizedIds.map((_, i) => `$${i + 1}`).join(', ');
       const query = `DELETE FROM ${category} WHERE id IN (${placeholders}) RETURNING id`;
       const result = await pool.query(query, normalizedIds);
+
+      for (const deleted of result.rows) {
+        await this.writeAuditLog({
+          tableName: category,
+          recordId: deleted.id,
+          action: 'DELETE',
+          actor,
+          oldData: existingRowsById.get(deleted.id) || null,
+          newData: null
+        });
+      }
 
       logger.info(`Bulk delete in ${category}: ${result.rowCount} assets deleted`);
       return { success: true, deletedCount: result.rowCount, deletedIds: result.rows.map(r => r.id) };

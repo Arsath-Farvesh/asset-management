@@ -47,6 +47,14 @@ describe('Auth Routes Integration Tests', () => {
     });
   });
 
+  describe('GET /api/db-schema', () => {
+    it('should reject unauthenticated users', async () => {
+      const response = await agent.get('/api/db-schema');
+
+      expect(response.status).toBe(401);
+    });
+  });
+
   describe('POST /api/auth/logout', () => {
     it('should handle logout request', async () => {
       const response = await agent

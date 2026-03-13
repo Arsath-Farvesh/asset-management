@@ -34,7 +34,7 @@ const passport = require('./src/config/passport');
 const swaggerSpec = require('./src/config/swagger');
 
 // Import middleware
-const { requestLogger, sanitizeInput, csrfErrorHandler, errorHandler } = require('./src/middleware/security');
+const { attachRequestContext, requestLogger, sanitizeInput, csrfErrorHandler, errorHandler } = require('./src/middleware/security');
 const { apiLimiter } = require('./src/middleware/rateLimiter');
 
 // Import routes
@@ -43,10 +43,33 @@ const routes = require('./src/routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production';
+const isStrictCsp = process.env.CSP_MODE === 'strict';
+const isCspReportOnly = process.env.CSP_REPORT_ONLY === 'true';
 const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+function buildCspDirectives() {
+  const baseDirectives = {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com'],
+    scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://html2canvas.hertzen.com', 'https://unpkg.com'],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
+    imgSrc: ["'self'", 'data:', 'https:'],
+    connectSrc: ["'self'"]
+  };
+
+  if (isStrictCsp) {
+    return baseDirectives;
+  }
+
+  return {
+    ...baseDirectives,
+    styleSrc: [...baseDirectives.styleSrc, "'unsafe-inline'"],
+    scriptSrc: [...baseDirectives.scriptSrc, "'unsafe-inline'"]
+  };
+}
 
 app.disable('x-powered-by');
 
@@ -64,14 +87,8 @@ app.get('/health', (req, res) => {
 // ===== SECURITY HEADERS =====
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://html2canvas.hertzen.com", "https://unpkg.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"]
-    }
+    directives: buildCspDirectives(),
+    reportOnly: isCspReportOnly
   }
 }));
 
@@ -102,9 +119,9 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // Production: if CORS_ORIGINS is not configured, allow all (with warning already logged)
+    // Production: if CORS_ORIGINS is not configured, fail closed for browser requests.
     if (allowedOrigins.length === 0) {
-      return callback(null, true);
+      return callback(new Error('CORS is not configured for production'));
     }
 
     // Production: check if origin is in allowed list
@@ -120,6 +137,7 @@ app.use(cors({
 app.set('trust proxy', 1);
 
 // ===== REQUEST LOGGING =====
+app.use(attachRequestContext);
 app.use(requestLogger);
 
 // ===== BODY PARSERS =====

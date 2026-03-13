@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { isAuthenticated, isAdmin } = require('../middleware/auth');
+
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production';
+const allowDebugEndpoints = process.env.ENABLE_DEBUG_ENDPOINTS === 'true' || !isProduction;
 
 // Health check route (no dependencies)
 router.get('/health', async (req, res) => {
@@ -45,7 +49,14 @@ router.get('/session-config', (req, res) => {
 });
 
 // Database schema check endpoint (for debugging)
-router.get('/db-schema', async (req, res) => {
+router.get('/db-schema', isAuthenticated, isAdmin, async (req, res) => {
+  if (!allowDebugEndpoints) {
+    return res.status(404).json({
+      success: false,
+      error: 'Not found'
+    });
+  }
+
   try {
     const result = await pool.query(`
       SELECT table_name 
