@@ -1083,6 +1083,7 @@
       const id       = modal._editId;
       const saveBtn  = document.getElementById('editSaveBtn');
       const caseStyle = isCaseStyleCategory(category);
+      const original = modal._originalRecord || {};
 
       const name = document.getElementById('editName').value.trim();
       const location = document.getElementById('editLocation').value.trim();
@@ -1107,25 +1108,23 @@
 
         payload = {
           name,
+          customer_name: customerNameInput || original.customer_name,
+          customer_phone: customerPhoneInput || original.customer_phone,
+          case_date: caseDateInput || (original.case_date ? String(original.case_date).slice(0, 10) : undefined),
+          case_number: caseNumberInput || original.case_number,
+          case_type: caseTypeInput || original.case_type,
           location
         };
-
-        if (customerNameInput) payload.customer_name = customerNameInput;
-        if (customerPhoneInput) payload.customer_phone = customerPhoneInput;
-        if (caseDateInput) payload.case_date = caseDateInput;
-        if (caseNumberInput) payload.case_number = caseNumberInput;
-        if (caseTypeInput) payload.case_type = caseTypeInput;
       } else {
         const serialInput = document.getElementById('editSerial').value.trim();
         const employeeInput = document.getElementById('editEmployee').value.trim();
 
         payload = {
           name,
+          serial_number: serialInput || original.serial_number,
+          employee_name: employeeInput || original.employee_name,
           location
         };
-
-        if (serialInput) payload.serial_number = serialInput;
-        if (employeeInput) payload.employee_name = employeeInput;
       }
 
       saveBtn.disabled = true;
@@ -1138,10 +1137,17 @@
           credentials: 'include',
           body: JSON.stringify(payload)
         });
-        const j = await res.json();
+        let j;
+        try {
+          j = await res.json();
+        } catch (_err) {
+          throw new Error('Invalid server response');
+        }
+
         if (j.success) {
           closeEditModal();
-          loadHistory();
+          await loadHistory();
+          alert('Record updated successfully.');
         } else {
           alert('Update failed: ' + (j.error || 'Unknown error'));
         }
