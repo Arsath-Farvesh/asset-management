@@ -172,8 +172,8 @@ class AssetController {
     doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
     doc.moveDown(1.2);
 
-    const headers = ['ID', 'Category', 'Name', 'Serial', 'Employee', 'Location', 'Created At'];
-    const widths = [40, 80, 90, 65, 75, 80, 90];
+    const headers = ['ID', 'Category', 'Name', 'Serial', 'Employee', 'Location', 'Submitted By', 'Created At'];
+    const widths = [35, 75, 85, 60, 70, 70, 65, 55];
 
     const drawHeader = () => {
       let x = doc.page.margins.left;
@@ -208,6 +208,7 @@ class AssetController {
         String(row.serial_number || '-'),
         String(row.employee_name || '-'),
         String(row.location || '-'),
+        String(row.submitted_by || '-'),
         row.created_at ? new Date(row.created_at).toLocaleString() : '-'
       ];
 
