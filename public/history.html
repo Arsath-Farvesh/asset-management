@@ -1299,8 +1299,40 @@
       }
     });
 
+    function bindEditModalEvents() {
+      const modal = document.getElementById('editModal');
+      const closeBtn = document.getElementById('editModalCloseBtn');
+      const cancelBtn = document.getElementById('editCancelBtn');
+      const saveBtn = document.getElementById('editSaveBtn');
+
+      if (modal && !modal.dataset.bound) {
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) {
+            closeEditModal();
+          }
+        });
+        modal.dataset.bound = '1';
+      }
+
+      if (closeBtn && !closeBtn.dataset.bound) {
+        closeBtn.addEventListener('click', closeEditModal);
+        closeBtn.dataset.bound = '1';
+      }
+
+      if (cancelBtn && !cancelBtn.dataset.bound) {
+        cancelBtn.addEventListener('click', closeEditModal);
+        cancelBtn.dataset.bound = '1';
+      }
+
+      if (saveBtn && !saveBtn.dataset.bound) {
+        saveBtn.addEventListener('click', saveEditRow);
+        saveBtn.dataset.bound = '1';
+      }
+    }
+
     (async function init(){
       await loadUser();
+      bindEditModalEvents();
       await loadHistory();
     })();
   </script>
@@ -1683,11 +1715,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <!-- Inline Edit Modal -->
-<div class="edit-modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+<div class="edit-modal-overlay" id="editModal">
   <div class="edit-modal-box">
     <div class="edit-modal-header">
       <h5><i class="bi bi-pencil-fill me-2"></i><span id="editModalTitle">Edit Asset Record</span></h5>
-      <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Close">&times;</button>
+      <button class="edit-modal-close" id="editModalCloseBtn" type="button" aria-label="Close">&times;</button>
     </div>
     <div class="edit-modal-body">
       <div class="edit-field">
@@ -1730,8 +1762,8 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
     <div class="edit-modal-footer">
-      <button class="btn-edit-cancel" onclick="closeEditModal()">Cancel</button>
-      <button class="btn-edit-save" id="editSaveBtn" onclick="saveEditRow()">
+      <button class="btn-edit-cancel" id="editCancelBtn" type="button">Cancel</button>
+      <button class="btn-edit-save" id="editSaveBtn" type="button">
         <i class="bi bi-check-lg me-1"></i>Save Changes
       </button>
     </div>
