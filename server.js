@@ -131,9 +131,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== SESSION CONFIGURATION =====
 // 30 minutes of inactivity = automatic logout (1800000 ms)
-const INACTIVITY_TIMEOUT = process.env.SESSION_INACTIVITY_TIMEOUT || 30 * 60 * 1000;
+const INACTIVITY_TIMEOUT = Number.parseInt(process.env.SESSION_INACTIVITY_TIMEOUT, 10) || 30 * 60 * 1000;
 // Maximum session duration regardless of activity (24 hours)
-const MAX_SESSION_AGE = process.env.SESSION_MAX_AGE || 24 * 60 * 60 * 1000;
+const MAX_SESSION_AGE = Number.parseInt(process.env.SESSION_MAX_AGE, 10) || 24 * 60 * 60 * 1000;
+const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'takhlees.sid';
 
 app.use(session({
   store: new pgSession({
@@ -143,7 +144,7 @@ app.use(session({
     errorLog: (err) => logger.error('Session store error:', err),
     disableTouch: false
   }),
-  name: process.env.SESSION_COOKIE_NAME || 'takhlees.sid',
+  name: SESSION_COOKIE_NAME,
   secret: process.env.SESSION_SECRET || "change_this_secret",
   resave: false,
   saveUninitialized: false,
@@ -160,21 +161,55 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+function respondToExpiredSession(req, res) {
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    domain: process.env.SESSION_COOKIE_DOMAIN || undefined
+  });
+
+  if (req.originalUrl.startsWith('/api/')) {
+    return res.status(401).json({
+      success: false,
+      error: 'Session expired due to inactivity',
+      code: 'SESSION_EXPIRED'
+    });
+  }
+
+  return res.redirect(`/login.html?reason=${encodeURIComponent('Session expired due to inactivity')}`);
+}
+
+// ===== ACTIVITY TRACKING AND INACTIVITY ENFORCEMENT =====
+app.use((req, res, next) => {
+  const isAuthenticated = typeof req.isAuthenticated === 'function'
+    ? req.isAuthenticated()
+    : Boolean(req.session && req.session.user);
+
+  if (!isAuthenticated || !req.session) {
+    return next();
+  }
+
+  const now = Date.now();
+  const lastActivity = Number(req.session.lastActivity || now);
+
+  if (now - lastActivity > INACTIVITY_TIMEOUT) {
+    return req.session.destroy((error) => {
+      if (error) {
+        logger.error('Failed to destroy expired session:', error);
+      }
+      return respondToExpiredSession(req, res);
+    });
+  }
+
+  req.session.touch();
+  req.session.lastActivity = now;
+  return next();
+});
+
 // ===== CSRF PROTECTION =====
 const csrfProtection = csrf({ cookie: false });
 app.use(csrfProtection);
-
-// ===== ACTIVITY TRACKING FOR SESSION TIMEOUT =====
-// Middleware to track user activity and extend session on each request
-app.use((req, res, next) => {
-  if (req.isAuthenticated && req.session) {
-    // Touch the session to extend its expiration
-    req.session.touch();
-    // Mark last activity timestamp for client-side timeout tracking
-    req.session.lastActivity = Date.now();
-  }
-  next();
-});
 
 // ===== INPUT SANITIZATION & VALIDATION =====
 app.use(sanitizeInput);

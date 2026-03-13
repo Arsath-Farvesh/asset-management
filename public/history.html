@@ -307,26 +307,6 @@
       font-weight: 500;
     }
 
-    .code-thumb {
-      width: 56px;
-      height: 56px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background: #fff;
-      object-fit: contain;
-      padding: 2px;
-    }
-
-    .barcode-thumb {
-      width: 110px;
-      height: 40px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background: #fff;
-      object-fit: contain;
-      padding: 2px;
-    }
-
     /* Action Buttons */
     .action-buttons {
       display: flex;
@@ -766,8 +746,6 @@
                   <th>Serial</th>
                   <th>Employee</th>
                   <th>Location</th>
-                  <th>QR</th>
-                  <th>Barcode</th>
                   <th>Submitted By</th>
                   <th>Created At</th>
                   <th>Actions</th>
@@ -892,20 +870,6 @@
         const tbody = document.querySelector('#historyTable tbody');
         tbody.innerHTML = '';
 
-        const buildQrData = (row) => {
-          const base = [row.name || '', row.category || '', row.serial_number || '', row.employee_name || '', row.id || '']
-            .join('-')
-            .replace(/^-+|-+$/g, '');
-          return base || `asset-${row.id}`;
-        };
-
-        const buildBarcodeText = (row) => {
-          return row.serial_number || row.name || `${row.category || 'asset'}-${row.id}`;
-        };
-
-        const qrSrc = (row) => `https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(buildQrData(row))}`;
-        const barcodeSrc = (row) => `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(buildBarcodeText(row))}&scale=2&height=28&includetext`;
-        
         rows.forEach(row => {
             displayCategory = row.category.replace(/_/g, ' ').toUpperCase();
             if (row.category === 'case_details') {
@@ -927,12 +891,6 @@
             <td>${row.serial_number || '-'}</td>
             <td>${row.employee_name || '-'}</td>
             <td>${row.location || '-'}</td>
-            <td>
-              <img class="code-thumb" src="${qrSrc(row)}" alt="QR ${row.id}" loading="lazy" />
-            </td>
-            <td>
-              <img class="barcode-thumb" src="${barcodeSrc(row)}" alt="Barcode ${row.id}" loading="lazy" />
-            </td>
             <td>${row.submitted_by || '-'}</td>
             <td>${new Date(row.created_at).toLocaleString()}</td>
             <td>
@@ -1553,167 +1511,6 @@
   window.addEventListener('load', loadProfileUserData);
   </script>
 
-<!-- Inactivity Timeout Warning Modal -->
-<div class="profile-modal-overlay" id="timeoutModalOverlay" style="display:none; background: rgba(0, 0, 0, 0.7);">
-  <div class="profile-modal" style="background: #fff; border: 2px solid var(--brand-500); max-width: 400px;">
-    <div class="profile-header" style="background: var(--brand-500); color: white; border-radius: 8px 8px 0 0;">
-      <h3 style="margin: 0; font-size: 1.3rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Session Timeout Warning</h3>
-    </div>
-    <div class="profile-body" style="text-align: center; padding: 2rem;">
-      <p style="font-size: 1rem; margin-bottom: 1rem; color: #333;">Your session will expire due to inactivity in <span id="timeoutCountdown" style="font-weight: bold; color: var(--brand-500);">5:00</span></p>
-      <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">Activity such as mouse movements, clicks, or typing will extend your session.</p>
-      <div style="display: flex; gap: 1rem;">
-        <button class="profile-btn" id="continueSessionBtn" style="flex: 1; background: var(--brand-500); color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Continue Session</button>
-        <button class="profile-btn" id="logoutNowBtn" style="flex: 1; background: #6b7280; color: white; border: none; padding: 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 600;">Logout Now</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ===== SESSION INACTIVITY TIMEOUT MANAGEMENT =====
-let inactivityTimer = null;
-let warningTimer = null;
-let sessionConfig = null;
-let lastActivityTime = Date.now();
-let isSessionActive = true;
-let warningShown = false;
-
-async function initializeSessionTimeout() {
-  try {
-    // Fetch session configuration from server
-    const res = await fetch('/api/session-config', { credentials: 'include' });
-    sessionConfig = await res.json();
-    console.log('Session config loaded:', sessionConfig);
-    
-    // Start tracking activity
-    document.addEventListener('mousemove', resetInactivityTimer);
-    document.addEventListener('keydown', resetInactivityTimer);
-    document.addEventListener('click', resetInactivityTimer);
-    document.addEventListener('scroll', resetInactivityTimer);
-    document.addEventListener('touchstart', resetInactivityTimer);
-    
-    // Start initial timer
-    resetInactivityTimer();
-  } catch (err) {
-    console.error('Failed to load session config:', err);
-  }
-}
-
-function resetInactivityTimer() {
-  if (!isSessionActive) return;
-  
-  lastActivityTime = Date.now();
-  warningShown = false;
-  
-  // Clear existing timers
-  if (inactivityTimer) clearTimeout(inactivityTimer);
-  if (warningTimer) clearTimeout(warningTimer);
-  
-  // Hide warning if it's showing
-  const timeoutModal = document.getElementById('timeoutModalOverlay');
-  if (timeoutModal) timeoutModal.style.display = 'none';
-  
-  if (!sessionConfig) return;
-  
-  // Set warning timer (show warning X minutes before timeout)
-  const warningTime = sessionConfig.warningTimeout || (sessionConfig.inactivityTimeout - 5 * 60 * 1000);
-  warningTimer = setTimeout(() => {
-    showTimeoutWarning();
-  }, warningTime);
-  
-  // Set logout timer
-  inactivityTimer = setTimeout(() => {
-    performLogout('Session expired due to inactivity');
-  }, sessionConfig.inactivityTimeout);
-}
-
-function showTimeoutWarning() {
-  if (warningShown || !isSessionActive) return;
-  warningShown = true;
-  
-  const timeoutModal = document.getElementById('timeoutModalOverlay');
-  const countdownEl = document.getElementById('timeoutCountdown');
-  
-  if (timeoutModal) {
-    timeoutModal.style.display = 'flex';
-    timeoutModal.style.justifyContent = 'center';
-    timeoutModal.style.alignItems = 'center';
-    timeoutModal.style.position = 'fixed';
-    timeoutModal.style.top = '0';
-    timeoutModal.style.left = '0';
-    timeoutModal.style.right = '0';
-    timeoutModal.style.bottom = '0';
-    timeoutModal.style.zIndex = '9999';
-  }
-  
-  // Update countdown every second
-  const warningInterval = setInterval(() => {
-    if (!warningShown || !isSessionActive) {
-      clearInterval(warningInterval);
-      return;
-    }
-    
-    const timeLeft = sessionConfig.inactivityTimeout - (Date.now() - lastActivityTime);
-    if (timeLeft <= 0) {
-      clearInterval(warningInterval);
-      performLogout('Session expired due to inactivity');
-      return;
-    }
-    
-    const minutes = Math.floor(timeLeft / 60000);
-    const seconds = Math.floor((timeLeft % 60000) / 1000);
-    if (countdownEl) {
-      countdownEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-  }, 1000);
-}
-
-function performLogout(reason = 'Session timeout') {
-  isSessionActive = false;
-  console.log('Performing logout:', reason);
-  
-  // Clear timers
-  if (inactivityTimer) clearTimeout(inactivityTimer);
-  if (warningTimer) clearTimeout(warningTimer);
-  
-  // Logout via API
-  fetch('/api/logout', { 
-    method: 'POST', 
-    credentials: 'include' 
-  }).then(() => {
-    // Redirect to login
-    window.location.href = '/login.html?reason=' + encodeURIComponent(reason);
-  }).catch((err) => {
-    console.error('Logout error:', err);
-    window.location.href = '/login.html?reason=' + encodeURIComponent(reason);
-  });
-}
-
-// Setup continue session button
-document.addEventListener('DOMContentLoaded', () => {
-  const continueBtn = document.getElementById('continueSessionBtn');
-  const logoutBtn = document.getElementById('logoutNowBtn');
-  
-  if (continueBtn) {
-    continueBtn.addEventListener('click', () => {
-      const timeoutModal = document.getElementById('timeoutModalOverlay');
-      if (timeoutModal) timeoutModal.style.display = 'none';
-      warningShown = false;
-      resetInactivityTimer();
-    });
-  }
-  
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      performLogout('User initiated logout from warning');
-    });
-  }
-  
-  // Initialize session timeout after page fully loads
-  initializeSessionTimeout();
-});
-</script>
 <!-- Inline Edit Modal -->
 <div class="edit-modal-overlay" id="editModal">
   <div class="edit-modal-box">
@@ -1770,6 +1567,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
+<script src="/session-timeout.js"></script>
 <script src="/account-panel.js"></script>
 </body>
 </html>

@@ -823,6 +823,16 @@
     function render(payload) {
       const container = document.getElementById('result');
       const d = payload.data;
+      const qrPayload = [
+        d.name || '',
+        payload.category || '',
+        d.serial_number || '',
+        d.employee_name || '',
+        d.id || ''
+      ].join('-').replace(/^-+|-+$/g, '') || `asset-${d.id}`;
+      const barcodePayload = d.serial_number || d.name || `${payload.category || 'asset'}-${d.id}`;
+      const qrSrc = d.qr_code || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrPayload)}`;
+      const barcodeSrc = d.barcode || `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodePayload)}&scale=3&height=60&includetext`;
       
       let displayCategory = payload.category.replace(/_/g, ' ').toUpperCase();
       if (payload.category === 'case_details') {
@@ -894,40 +904,33 @@
       
       container.innerHTML = detailsHTML;
       
-      // Add QR and Barcode if available
-      if (d.qr_code || d.barcode) {
-        const mediaHTML = `
-          <div class="media-section">
-            ${d.qr_code ? `
-              <div class="media-item">
-                <h6><i class="bi bi-qr-code"></i> QR Code</h6>
-                <img src="${d.qr_code}" alt="QR Code">
-                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
-                  <div class="detail-label" style="margin-bottom: 0.5rem;">
-                    <i class="bi bi-geo-alt-fill"></i>
-                    Location
-                  </div>
-                  <div class="detail-value">${d.location || d.case_type || '-'}</div>
-                </div>
+      const mediaHTML = `
+        <div class="media-section">
+          <div class="media-item">
+            <h6><i class="bi bi-qr-code"></i> QR Code</h6>
+            <img src="${qrSrc}" alt="QR Code">
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+              <div class="detail-label" style="margin-bottom: 0.5rem;">
+                <i class="bi bi-geo-alt-fill"></i>
+                Location
               </div>
-            ` : ''}
-            ${d.barcode ? `
-              <div class="media-item">
-                <h6><i class="bi bi-barcode-scan"></i> Barcode</h6>
-                <img src="${d.barcode}" alt="Barcode">
-                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
-                  <div class="detail-label" style="margin-bottom: 0.5rem;">
-                    <i class="bi bi-geo-alt-fill"></i>
-                    Location
-                  </div>
-                  <div class="detail-value">${d.location || d.case_type || '-'}</div>
-                </div>
-              </div>
-            ` : ''}
+              <div class="detail-value">${d.location || d.case_type || '-'}</div>
+            </div>
           </div>
-        `;
-        container.innerHTML += mediaHTML;
-      }
+          <div class="media-item">
+            <h6><i class="bi bi-barcode-scan"></i> Barcode</h6>
+            <img src="${barcodeSrc}" alt="Barcode">
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+              <div class="detail-label" style="margin-bottom: 0.5rem;">
+                <i class="bi bi-geo-alt-fill"></i>
+                Location
+              </div>
+              <div class="detail-value">${d.location || d.case_type || '-'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      container.innerHTML += mediaHTML;
       
       document.getElementById('loadingState').style.display = 'none';
       container.style.display = 'block';
@@ -1172,6 +1175,7 @@
     // Load auth indicator when page loads
     window.addEventListener('load', loadProfileUserData);
   </script>
+    <script src="/session-timeout.js"></script>
   <script src="/account-panel.js"></script>
 </body>
 </html>

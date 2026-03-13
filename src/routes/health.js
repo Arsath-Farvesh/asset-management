@@ -31,8 +31,8 @@ router.get('/csrf-token', (req, res) => {
 // Session timeout configuration endpoint
 router.get('/session-config', (req, res) => {
   // 30 minutes inactivity timeout and 24 hours max session
-  const inactivityTimeout = process.env.SESSION_INACTIVITY_TIMEOUT || 30 * 60 * 1000;
-  const maxSessionAge = process.env.SESSION_MAX_AGE || 24 * 60 * 60 * 1000;
+  const inactivityTimeout = Number.parseInt(process.env.SESSION_INACTIVITY_TIMEOUT, 10) || 30 * 60 * 1000;
+  const maxSessionAge = Number.parseInt(process.env.SESSION_MAX_AGE, 10) || 24 * 60 * 60 * 1000;
   const warningTimeout = Math.max(inactivityTimeout - 5 * 60 * 1000, 5 * 60 * 1000); // Show warning 5 min before logout
   
   res.json({
