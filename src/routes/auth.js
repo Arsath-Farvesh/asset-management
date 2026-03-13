@@ -129,6 +129,7 @@ router.get('/me', authController.getMe);
  *         description: Admin access required
  */
 router.get('/users', isAuthenticated, isAdmin, authController.getAllUsers);
+router.post('/users', isAuthenticated, isAdmin, authController.createUser);
 router.put('/users/:id', isAuthenticated, isAdmin, authController.updateUser);
 
 /**

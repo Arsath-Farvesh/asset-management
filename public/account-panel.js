@@ -14,7 +14,9 @@
     csrfToken: null,
     activeTab: 'profile',
     users: [],
-    selectedUserId: null
+    selectedUserId: null,
+    wizardStep: 0,       // 0 = not open, 1-3 = wizard steps
+    wizardData: {}
   };
 
   function escapeHtml(value) {
@@ -186,19 +188,41 @@
   }
 
   function renderUsersPanel() {
+    // Show wizard inline if active
+    if (state.wizardStep > 0) {
+      return renderWizard();
+    }
+
     const selected = getSelectedUser();
     const userButtons = state.users.map((user) => {
       const active = user.id === state.selectedUserId;
+      const initials = (user.first_name ? user.first_name.charAt(0) : user.username.charAt(0)).toUpperCase();
+      const displayName = user.first_name
+        ? `${escapeHtml(user.first_name)} ${escapeHtml(user.last_name || '')}`
+        : escapeHtml(user.username);
       return `
-        <button type="button" class="managed-user-btn" data-user-id="${user.id}" style="width:100%; text-align:left; border:1px solid ${active ? '#111827' : '#e5e7eb'}; background:${active ? '#111827' : '#ffffff'}; color:${active ? '#ffffff' : '#111827'}; border-radius:10px; padding:0.8rem 0.9rem; margin-bottom:0.5rem;">
-          <div style="font-weight:600;">${escapeHtml(user.username)}</div>
-          <div style="font-size:0.8rem; opacity:0.8;">${escapeHtml(user.role || 'user')} | ${escapeHtml(user.email || '')}</div>
+        <button type="button" class="managed-user-btn" data-user-id="${user.id}" style="width:100%; text-align:left; border:1px solid ${active ? '#D62855' : '#e5e7eb'}; background:${active ? '#111827' : '#ffffff'}; color:${active ? '#ffffff' : '#111827'}; border-radius:10px; padding:0.75rem 0.9rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.6rem;">
+          <div style="width:32px; height:32px; border-radius:50%; background:${active ? 'rgba(255,255,255,0.2)' : '#f3f4f6'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">${initials}</div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem;">${displayName}</div>
+            <div style="font-size:0.75rem; opacity:0.75;">${escapeHtml(user.role || 'user')} &bull; ${escapeHtml(user.email || '')}</div>
+          </div>
         </button>
       `;
     }).join('');
 
     const selectedMarkup = selected ? `
       <form id="adminUserForm" style="display:grid; gap:0.9rem;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div>
+            <label class="profile-label">First Name</label>
+            <input type="text" id="adminFirstName" class="profile-input" value="${escapeHtml(selected.first_name || '')}" placeholder="First name">
+          </div>
+          <div>
+            <label class="profile-label">Last Name</label>
+            <input type="text" id="adminLastName" class="profile-input" value="${escapeHtml(selected.last_name || '')}" placeholder="Last name">
+          </div>
+        </div>
         <div>
           <label class="profile-label">Username</label>
           <input type="text" id="adminUsername" class="profile-input" value="${escapeHtml(selected.username || '')}" required>
@@ -207,23 +231,37 @@
           <label class="profile-label">Email</label>
           <input type="email" id="adminEmail" class="profile-input" value="${escapeHtml(selected.email || '')}" required>
         </div>
-        <div>
-          <label class="profile-label">Department</label>
-          <input type="text" id="adminDepartment" class="profile-input" value="${escapeHtml(selected.department || '')}">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div>
+            <label class="profile-label">Department</label>
+            <input type="text" id="adminDepartment" class="profile-input" value="${escapeHtml(selected.department || '')}">
+          </div>
+          <div>
+            <label class="profile-label">Office Location</label>
+            <input type="text" id="adminOffice" class="profile-input" value="${escapeHtml(selected.office_location || '')}">
+          </div>
         </div>
-        <div>
-          <label class="profile-label">Role</label>
-          <select id="adminRole" class="profile-input">
-            ${['admin', 'user', 'guest'].map((role) => `<option value="${role}" ${selected.role === role ? 'selected' : ''}>${role.toUpperCase()}</option>`).join('')}
-          </select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div>
+            <label class="profile-label">Phone</label>
+            <input type="text" id="adminPhone" class="profile-input" value="${escapeHtml(selected.phone || '')}">
+          </div>
+          <div>
+            <label class="profile-label">Role</label>
+            <select id="adminRole" class="profile-input">
+              ${['admin', 'user', 'guest'].map((role) => `<option value="${role}" ${selected.role === role ? 'selected' : ''}>${role.toUpperCase()}</option>`).join('')}
+            </select>
+          </div>
         </div>
-        <div>
-          <label class="profile-label">Reset Password</label>
-          <input type="password" id="adminPassword" class="profile-input" placeholder="Leave blank to keep current password">
-        </div>
-        <div>
-          <label class="profile-label">Confirm Password</label>
-          <input type="password" id="adminConfirmPassword" class="profile-input" placeholder="Confirm new password">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div>
+            <label class="profile-label">Reset Password</label>
+            <input type="password" id="adminPassword" class="profile-input" placeholder="Leave blank to keep current">
+          </div>
+          <div>
+            <label class="profile-label">Confirm Password</label>
+            <input type="password" id="adminConfirmPassword" class="profile-input" placeholder="Confirm new password">
+          </div>
         </div>
         <div id="adminUserMessage" style="display:none; padding:0.75rem; border-radius:10px; font-size:0.9rem;"></div>
         <div style="display:flex; gap:0.75rem;">
@@ -232,16 +270,148 @@
           <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
         </div>
       </form>
-    ` : '<div style="padding:1rem; border:1px dashed #d1d5db; border-radius:12px; color:#6b7280;">No users available.</div>';
+    ` : '<div style="padding:1rem; border:1px dashed #d1d5db; border-radius:12px; color:#6b7280;">Select a user from the list.</div>';
 
     return `
-      <div style="display:grid; grid-template-columns:220px 1fr; gap:1rem; align-items:start;">
-        <div style="max-height:360px; overflow:auto; padding-right:0.25rem;">
-          ${userButtons || '<div style="color:#6b7280;">No users found.</div>'}
+      <div style="display:grid; grid-template-columns:240px 1fr; gap:1rem; align-items:start;">
+        <div>
+          <button type="button" id="addUserBtn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.4rem; border:2px dashed #D62855; background:transparent; color:#D62855; border-radius:10px; padding:0.65rem 0.9rem; margin-bottom:0.75rem; font-weight:600; cursor:pointer; font-size:0.9rem;">
+            <span style="font-size:1.1rem;">+</span> Add User
+          </button>
+          <div style="max-height:340px; overflow:auto; padding-right:0.25rem;">
+            ${userButtons || '<div style="color:#6b7280; font-size:0.9rem;">No users found.</div>'}
+          </div>
         </div>
         <div>${selectedMarkup}</div>
       </div>
     `;
+  }
+
+  function renderWizard() {
+    const step = state.wizardStep;
+    const d = state.wizardData;
+
+    const stepLabels = ['Basics', 'Settings', 'Review & Finish'];
+    const stepsHtml = stepLabels.map((label, i) => {
+      const num = i + 1;
+      const active = num === step;
+      const done = num < step;
+      const bg = done ? '#10b981' : active ? '#D62855' : '#e5e7eb';
+      const color = done || active ? '#fff' : '#9ca3af';
+      return `
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <div style="width:26px; height:26px; border-radius:50%; background:${bg}; color:${color}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">${done ? '&#10003;' : num}</div>
+          <span style="font-size:0.8rem; font-weight:${active ? '700' : '500'}; color:${active ? '#111827' : '#9ca3af'};">${label}</span>
+          ${num < 3 ? '<span style="color:#d1d5db; margin:0 0.25rem;">›</span>' : ''}
+        </div>`;
+    }).join('');
+
+    let bodyHtml = '';
+
+    if (step === 1) {
+      bodyHtml = `
+        <div style="display:grid; gap:0.85rem;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <div>
+              <label class="profile-label">First Name</label>
+              <input type="text" id="wFirstName" class="profile-input" value="${escapeHtml(d.first_name || '')}" placeholder="First name">
+            </div>
+            <div>
+              <label class="profile-label">Last Name</label>
+              <input type="text" id="wLastName" class="profile-input" value="${escapeHtml(d.last_name || '')}" placeholder="Last name">
+            </div>
+          </div>
+          <div>
+            <label class="profile-label">Display Name / Username <span style="color:#D62855">*</span></label>
+            <input type="text" id="wUsername" class="profile-input" value="${escapeHtml(d.username || '')}" placeholder="e.g. john.doe" required>
+          </div>
+          <div>
+            <label class="profile-label">Email Address <span style="color:#D62855">*</span></label>
+            <input type="email" id="wEmail" class="profile-input" value="${escapeHtml(d.email || '')}" placeholder="user@company.com" required>
+          </div>
+          <div id="wizardMsg" style="display:none; padding:0.65rem; border-radius:8px; font-size:0.85rem;"></div>
+          <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+            <button type="button" id="wizardCancel" class="profile-btn profile-btn-close">Cancel</button>
+            <button type="button" id="wizardNext" class="profile-btn profile-btn-save">Next &rsaquo;</button>
+          </div>
+        </div>`;
+    } else if (step === 2) {
+      bodyHtml = `
+        <div style="display:grid; gap:0.85rem;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <div>
+              <label class="profile-label">Role</label>
+              <select id="wRole" class="profile-input">
+                <option value="user" ${d.role === 'user' ? 'selected' : ''}>USER</option>
+                <option value="admin" ${d.role === 'admin' ? 'selected' : ''}>ADMIN</option>
+                <option value="guest" ${d.role === 'guest' ? 'selected' : ''}>GUEST</option>
+              </select>
+            </div>
+            <div>
+              <label class="profile-label">Department</label>
+              <input type="text" id="wDepartment" class="profile-input" value="${escapeHtml(d.department || '')}" placeholder="e.g. IT, HR">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <div>
+              <label class="profile-label">Office Location</label>
+              <input type="text" id="wOffice" class="profile-input" value="${escapeHtml(d.office_location || '')}" placeholder="e.g. Dubai HQ">
+            </div>
+            <div>
+              <label class="profile-label">Phone</label>
+              <input type="text" id="wPhone" class="profile-input" value="${escapeHtml(d.phone || '')}" placeholder="+971 ...">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+            <div>
+              <label class="profile-label">Password <span style="color:#D62855">*</span></label>
+              <input type="password" id="wPassword" class="profile-input" placeholder="Min 8 characters">
+            </div>
+            <div>
+              <label class="profile-label">Confirm Password <span style="color:#D62855">*</span></label>
+              <input type="password" id="wConfirmPassword" class="profile-input" placeholder="Repeat password">
+            </div>
+          </div>
+          <div id="wizardMsg" style="display:none; padding:0.65rem; border-radius:8px; font-size:0.85rem;"></div>
+          <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+            <button type="button" id="wizardBack" class="profile-btn profile-btn-cancel">&lsaquo; Back</button>
+            <button type="button" id="wizardNext" class="profile-btn profile-btn-save">Review &rsaquo;</button>
+          </div>
+        </div>`;
+    } else {
+      // Step 3 — Review
+      const row = (label, val) =>
+        `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid #f3f4f6;">
+           <span style="font-size:0.8rem; color:#6b7280; text-transform:uppercase; font-weight:600;">${label}</span>
+           <span style="font-weight:600; color:#111827; text-align:right;">${escapeHtml(val || '—')}</span>
+         </div>`;
+      bodyHtml = `
+        <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:1rem; margin-bottom:0.9rem;">
+          ${row('First name', d.first_name)}
+          ${row('Last name', d.last_name)}
+          ${row('Username', d.username)}
+          ${row('Email', d.email)}
+          ${row('Role', (d.role || 'user').toUpperCase())}
+          ${row('Department', d.department)}
+          ${row('Office Location', d.office_location)}
+          ${row('Phone', d.phone)}
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0;">
+            <span style="font-size:0.8rem; color:#6b7280; text-transform:uppercase; font-weight:600;">Password</span>
+            <span style="font-weight:600; color:#111827;">••••••••</span>
+          </div>
+        </div>
+        <div id="wizardMsg" style="display:none; padding:0.65rem; border-radius:8px; font-size:0.85rem; margin-bottom:0.75rem;"></div>
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+          <button type="button" id="wizardBack" class="profile-btn profile-btn-cancel">&lsaquo; Back</button>
+          <button type="button" id="wizardFinish" class="profile-btn profile-btn-save">&#10003; Create User</button>
+        </div>`;
+    }
+
+    return `
+      <div>
+        <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:1.25rem; flex-wrap:wrap;">${stepsHtml}</div>
+        ${bodyHtml}
+      </div>`;
   }
 
   function renderContent() {
@@ -320,6 +490,43 @@
       renderHeader();
     } catch (error) {
       setMessage('selfProfileMessage', error.message, 'error');
+    }
+  }
+
+  async function saveNewUser() {
+    const d = state.wizardData;
+    const wizardMsgEl = document.getElementById('wizardMsg');
+
+    function showWizardMsg(msg, type) {
+      if (!wizardMsgEl) return;
+      wizardMsgEl.textContent = msg;
+      wizardMsgEl.style.display = 'block';
+      wizardMsgEl.style.background = type === 'error' ? '#fee2e2' : '#dcfce7';
+      wizardMsgEl.style.color = type === 'error' ? '#991b1b' : '#166534';
+      wizardMsgEl.style.borderLeft = `4px solid ${type === 'error' ? '#dc2626' : '#10b981'}`;
+    }
+
+    try {
+      const token = await getCsrfToken();
+      const result = await fetchJson('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'csrf-token': token },
+        body: JSON.stringify(d)
+      });
+
+      state.users.push(result.user);
+      state.selectedUserId = result.user.id;
+      state.wizardStep = 0;
+      state.wizardData = {};
+      renderContent();
+    } catch (error) {
+      if (wizardMsgEl) {
+        wizardMsgEl.textContent = error.message;
+        wizardMsgEl.style.display = 'block';
+        wizardMsgEl.style.background = '#fee2e2';
+        wizardMsgEl.style.color = '#991b1b';
+        wizardMsgEl.style.borderLeft = '4px solid #dc2626';
+      }
     }
   }
 
@@ -433,6 +640,7 @@
     if (tabProfile) {
       tabProfile.addEventListener('click', () => {
         state.activeTab = 'profile';
+        state.wizardStep = 0;
         renderContent();
       });
     }
@@ -441,11 +649,88 @@
     if (tabUsers) {
       tabUsers.addEventListener('click', async () => {
         state.activeTab = 'users';
+        state.wizardStep = 0;
         if (state.users.length === 0) {
           await loadUsers();
         }
         renderContent();
       });
+    }
+
+    // Add User button → start wizard
+    const addUserBtn = document.getElementById('addUserBtn');
+    if (addUserBtn) {
+      addUserBtn.addEventListener('click', () => {
+        state.wizardStep = 1;
+        state.wizardData = {};
+        renderContent();
+      });
+    }
+
+    // Wizard events (only bound when wizard is active)
+    const wizardCancel = document.getElementById('wizardCancel');
+    if (wizardCancel) {
+      wizardCancel.addEventListener('click', () => {
+        state.wizardStep = 0;
+        state.wizardData = {};
+        renderContent();
+      });
+    }
+
+    const wizardBack = document.getElementById('wizardBack');
+    if (wizardBack) {
+      wizardBack.addEventListener('click', () => {
+        state.wizardStep = Math.max(1, state.wizardStep - 1);
+        renderContent();
+      });
+    }
+
+    const wizardNext = document.getElementById('wizardNext');
+    if (wizardNext) {
+      wizardNext.addEventListener('click', () => {
+        const d = state.wizardData;
+        const msgEl = document.getElementById('wizardMsg');
+
+        function showErr(msg) {
+          if (!msgEl) return;
+          msgEl.textContent = msg;
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#fee2e2';
+          msgEl.style.color = '#991b1b';
+          msgEl.style.borderLeft = '4px solid #dc2626';
+        }
+
+        if (state.wizardStep === 1) {
+          const username = document.getElementById('wUsername')?.value.trim();
+          const email = document.getElementById('wEmail')?.value.trim();
+          if (!username) { showErr('Username is required'); return; }
+          if (!email) { showErr('Email is required'); return; }
+          d.username = username;
+          d.email = email;
+          d.first_name = document.getElementById('wFirstName')?.value.trim() || '';
+          d.last_name = document.getElementById('wLastName')?.value.trim() || '';
+        } else if (state.wizardStep === 2) {
+          const password = document.getElementById('wPassword')?.value;
+          const confirm = document.getElementById('wConfirmPassword')?.value;
+          if (!password) { showErr('Password is required'); return; }
+          if (password.length < 8) { showErr('Password must be at least 8 characters'); return; }
+          if (password !== confirm) { showErr('Passwords do not match'); return; }
+          d.role = document.getElementById('wRole')?.value || 'user';
+          d.department = document.getElementById('wDepartment')?.value.trim() || '';
+          d.office_location = document.getElementById('wOffice')?.value.trim() || '';
+          d.phone = document.getElementById('wPhone')?.value.trim() || '';
+          d.password = password;
+          d.confirmPassword = confirm;
+        }
+
+        state.wizardStep += 1;
+        renderContent();
+      });
+    }
+
+    const wizardFinish = document.getElementById('wizardFinish');
+    if (wizardFinish) {
+      wizardFinish.addEventListener('click', saveNewUser);
     }
 
     document.querySelectorAll('.managed-user-btn').forEach((button) => {

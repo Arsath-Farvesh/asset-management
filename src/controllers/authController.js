@@ -91,6 +91,40 @@ class AuthController {
     res.json(result);
   }
 
+  async createUser(req, res) {
+    const {
+      username, email, password, confirmPassword,
+      role, department, first_name, last_name, office_location, phone
+    } = req.body;
+
+    if (!username || !String(username).trim()) {
+      return res.status(400).json({ success: false, error: 'Username is required' });
+    }
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Password is required' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ success: false, error: 'Passwords do not match' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+
+    const result = await authService.createUser({
+      username, email, password, role, department,
+      first_name, last_name, office_location, phone
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(201).json(result);
+  }
+
   async updateUser(req, res) {
     const { id } = req.params;
     const { username, email, department, role, password, confirmPassword } = req.body;

@@ -7,7 +7,11 @@ class AssetController {
   async createAsset(req, res) {
     try {
       const { category } = req.params;
-      const data = req.body;
+      // Inject the logged-in user's username so history shows who submitted it
+      const data = {
+        ...req.body,
+        submitted_by: req.session?.user?.username || null
+      };
 
       const result = await assetService.createAsset(category, data);
 

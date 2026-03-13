@@ -23,7 +23,15 @@ describe('AssetService', () => {
         location: 'EJARI'
       };
 
-      pool.query = jest.fn().mockResolvedValue({ rows: [mockAsset] });
+      // createAsset first queries information_schema.columns, then does the INSERT
+      pool.query = jest.fn()
+        .mockResolvedValueOnce({
+          rows: [
+            { column_name: 'name', data_type: 'character varying', is_nullable: 'NO', column_default: null },
+            { column_name: 'location', data_type: 'character varying', is_nullable: 'NO', column_default: null }
+          ]
+        })
+        .mockResolvedValueOnce({ rows: [mockAsset] });
 
       const result = await assetService.createAsset('keys', {
         name: 'Test Asset',

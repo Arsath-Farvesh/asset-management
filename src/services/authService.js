@@ -13,7 +13,11 @@ class AuthService {
       username: user.username,
       email: user.email,
       role: user.role,
-      department: user.department
+      department: user.department,
+      first_name: user.first_name || null,
+      last_name: user.last_name || null,
+      office_location: user.office_location || null,
+      phone: user.phone || null
     };
   }
 
@@ -47,11 +51,74 @@ class AuthService {
     }
   }
 
+  // Create a new user (admin only)
+  async createUser({ username, email, password, role, department, first_name, last_name, office_location, phone }) {
+    try {
+      if (!username || !String(username).trim()) {
+        return { success: false, error: 'Username is required' };
+      }
+      if (!email || !String(email).trim()) {
+        return { success: false, error: 'Email is required' };
+      }
+      if (!password || password.length < 8) {
+        return { success: false, error: 'Password must be at least 8 characters' };
+      }
+
+      const normalizedUsername = String(username).trim();
+      const normalizedRole = ['admin', 'user', 'guest'].includes(role) ? role : 'user';
+
+      const dupUser = await pool.query(
+        'SELECT id FROM users WHERE lower(username) = lower($1) LIMIT 1',
+        [normalizedUsername]
+      );
+      if (dupUser.rows.length > 0) {
+        return { success: false, error: 'Username already exists' };
+      }
+
+      const dupEmail = await pool.query(
+        'SELECT id FROM users WHERE lower(email) = lower($1) LIMIT 1',
+        [String(email).trim()]
+      );
+      if (dupEmail.rows.length > 0) {
+        return { success: false, error: 'Email already exists' };
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const result = await pool.query(
+        `INSERT INTO users
+           (username, email, password, role, department, first_name, last_name, office_location, phone)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING id, username, email, role, department, first_name, last_name, office_location, phone`,
+        [
+          normalizedUsername,
+          String(email).trim(),
+          hashedPassword,
+          normalizedRole,
+          department || null,
+          first_name || null,
+          last_name || null,
+          office_location || null,
+          phone || null
+        ]
+      );
+
+      logger.info(`New user created by admin: ${normalizedUsername}`);
+      return { success: true, user: this.sanitizeUser(result.rows[0]) };
+    } catch (error) {
+      logger.error('Create user error:', error);
+      return { success: false, error: 'Failed to create user' };
+    }
+  }
+
   // Get all users (admin only)
   async getAllUsers() {
     try {
       const result = await pool.query(
-        'SELECT id, username, email, role, department, created_at FROM users ORDER BY created_at DESC'
+        `SELECT id, username, email, role, department,
+                first_name, last_name, office_location, phone,
+                created_at
+         FROM users ORDER BY created_at DESC`
       );
       return { success: true, users: result.rows };
     } catch (error) {
