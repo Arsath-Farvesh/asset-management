@@ -91,6 +91,15 @@ class AuthController {
     res.json(result);
   }
 
+  // Get user statistics (admin only)
+  async getUserStats(req, res) {
+    const result = await authService.getUserStats();
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+    return res.json(result);
+  }
+
   async createUser(req, res) {
     const {
       username, email, password, confirmPassword,

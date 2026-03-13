@@ -51,6 +51,67 @@ class AuthService {
     }
   }
 
+  // Get user statistics (admin only)
+  async getUserStats() {
+    try {
+      const summary = await pool.query(`
+        SELECT
+          COUNT(*)                                                  AS total_users,
+          COUNT(*) FILTER (WHERE role = 'admin')                   AS admins,
+          COUNT(*) FILTER (WHERE role = 'user')                    AS normal_users,
+          COUNT(*) FILTER (WHERE role = 'guest')                   AS guests,
+          COUNT(*) FILTER (WHERE email IS NOT NULL AND email <> '') AS has_email,
+          COUNT(*) FILTER (WHERE department IS NOT NULL AND department <> '') AS has_department,
+          COUNT(*) FILTER (WHERE first_name IS NOT NULL AND first_name <> '') AS has_first_name,
+          COUNT(*) FILTER (
+            WHERE email IS NOT NULL AND email <> ''
+              AND department IS NOT NULL AND department <> ''
+          ) AS fully_complete
+        FROM users
+      `);
+
+      const detail = await pool.query(`
+        SELECT
+          id, username, email, role, department,
+          first_name, last_name, office_location, phone,
+          created_at,
+          CASE
+            WHEN email IS NOT NULL AND email <> ''
+             AND department IS NOT NULL AND department <> ''
+             AND first_name IS NOT NULL AND first_name <> ''
+            THEN 'complete'
+            WHEN (email IS NULL OR email = '')
+             AND (department IS NULL OR department = '')
+             AND (first_name IS NULL OR first_name = '')
+            THEN 'empty'
+            ELSE 'partial'
+          END AS data_status
+        FROM users
+        ORDER BY role, created_at ASC
+      `);
+
+      const s = summary.rows[0];
+      return {
+        success: true,
+        summary: {
+          total:           Number(s.total_users),
+          admins:          Number(s.admins),
+          normal_users:    Number(s.normal_users),
+          guests:          Number(s.guests),
+          has_email:       Number(s.has_email),
+          has_department:  Number(s.has_department),
+          has_first_name:  Number(s.has_first_name),
+          fully_complete:  Number(s.fully_complete),
+          incomplete:      Number(s.total_users) - Number(s.fully_complete)
+        },
+        users: detail.rows.map((u) => this.sanitizeUser(u))
+      };
+    } catch (error) {
+      logger.error('getUserStats error:', error);
+      return { success: false, error: 'Failed to fetch user stats' };
+    }
+  }
+
   // Create a new user (admin only)
   async createUser({ username, email, password, role, department, first_name, last_name, office_location, phone }) {
     try {
