@@ -266,7 +266,27 @@ class AssetService {
       }
 
       const normalizedData = normalizePayloadForLegacySchemas(category, data);
-      const entries = Object.entries(normalizedData || {}).filter(([, value]) => value !== undefined);
+      const colResult = await pool.query(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = $1`,
+        [category]
+      );
+
+      if (!colResult.rows || colResult.rows.length === 0) {
+        return { success: false, error: `Table not found or has no columns: ${category}` };
+      }
+
+      const existingColumns = new Set(colResult.rows.map((row) => row.column_name));
+
+      const entries = Object.entries(normalizedData || {}).filter(([key, value]) => (
+        value !== undefined && key !== 'id' && existingColumns.has(key)
+      ));
+
+      if (entries.length === 0) {
+        return { success: false, error: 'No valid fields to update' };
+      }
+
       const columnsArray = entries.map(([key]) => key);
       const values = entries.map(([, value]) => value);
 

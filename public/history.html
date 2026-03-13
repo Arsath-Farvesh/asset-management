@@ -997,6 +997,7 @@
         }
 
         const d = data.data;
+        modal._originalRecord = d;
         const caseStyle = isCaseStyleCategory(category);
 
         document.getElementById('editName').value = d.name || '';
@@ -1040,6 +1041,7 @@
       const id       = modal._editId;
       const saveBtn  = document.getElementById('editSaveBtn');
       const caseStyle = isCaseStyleCategory(category);
+      const original = modal._originalRecord || {};
 
       const name = document.getElementById('editName').value.trim();
       const location = document.getElementById('editLocation').value.trim();
@@ -1056,14 +1058,20 @@
 
       let payload;
       if (caseStyle) {
-        const customerName = document.getElementById('editCustomerName').value.trim();
-        const customerPhone = document.getElementById('editCustomerPhone').value.trim();
-        const caseDate = document.getElementById('editCaseDate').value;
-        const caseNumber = document.getElementById('editCaseNumber').value.trim();
-        const caseType = document.getElementById('editCaseType').value.trim();
+        const customerNameInput = document.getElementById('editCustomerName').value.trim();
+        const customerPhoneInput = document.getElementById('editCustomerPhone').value.trim();
+        const caseDateInput = document.getElementById('editCaseDate').value;
+        const caseNumberInput = document.getElementById('editCaseNumber').value.trim();
+        const caseTypeInput = document.getElementById('editCaseType').value.trim();
+
+        const customerName = customerNameInput || original.customer_name || '';
+        const customerPhone = customerPhoneInput || original.customer_phone || '';
+        const caseDate = caseDateInput || (original.case_date ? String(original.case_date).slice(0, 10) : '');
+        const caseNumber = caseNumberInput || original.case_number || '';
+        const caseType = caseTypeInput || original.case_type || '';
 
         if (!customerName || !customerPhone || !caseDate || !caseNumber || !caseType) {
-          alert('Please complete all case fields.');
+          alert('Please complete all case fields (or keep existing values).');
           return;
         }
 
