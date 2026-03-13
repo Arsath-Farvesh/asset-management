@@ -308,64 +308,50 @@
     }
 
     /* Action Buttons */
-    .action-dropdown {
-      position: relative;
-    }
-
-    .dropdown-toggle-takhlees {
-      background: linear-gradient(135deg, var(--takhlees-gold) 0%, #E8186A 100%);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 500;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .dropdown-toggle-takhlees:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(197, 165, 114, 0.4);
-    }
-
-    .dropdown-menu-takhlees {
-      min-width: 160px;
-      padding: 0.5rem;
-      border: none;
-      box-shadow: 0 8px 25px rgba(0, 48, 73, 0.2);
-      border-radius: 10px;
-      position: absolute;
-      right: 0;
-      left: auto;
-      z-index: 1050;
-      background: #fff;
-    }
-
-    .dropdown-item-takhlees {
-      padding: 10px 16px;
-      border-radius: 6px;
-      color: var(--takhlees-dark);
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      border: none;
-      background: white;
-      width: 100%;
-      text-align: left;
+    .action-buttons {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0.35rem;
+      flex-wrap: wrap;
     }
 
-    .dropdown-item-takhlees:hover {
-      background: var(--takhlees-gold);
-      color: white;
+    .btn-row-action {
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      color: #1f2937;
+      padding: 0.35rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .dropdown-item-takhlees.delete:hover {
-      background: var(--takhlees-red);
-      color: white;
+    .btn-row-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-row-action.view {
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+      background: #eff6ff;
+    }
+
+    .btn-row-action.edit {
+      border-color: #fbcfe8;
+      color: #be185d;
+      background: #fdf2f8;
+    }
+
+    .btn-row-action.delete {
+      border-color: #fecaca;
+      color: #b91c1c;
+      background: #fef2f2;
     }
 
     /* Download Button */
@@ -908,35 +894,29 @@
             <td>${row.submitted_by || '-'}</td>
             <td>${new Date(row.created_at).toLocaleString()}</td>
             <td>
-              <div class="dropdown action-dropdown">
-                <button class="dropdown-toggle-takhlees" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-three-dots-vertical"></i> Options
+              <div class="action-buttons">
+                <button class="btn-row-action view" data-action="view" data-category="${row.category}" data-id="${row.id}">
+                  <i class="bi bi-eye-fill"></i> View
                 </button>
-                <ul class="dropdown-menu dropdown-menu-takhlees dropdown-menu-end">
-                  <li>
-                    <button class="dropdown-item-takhlees" onclick="viewRow('${row.category}', ${row.id})">
-                      <i class="bi bi-eye-fill"></i> View Details
-                    </button>
-                  </li>
-                  ${isAdmin ? `
-                  <li><hr style="margin: 4px 0; border-color: #f3f4f6;"></li>
-                  <li>
-                    <button class="dropdown-item-takhlees" onclick="openEditModal('${row.category}', ${row.id})">
-                      <i class="bi bi-pencil-fill"></i> Edit
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item-takhlees delete" onclick="deleteRow('${row.category}', ${row.id})">
-                      <i class="bi bi-trash-fill"></i> Delete
-                    </button>
-                  </li>
-                  ` : ''}
-                </ul>
+                ${isAdmin ? `
+                <button class="btn-row-action edit" data-action="edit" data-category="${row.category}" data-id="${row.id}">
+                  <i class="bi bi-pencil-fill"></i> Edit
+                </button>
+                <button class="btn-row-action delete" data-action="delete" data-category="${row.category}" data-id="${row.id}">
+                  <i class="bi bi-trash-fill"></i> Delete
+                </button>
+                ` : ''}
               </div>
             </td>
           `;
           tbody.appendChild(tr);
         });
+
+        const tableEl = document.getElementById('historyTable');
+        if (tableEl && !tableEl.dataset.actionsBound) {
+          tableEl.addEventListener('click', handleHistoryActionClick);
+          tableEl.dataset.actionsBound = '1';
+        }
 
         // Attach checkbox event listeners after table is populated
         // Show checkbox column header only for admins
@@ -958,6 +938,31 @@
 
     function viewRow(category, id) {
       window.location.href = `/details.html?category=${encodeURIComponent(category)}&id=${encodeURIComponent(id)}`;
+    }
+
+    function handleHistoryActionClick(event) {
+      const btn = event.target.closest('button[data-action]');
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const category = btn.dataset.category;
+      const id = btn.dataset.id;
+      if (!action || !category || !id) return;
+
+      if (action === 'view') {
+        viewRow(category, id);
+        return;
+      }
+
+      if (!currentUser || currentUser.role !== 'admin') {
+        return;
+      }
+
+      if (action === 'edit') {
+        openEditModal(category, id);
+      } else if (action === 'delete') {
+        deleteRow(category, id);
+      }
     }
 
     function editRow(category, id) {

@@ -920,7 +920,7 @@
                     <i class="bi bi-geo-alt-fill"></i>
                     Location
                   </div>
-                  <div class="detail-value">${d.location || '-'}</div>
+                  <div class="detail-value">${d.location || d.case_type || '-'}</div>
                 </div>
               </div>
             ` : ''}
@@ -946,8 +946,23 @@
     async function fetchByCategoryId(cat, assetId) {
       try {
         const resp = await fetch(`/api/assets/${encodeURIComponent(cat)}/${encodeURIComponent(assetId)}`, { credentials:'include' });
-        if (!resp.ok) throw new Error('Not found');
-        const j = await resp.json();
+
+        if (resp.status === 401 || resp.status === 403) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        let j;
+        try {
+          j = await resp.json();
+        } catch (_err) {
+          throw new Error('Invalid server response');
+        }
+
+        if (!resp.ok) {
+          throw new Error(j.error || 'Not found');
+        }
+
         if (!j.success) throw new Error(j.error || 'Not found');
         render({ category: cat, data: j.data });
       } catch(err) {
