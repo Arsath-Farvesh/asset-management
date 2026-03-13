@@ -167,16 +167,16 @@
             <!-- Standard Fields -->
             <div id="standard-fields">
               <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-6" id="serial-number-col">
                   <label for="serial-number" class="form-label form-label-enhanced">Serial Number</label>
                   <input type="text" class="form-control form-control-enhanced" id="serial-number" placeholder="Enter serial number">
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="employee-name-col">
                   <label for="employee-name" class="form-label form-label-enhanced">Assigned Employee</label>
                   <input type="text" class="form-control form-control-enhanced" id="employee-name" placeholder="Enter employee name">
                 </div>
               </div>
-              <div class="row mb-3">
+              <div class="row mb-3" id="location-field-row">
                 <div class="col-md-6">
                   <label for="asset-location" class="form-label form-label-enhanced">Location</label>
                   <select class="form-select form-control-enhanced" id="asset-location">
@@ -257,6 +257,10 @@
             <div class="preview-row">
               <span class="preview-key">Case Type</span>
               <span class="preview-val" id="preview-case-type">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Location</span>
+              <span class="preview-val" id="preview-case-location">N/A</span>
             </div>
           </div>
 
@@ -349,6 +353,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const employeeName = document.getElementById('employee-name');
     const locationInput = document.getElementById('asset-location');
     const locationManual = document.getElementById('asset-location-manual');
+    const serialNumberCol = document.getElementById('serial-number-col');
+    const employeeNameCol = document.getElementById('employee-name-col');
+    const locationFieldRow = document.getElementById('location-field-row');
     
     // Customer fields
     const customerName = document.getElementById('customer-name');
@@ -371,6 +378,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const previewCustomerPhone = document.getElementById('preview-customer-phone');
     const previewCaseNumber = document.getElementById('preview-case-number');
     const previewCaseType = document.getElementById('preview-case-type');
+    const previewCaseLocation = document.getElementById('preview-case-location');
     const previewQr = document.getElementById('preview-qr');
     const previewBarcode = document.getElementById('preview-barcode');
 
@@ -484,12 +492,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             const cDate = caseDate.value || 'N/A';
             const cNum = caseNumber.value || 'N/A';
             const cType = caseType.value || 'N/A';
+            const locationVal = getLocationValue() || 'N/A';
             
             previewName.textContent = caseName || 'Case Name';
             previewCustomerName.textContent = cName;
             previewCustomerPhone.textContent = cPhone;
             previewCaseNumber.textContent = cNum;
             previewCaseType.textContent = cType;
+            previewCaseLocation.textContent = locationVal;
             
             // Hide standard fields in preview, show case details
             previewSerialRow.style.display = 'none';
@@ -545,9 +555,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (isCaseStyleCategory) {
             // Show asset name, hide standard fields
             assetNameCol.classList.remove('hidden-field');
-            standardFields.style.display = 'none';
+            standardFields.style.display = 'block';
+            serialNumberCol.style.display = 'none';
+            employeeNameCol.style.display = 'none';
+            locationFieldRow.style.display = 'flex';
             customerDetailsSection.style.display = 'block';
           setCaseFieldsRequired(true);
+            locationInput.required = true;
             updateLocationManualVisibility();
             
             // Set case name input
@@ -564,8 +578,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Show standard layout
             assetNameCol.classList.remove('hidden-field');
             standardFields.style.display = 'block';
+            serialNumberCol.style.display = '';
+            employeeNameCol.style.display = '';
+            locationFieldRow.style.display = '';
             customerDetailsSection.style.display = 'none';
           setCaseFieldsRequired(false);
+            locationInput.required = false;
             updateLocationManualVisibility();
         }
 
@@ -655,9 +673,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             const caseDateVal = caseDate.value;
             const caseNumberVal = (caseNumber.value || '').trim();
             const caseTypeVal = (caseType.value || '').trim();
+            const locationVal = getLocationValue();
 
-            if (!caseName || !customerNameVal || !customerPhoneVal || !caseDateVal || !caseNumberVal || !caseTypeVal) {
+            if (!caseName || !customerNameVal || !customerPhoneVal || !caseDateVal || !caseNumberVal || !caseTypeVal || !locationVal) {
               alert('Please complete all mandatory case fields.');
+              return;
+            }
+
+            if (locationInput.value === '__manual__' && !locationVal) {
+              alert('Manual location is mandatory when Manual entry is selected.');
               return;
             }
 
@@ -667,7 +691,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 customer_phone: customerPhoneVal,
                 case_date: caseDateVal,
                 case_number: caseNumberVal,
-                case_type: caseTypeVal
+                case_type: caseTypeVal,
+                location: locationVal
             };
         } else {
             // Standard asset payload

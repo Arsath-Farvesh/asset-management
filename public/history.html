@@ -921,7 +921,7 @@
                   ${isAdmin ? `
                   <li><hr style="margin: 4px 0; border-color: #f3f4f6;"></li>
                   <li>
-                    <button class="dropdown-item-takhlees" onclick="openEditModal('${row.category}', ${row.id}, '${encodeURIComponent(row.name||'')}', '${encodeURIComponent(row.serial_number||'')}', '${encodeURIComponent(row.employee_name||'')}', '${encodeURIComponent(row.location||'')}')">
+                    <button class="dropdown-item-takhlees" onclick="openEditModal('${row.category}', ${row.id})">
                       <i class="bi bi-pencil-fill"></i> Edit
                     </button>
                   </li>
@@ -964,17 +964,65 @@
       if (!currentUser || currentUser.role !== 'admin') return;
     }
 
-    function openEditModal(category, id, name, serial, employee, location) {
+    function isCaseStyleCategory(category) {
+      return category === 'case_details' || category === 'keys';
+    }
+
+    async function openEditModal(category, id) {
       if (!currentUser || currentUser.role !== 'admin') return;
+
       const modal = document.getElementById('editModal');
-      document.getElementById('editName').value     = decodeURIComponent(name);
-      document.getElementById('editSerial').value   = decodeURIComponent(serial);
-      document.getElementById('editEmployee').value = decodeURIComponent(employee);
-      document.getElementById('editLocation').value = decodeURIComponent(location);
+      const title = document.getElementById('editModalTitle');
+      const caseFields = document.getElementById('editCaseFields');
+      const serialField = document.getElementById('editSerialField');
+      const employeeField = document.getElementById('editEmployeeField');
+
       modal._editCategory = category;
-      modal._editId       = id;
-      modal.classList.add('active');
-      setTimeout(() => document.getElementById('editName').focus(), 50);
+      modal._editId = id;
+
+      try {
+        const resp = await fetch(`/api/assets/${encodeURIComponent(category)}/${encodeURIComponent(id)}`, {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+
+        const data = await resp.json();
+        if (!resp.ok || !data.success || !data.data) {
+          throw new Error(data.error || 'Unable to load record details');
+        }
+
+        const d = data.data;
+        const caseStyle = isCaseStyleCategory(category);
+
+        document.getElementById('editName').value = d.name || '';
+        document.getElementById('editLocation').value = d.location || d.case_type || '';
+
+        if (caseStyle) {
+          title.textContent = 'Edit Case Record';
+          caseFields.style.display = '';
+          serialField.style.display = 'none';
+          employeeField.style.display = 'none';
+
+          document.getElementById('editCustomerName').value = d.customer_name || '';
+          document.getElementById('editCustomerPhone').value = d.customer_phone || '';
+          document.getElementById('editCaseDate').value = d.case_date ? String(d.case_date).slice(0, 10) : '';
+          document.getElementById('editCaseNumber').value = d.case_number || '';
+          document.getElementById('editCaseType').value = d.case_type || '';
+        } else {
+          title.textContent = 'Edit Asset Record';
+          caseFields.style.display = 'none';
+          serialField.style.display = '';
+          employeeField.style.display = '';
+
+          document.getElementById('editSerial').value = d.serial_number || '';
+          document.getElementById('editEmployee').value = d.employee_name || '';
+        }
+
+        modal.classList.add('active');
+        setTimeout(() => document.getElementById('editName').focus(), 50);
+      } catch (err) {
+        alert('Unable to open editor: ' + err.message);
+      }
     }
 
     function closeEditModal() {
@@ -986,6 +1034,52 @@
       const category = modal._editCategory;
       const id       = modal._editId;
       const saveBtn  = document.getElementById('editSaveBtn');
+      const caseStyle = isCaseStyleCategory(category);
+
+      const name = document.getElementById('editName').value.trim();
+      const location = document.getElementById('editLocation').value.trim();
+
+      if (!name) {
+        alert('Name is required.');
+        return;
+      }
+
+      if (!location) {
+        alert('Location is required.');
+        return;
+      }
+
+      let payload;
+      if (caseStyle) {
+        const customerName = document.getElementById('editCustomerName').value.trim();
+        const customerPhone = document.getElementById('editCustomerPhone').value.trim();
+        const caseDate = document.getElementById('editCaseDate').value;
+        const caseNumber = document.getElementById('editCaseNumber').value.trim();
+        const caseType = document.getElementById('editCaseType').value.trim();
+
+        if (!customerName || !customerPhone || !caseDate || !caseNumber || !caseType) {
+          alert('Please complete all case fields.');
+          return;
+        }
+
+        payload = {
+          name,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          case_date: caseDate,
+          case_number: caseNumber,
+          case_type: caseType,
+          location
+        };
+      } else {
+        payload = {
+          name,
+          serial_number: document.getElementById('editSerial').value.trim(),
+          employee_name: document.getElementById('editEmployee').value.trim(),
+          location
+        };
+      }
+
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
       try {
@@ -994,12 +1088,7 @@
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'csrf-token': token },
           credentials: 'include',
-          body: JSON.stringify({
-            name:          document.getElementById('editName').value.trim(),
-            serial_number: document.getElementById('editSerial').value.trim(),
-            employee_name: document.getElementById('editEmployee').value.trim(),
-            location:      document.getElementById('editLocation').value.trim()
-          })
+          body: JSON.stringify(payload)
         });
         const j = await res.json();
         if (j.success) {
@@ -1543,7 +1632,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="edit-modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-modal-box">
     <div class="edit-modal-header">
-      <h5><i class="bi bi-pencil-fill me-2"></i>Edit Asset Record</h5>
+      <h5><i class="bi bi-pencil-fill me-2"></i><span id="editModalTitle">Edit Asset Record</span></h5>
       <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Close">&times;</button>
     </div>
     <div class="edit-modal-body">
@@ -1551,13 +1640,35 @@ document.addEventListener('DOMContentLoaded', () => {
         <label>Name</label>
         <input type="text" id="editName" placeholder="Asset name">
       </div>
-      <div class="edit-field">
+      <div class="edit-field" id="editSerialField">
         <label>Serial Number</label>
         <input type="text" id="editSerial" placeholder="Serial number">
       </div>
-      <div class="edit-field">
+      <div class="edit-field" id="editEmployeeField">
         <label>Employee</label>
         <input type="text" id="editEmployee" placeholder="Employee name">
+      </div>
+      <div id="editCaseFields" style="display: none;">
+        <div class="edit-field">
+          <label>Customer Name</label>
+          <input type="text" id="editCustomerName" placeholder="Customer name">
+        </div>
+        <div class="edit-field">
+          <label>Customer Phone</label>
+          <input type="text" id="editCustomerPhone" placeholder="Customer phone">
+        </div>
+        <div class="edit-field">
+          <label>Date</label>
+          <input type="date" id="editCaseDate">
+        </div>
+        <div class="edit-field">
+          <label>Case Number</label>
+          <input type="text" id="editCaseNumber" placeholder="Case number">
+        </div>
+        <div class="edit-field">
+          <label>Case Type</label>
+          <input type="text" id="editCaseType" placeholder="Type of case">
+        </div>
       </div>
       <div class="edit-field">
         <label>Location</label>

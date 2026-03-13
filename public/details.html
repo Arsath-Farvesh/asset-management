@@ -873,7 +873,7 @@
               <i class="bi bi-geo-alt-fill"></i>
               Location
             </div>
-            <div class="detail-value">${d.location || '-'}</div>
+            <div class="detail-value">${d.location || d.case_type || '-'}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">
@@ -907,7 +907,7 @@
                     <i class="bi bi-geo-alt-fill"></i>
                     Location
                   </div>
-                  <div class="detail-value">${d.location || '-'}</div>
+                  <div class="detail-value">${d.location || d.case_type || '-'}</div>
                 </div>
               </div>
             ` : ''}

@@ -134,6 +134,16 @@ function normalizePayloadForLegacySchemas(category, payload) {
   return normalized;
 }
 
+function normalizeRecordForLegacySchemas(record) {
+  const normalized = { ...(record || {}) };
+
+  if ((normalized.location === undefined || normalized.location === null || normalized.location === '') && normalized.case_type) {
+    normalized.location = normalized.case_type;
+  }
+
+  return normalized;
+}
+
 class AssetService {
   // Create asset
   async createAsset(category, data) {
@@ -211,7 +221,7 @@ class AssetService {
       }
 
       const result = await pool.query(`SELECT * FROM ${category} ORDER BY id DESC`);
-      return { success: true, data: result.rows };
+      return { success: true, data: result.rows.map(normalizeRecordForLegacySchemas) };
     } catch (error) {
       logger.error(`Get assets error from ${category}:`, error);
       return { success: false, error: 'Failed to fetch assets' };
@@ -236,7 +246,7 @@ class AssetService {
         return { success: false, error: 'Asset not found' };
       }
 
-      return { success: true, data: result.rows[0] };
+      return { success: true, data: normalizeRecordForLegacySchemas(result.rows[0]) };
     } catch (error) {
       logger.error(`Get asset error from ${category}:`, error);
       return { success: false, error: 'Failed to fetch asset' };
@@ -255,7 +265,8 @@ class AssetService {
         return { success: false, error: 'Invalid asset id' };
       }
 
-      const entries = Object.entries(data || {}).filter(([, value]) => value !== undefined);
+      const normalizedData = normalizePayloadForLegacySchemas(category, data);
+      const entries = Object.entries(normalizedData || {}).filter(([, value]) => value !== undefined);
       const columnsArray = entries.map(([key]) => key);
       const values = entries.map(([, value]) => value);
 
@@ -372,7 +383,7 @@ class AssetService {
 
           const serialExpr = cols.has('serial_number') ? 'serial_number' : 'NULL';
           const employeeExpr = cols.has('employee_name') ? 'employee_name' : 'NULL';
-          const locationExpr = cols.has('location') ? 'location' : 'NULL';
+          const locationExpr = cols.has('location') ? 'location' : cols.has('case_type') ? 'case_type' : 'NULL';
           const submittedByExpr = cols.has('submitted_by') ? 'submitted_by' : 'NULL';
           const createdAtExpr = cols.has('created_at') ? 'created_at' : 'NOW()';
 
