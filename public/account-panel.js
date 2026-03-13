@@ -250,6 +250,15 @@
       ${renderTabs()}
       ${state.activeTab === 'users' ? renderUsersPanel() : renderProfilePanel()}
     `;
+    // Widen the modal when showing the two-column admin user management panel
+    const modal = overlay.querySelector('.profile-modal');
+    if (modal) {
+      if (state.activeTab === 'users') {
+        modal.classList.add('profile-modal--wide');
+      } else {
+        modal.classList.remove('profile-modal--wide');
+      }
+    }
     bindModalEvents();
   }
 
@@ -391,6 +400,8 @@
     }
 
     renderContent();
+    // Remove any inline display style set by legacy HTML before toggling the CSS class
+    overlay.style.removeProperty('display');
     overlay.classList.add('active');
   }
 

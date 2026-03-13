@@ -1178,9 +1178,15 @@ small, .text-small {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-2xl);
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   margin: var(--space-3);
   overflow: hidden;
+  transition: max-width 0.2s ease;
+}
+
+/* Wider variant for admin User Management two-column layout */
+.profile-modal.profile-modal--wide {
+  max-width: 720px;
 }
 
 .profile-header {
@@ -1219,6 +1225,8 @@ small, .text-small {
 
 .profile-body {
   padding: var(--space-3);
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .profile-field {

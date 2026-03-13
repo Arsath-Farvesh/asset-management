@@ -756,7 +756,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 </script>
 
 <!-- Profile Modal -->
-<div class="profile-modal-overlay" id="profileModalOverlay" style="display:none;">
+<div class="profile-modal-overlay" id="profileModalOverlay">
   <div class="profile-modal">
     <div class="profile-header">
       <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
@@ -770,11 +770,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 </div>
 
 <script>
-// Profile Modal Functions
-let currentUser = null;
-let isEditMode = false;
+// Profile modal is handled by account-panel.js
+// Stub loadAuthIndicator to prevent double-init on pages that reference it
+function loadAuthIndicator() {
+  // no-op: account-panel.js handles all auth indicator + modal logic
+}
 
-async function loadAuthIndicator() {
+/* ---- legacy stubs kept to avoid ReferenceError if called elsewhere ---- */
+async function _legacyLoadAuthIndicator() {
   try {
     const resp = await fetch('/api/auth-status', { credentials: 'include' });
     const data = await resp.json();
@@ -962,15 +965,7 @@ function showFormMessage(msg, type) {
   messageDiv.style.borderLeft = '4px solid ' + (type === 'error' ? '#dc2626' : '#10b981');
 }
 
-// Close modal when clicking overlay
-document.getElementById('profileModalOverlay').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeProfileModal();
-  }
-});
-
-// Load auth indicator when page loads
-window.addEventListener('load', loadAuthIndicator);
+// account-panel.js handles overlay click-away natively
 </script>
 
 <!-- Inactivity Timeout Warning Modal -->
