@@ -5,20 +5,50 @@ const logger = require('../config/logger');
 class AuthController {
   // Login
   async login(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, errors: errors.array() });
+      }
+
+      const { username, password } = req.body;
+      const result = await authService.login(username, password);
+
+      if (!result.success) {
+        return res.status(401).json(result);
+      }
+
+      if (!req.session) {
+        logger.error('Login failed: session is not available', {
+          username,
+          requestId: req.requestId,
+          path: req.originalUrl
+        });
+        return res.status(500).json({ success: false, error: 'Session service unavailable' });
+      }
+
+      req.session.user = result.user;
+      req.session.save((saveError) => {
+        if (saveError) {
+          logger.error('Login failed: could not persist session', {
+            username,
+            requestId: req.requestId,
+            message: saveError.message
+          });
+          return res.status(500).json({ success: false, error: 'Unable to complete login. Please try again.' });
+        }
+
+        return res.json({ success: true, user: result.user });
+      });
+    } catch (error) {
+      logger.error('Unhandled login controller error', {
+        requestId: req.requestId,
+        path: req.originalUrl,
+        message: error.message,
+        stack: error.stack
+      });
+      return res.status(500).json({ success: false, error: 'Internal server error' });
     }
-
-    const { username, password } = req.body;
-    const result = await authService.login(username, password);
-
-    if (!result.success) {
-      return res.status(401).json(result);
-    }
-
-    req.session.user = result.user;
-    return res.json({ success: true, user: result.user });
   }
 
   // Logout

@@ -575,7 +575,7 @@
           throw new Error('Failed to get security token. Please refresh and try again.');
         }
 
-        const res = await fetch("/api/login", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -593,7 +593,9 @@
             window.location.href = "/index.html";
           }, 500);
         } else {
-          errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + (data.error || "Invalid credentials");
+          const requestRef = data.requestId ? ` <small class="d-block mt-1 text-muted">Ref: ${data.requestId}</small>` : '';
+          const statusRef = `<small class="d-block mt-1 text-muted">HTTP ${res.status}</small>`;
+          errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + (data.error || "Invalid credentials") + statusRef + requestRef;
           errorDiv.classList.add('show');
           submitBtn.disabled = false;
           submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Sign In';

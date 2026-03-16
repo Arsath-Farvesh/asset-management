@@ -45,10 +45,28 @@ const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production';
 const isStrictCsp = process.env.CSP_MODE === 'strict';
 const isCspReportOnly = process.env.CSP_REPORT_ONLY === 'true';
-const allowedOrigins = (process.env.CORS_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const railwayPublicOrigin = process.env.RAILWAY_PUBLIC_DOMAIN
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  : null;
+
+function normalizeOrigin(origin) {
+  if (!origin || typeof origin !== 'string') {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(origin.trim());
+    return parsed.origin;
+  } catch (error) {
+    return null;
+  }
+}
+
+const allowedOrigins = new Set(
+  [...(process.env.CORS_ORIGINS || '').split(','), railwayPublicOrigin]
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean)
+);
 
 function buildCspDirectives() {
   const baseDirectives = {
@@ -107,31 +125,24 @@ app.use(compression({
 app.use('/api/', apiLimiter);
 
 // ===== CORS CONFIGURATION =====
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like Postman, server-to-server, mobile apps)
-    if (!origin) {
-      return callback(null, true);
-    }
+app.use(cors((req, callback) => {
+  const requestOrigin = normalizeOrigin(req.get('origin'));
+  const requestHost = req.get('host');
+  const forwardedProto = (req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim();
+  const sameOrigin = requestOrigin && requestHost && requestOrigin === `${forwardedProto}://${requestHost}`;
 
-    // Development: allow all origins
-    if (!isProduction) {
-      return callback(null, true);
-    }
+  // Allow non-browser calls, development calls, same-origin browser calls, or approved origins.
+  if (!requestOrigin || !isProduction || sameOrigin || allowedOrigins.has(requestOrigin)) {
+    return callback(null, { origin: true, credentials: true });
+  }
 
-    // Production: if CORS_ORIGINS is not configured, fail closed for browser requests.
-    if (allowedOrigins.length === 0) {
-      return callback(new Error('CORS is not configured for production'));
-    }
+  logger.warn('Blocked CORS origin', {
+    origin: requestOrigin,
+    path: req.originalUrl
+  });
 
-    // Production: check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error('CORS not allowed for this origin'));
-  },
-  credentials: true
+  // Reject disallowed origins without throwing a 500.
+  return callback(null, { origin: false, credentials: true });
 }));
 
 app.set('trust proxy', 1);
@@ -227,7 +238,14 @@ app.use((req, res, next) => {
 
 // ===== CSRF PROTECTION =====
 const csrfProtection = csrf({ cookie: false });
-app.use(csrfProtection);
+app.use((req, res, next) => {
+  const isLoginEndpoint = req.method === 'POST' && (req.path === '/api/login' || req.path === '/api/auth/login');
+  if (isLoginEndpoint) {
+    return next();
+  }
+
+  return csrfProtection(req, res, next);
+});
 
 // ===== INPUT SANITIZATION & VALIDATION =====
 app.use(sanitizeInput);

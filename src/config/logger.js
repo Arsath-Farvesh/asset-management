@@ -1,5 +1,7 @@
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
+const fs = require('fs');
+const path = require('path');
 
 const SENSITIVE_KEYWORDS = ['password', 'pass', 'token', 'secret', 'apiKey', 'apikey', 'authorization', 'cookie', 'session'];
 
@@ -57,35 +59,52 @@ const logFormat = winston.format.combine(
   winston.format.json()
 );
 
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: logFormat,
-  transports: [
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT_NAME === 'production';
+const shouldLogToFiles = process.env.LOG_TO_FILES === 'true' || !isProduction;
+const transports = [];
+
+if (shouldLogToFiles) {
+  const logsDir = path.join(process.cwd(), 'logs');
+  try {
+    fs.mkdirSync(logsDir, { recursive: true });
+  } catch (error) {
+    // Fall back to console-only logging if directory cannot be created.
+  }
+
+  transports.push(
     new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
+      filename: path.join(logsDir, 'error-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       level: 'error',
       maxSize: '20m',
       maxFiles: '14d'
     }),
     new DailyRotateFile({
-      filename: 'logs/combined-%DATE%.log',
+      filename: path.join(logsDir, 'combined-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxSize: '20m',
       maxFiles: '14d'
     })
-  ]
-});
-
-// Console logging in development only
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    )
-  }));
+  );
 }
+
+// Always log to console so platform logs (Railway) capture runtime errors.
+transports.push(
+  new winston.transports.Console({
+    format: isProduction
+      ? logFormat
+      : winston.format.combine(
+          winston.format.colorize(),
+          winston.format.simple()
+        )
+  })
+);
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: logFormat,
+  transports
+});
 
 // Backward compatibility alias without overriding Winston's internal logger.log() method.
 logger.legacy = {
