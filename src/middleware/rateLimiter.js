@@ -6,7 +6,18 @@ const apiLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: { success: false, error: "Too many requests, please try again later" },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  skip: (req) => {
+    const path = req.path || '';
+
+    // Login/CSRF endpoints are protected separately by authLimiter and should
+    // not be throttled by the global API limiter.
+    return (
+      path === '/csrf-token' ||
+      path === '/login' ||
+      path.startsWith('/auth/')
+    );
+  }
 });
 
 // Stricter rate limiter for authentication endpoints
