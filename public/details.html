@@ -801,20 +801,126 @@
       return params.get(key);
     }
 
+    const KNOWN_CATEGORIES = new Set([
+      'assets',
+      'case_details',
+      'depreciation_history',
+      'digital_media',
+      'documents',
+      'employees',
+      'keys',
+      'financial_assets',
+      'furniture',
+      'infrastructure',
+      'intellectual_property',
+      'it_hardware',
+      'leased_assets',
+      'locations',
+      'machinery_equipment',
+      'maintenance_logs',
+      'real_estate',
+      'software_license',
+      'tools',
+      'vehicles',
+      'equipments_assets',
+      'laptops',
+      'monitors',
+      'accessories',
+      'id_cards'
+    ]);
+
+    function parseQrPayload(rawQr) {
+      const decoded = (() => {
+        try {
+          return decodeURIComponent(rawQr);
+        } catch (_err) {
+          return rawQr;
+        }
+      })();
+
+      const parts = String(decoded)
+        .split('-')
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+      if (parts.length === 0) {
+        return null;
+      }
+
+      const categoryIndex = parts.findIndex((part) => KNOWN_CATEGORIES.has(part.toLowerCase()));
+      if (categoryIndex === -1) {
+        return null;
+      }
+
+      const category = parts[categoryIndex].toLowerCase();
+      const lastPart = parts[parts.length - 1];
+      const id = /^\d+$/.test(lastPart) ? Number.parseInt(lastPart, 10) : null;
+
+      return {
+        category,
+        id,
+        name: parts.slice(0, categoryIndex).join('-') || null,
+        serial: parts[categoryIndex + 1] || null,
+        employee: parts.slice(categoryIndex + 2, id ? -1 : undefined).join('-') || null
+      };
+    }
+
     async function fetchByQR(qr) {
       try {
-        const resp = await fetch('/api/qr/' + encodeURIComponent(qr), { credentials:'include' });
-        if (!resp.ok) {
-          const txt = await resp.text();
-          showError('QR Code not found in system: ' + txt);
+        const parsed = parseQrPayload(qr);
+        if (!parsed || !parsed.category) {
+          showError('QR format is not supported by this system');
           return;
         }
-        const j = await resp.json();
-        if (!j.success) {
+
+        if (parsed.id) {
+          await fetchByCategoryId(parsed.category, parsed.id);
+          return;
+        }
+
+        const listResp = await fetch(`/api/assets/${encodeURIComponent(parsed.category)}`, { credentials: 'include' });
+        if (listResp.status === 401 || listResp.status === 403) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        let listPayload;
+        try {
+          listPayload = await listResp.json();
+        } catch (_err) {
+          throw new Error('Invalid server response');
+        }
+
+        if (!listResp.ok || !listPayload.success || !Array.isArray(listPayload.data)) {
+          throw new Error(listPayload.error || 'Unable to look up QR asset');
+        }
+
+        const normalizedName = (parsed.name || '').toLowerCase();
+        const normalizedSerial = (parsed.serial || '').toLowerCase();
+        const normalizedEmployee = (parsed.employee || '').toLowerCase();
+
+        const matched = listPayload.data.find((item) => {
+          const itemName = String(item.name || item.asset_name || item.case_name || '').toLowerCase();
+          const itemSerial = String(item.serial_number || item.asset_tag || item.employee_id || item.key_reference || '').toLowerCase();
+          const itemEmployee = String(item.employee_name || item.customer_name || '').toLowerCase();
+
+          if (normalizedSerial && itemSerial === normalizedSerial) {
+            return true;
+          }
+
+          if (normalizedName && itemName === normalizedName && (!normalizedEmployee || itemEmployee === normalizedEmployee)) {
+            return true;
+          }
+
+          return false;
+        });
+
+        if (!matched || !matched.id) {
           showError('QR Code not found in system');
           return;
         }
-        render(j);
+
+        render({ category: parsed.category, data: matched });
       } catch (err) {
         showError('Error: ' + err.message);
       }
