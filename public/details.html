@@ -843,6 +843,26 @@
         .map((part) => part.trim())
         .filter(Boolean);
 
+      // New report/label format: category|id|name|serial
+      if (String(decoded).includes('|')) {
+        const pipeParts = String(decoded)
+          .split('|')
+          .map((part) => part.trim())
+          .filter(Boolean);
+
+        if (pipeParts.length >= 2 && KNOWN_CATEGORIES.has(String(pipeParts[0]).toLowerCase())) {
+          const category = String(pipeParts[0]).toLowerCase();
+          const id = /^\d+$/.test(pipeParts[1]) ? Number.parseInt(pipeParts[1], 10) : null;
+          return {
+            category,
+            id,
+            name: pipeParts[2] || null,
+            serial: pipeParts[3] || null,
+            employee: null
+          };
+        }
+      }
+
       if (parts.length === 0) {
         return null;
       }
@@ -865,11 +885,59 @@
       };
     }
 
+    async function findAssetByLooseToken(rawToken) {
+      const token = String(rawToken || '').trim().toLowerCase();
+      if (!token) {
+        return null;
+      }
+
+      const historyResp = await fetch('/api/history', { credentials: 'include', cache: 'no-store' });
+      if (historyResp.status === 401 || historyResp.status === 403) {
+        window.location.href = '/login.html';
+        return null;
+      }
+
+      let historyPayload;
+      try {
+        historyPayload = await historyResp.json();
+      } catch (_err) {
+        throw new Error('Invalid server response');
+      }
+
+      if (!historyResp.ok || !historyPayload.success || !Array.isArray(historyPayload.data)) {
+        throw new Error(historyPayload.error || 'Unable to look up asset from barcode');
+      }
+
+      const match = historyPayload.data.find((item) => {
+        const serial = String(item.serial_number || '').trim().toLowerCase();
+        const name = String(item.name || '').trim().toLowerCase();
+        const itemId = String(item.id || '').trim().toLowerCase();
+
+        return serial === token || name === token || itemId === token;
+      });
+
+      if (!match || !match.category || !match.id) {
+        return null;
+      }
+
+      return {
+        category: match.category,
+        id: match.id
+      };
+    }
+
     async function fetchByQR(qr) {
       try {
         const parsed = parseQrPayload(qr);
         if (!parsed || !parsed.category) {
-          showError('QR format is not supported by this system');
+          // Barcode scans often contain only serial text; resolve by history lookup.
+          const looseMatch = await findAssetByLooseToken(qr);
+          if (!looseMatch) {
+            showError('Asset not found for scanned QR/Barcode value');
+            return;
+          }
+
+          await fetchByCategoryId(looseMatch.category, looseMatch.id);
           return;
         }
 

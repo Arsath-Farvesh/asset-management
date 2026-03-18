@@ -878,8 +878,8 @@
         const tbody = document.querySelector('#historyTable tbody');
         tbody.innerHTML = '';
 
-        rows.forEach(row => {
-            displayCategory = row.category.replace(/_/g, ' ').toUpperCase();
+        rows.forEach((row) => {
+            let displayCategory = String(row.category || '').replace(/_/g, ' ').toUpperCase();
             if (row.category === 'case_details') {
               displayCategory = 'Case Details';
             } else if (row.category === 'keys' || row.category === 'equipments_assets') {
@@ -900,7 +900,7 @@
             <td>${row.employee_name || '-'}</td>
             <td>${row.location || '-'}</td>
             <td>${row.submitted_by || '-'}</td>
-            <td>${new Date(row.created_at).toLocaleString()}</td>
+            <td>${row.created_at ? new Date(row.created_at).toLocaleString() : '-'}</td>
             <td>
               <div class="action-buttons">
                 <button class="btn-row-action view" data-action="view" data-category="${row.category}" data-id="${row.id}">

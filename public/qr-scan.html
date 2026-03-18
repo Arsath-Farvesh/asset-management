@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Scan QR codes to quickly access asset information in Takhlees Asset Management System." />
+  <meta name="description" content="Scan QR and barcode labels to quickly access asset information in Takhlees Asset Management System." />
   <meta name="theme-color" content="#1f2937" />
-  <title>QR Scanner - Takhlees Government Services</title>
+  <title>QR & Barcode Scanner - Takhlees Government Services</title>
   
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -577,8 +577,8 @@
     <div class="scanner-card card-enhanced">
       <div class="scanner-header text-center">
         <i class="bi bi-qr-code-scan"></i>
-        <h2 class="mb-2">QR Code Scanner</h2>
-        <p class="mb-0">Point your camera at the asset QR code</p>
+        <h2 class="mb-2">QR & Barcode Scanner</h2>
+        <p class="mb-0">Point your camera at the asset label</p>
       </div>
       
       <div class="scanner-body">
@@ -598,7 +598,7 @@
             </li>
             <li>
               <i class="bi bi-check-circle-fill"></i>
-              Position the QR code within the frame
+              Position the QR code or barcode within the frame
             </li>
             <li>
               <i class="bi bi-check-circle-fill"></i>
@@ -714,12 +714,50 @@
 
     checkLogin();
 
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    function getScanFormats() {
+      const formats = [];
+      const supported = window.Html5QrcodeSupportedFormats;
+      if (!supported) {
+        return formats;
+      }
+
+      const desired = [
+        'QR_CODE',
+        'CODE_128',
+        'CODE_39',
+        'EAN_13',
+        'EAN_8',
+        'UPC_A',
+        'UPC_E',
+        'ITF',
+        'CODABAR'
+      ];
+
+      desired.forEach((name) => {
+        if (Object.prototype.hasOwnProperty.call(supported, name)) {
+          formats.push(supported[name]);
+        }
+      });
+
+      return formats;
+    }
+
+    const config = {
+      fps: 12,
+      qrbox: { width: 280, height: 220 },
+      aspectRatio: 1.333,
+      rememberLastUsedCamera: true,
+      formatsToSupport: getScanFormats()
+    };
 
     function onScanSuccess(decodedText, decodedResult) {
+      const detectedFormat = decodedResult && decodedResult.result && decodedResult.result.format
+        ? decodedResult.result.format.formatName || decodedResult.result.format
+        : 'CODE';
+
       statusEl.className = 'status-message success';
       statusEl.style.display = 'block';
-      statusEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> QR Code detected! Redirecting...';
+      statusEl.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${detectedFormat} detected! Redirecting...`;
       
       scannerInstance.stop().then(() => {
         window.location.href = `/details.html?qr=${encodeURIComponent(decodedText)}`;
@@ -776,207 +814,7 @@
     </div>
   </div>
 
-  <script>
-  // Profile Modal Functions
-  let currentProfileUser = null;
-  let isEditMode = false;
-
-  async function loadProfileUserData() {
-    try {
-      const resp = await fetch('/api/auth-status', { credentials: 'include' });
-      const data = await resp.json();
-      if (data.authenticated && data.user) {
-        currentProfileUser = data.user;
-        const indicator = document.getElementById('authIndicator');
-        if (indicator) {
-          indicator.style.display = 'flex';
-          indicator.addEventListener('click', openProfileModal);
-        }
-      }
-    } catch(err) {
-      console.log('Auth check failed:', err);
-    }
-  }
-
-  function openProfileModal() {
-    if (!currentProfileUser) return;
-    isEditMode = false;
-    renderProfileModal();
-    document.getElementById('profileModalOverlay').classList.add('active');
-  }
-
-  function closeProfileModal() {
-    document.getElementById('profileModalOverlay').classList.remove('active');
-    isEditMode = false;
-  }
-
-  function renderProfileModal() {
-    const username = currentProfileUser.username || 'User';
-    const role = (currentProfileUser.role || 'user').charAt(0).toUpperCase() + (currentProfileUser.role || 'user').slice(1);
-    const avatar = username.charAt(0).toUpperCase();
-    const email = currentProfileUser.email || '';
-    const department = currentProfileUser.department || 'Not Set';
-
-    document.getElementById('profileAvatarLarge').textContent = avatar;
-    document.getElementById('profileUsername').textContent = username;
-    document.getElementById('profileRoleDisplay').textContent = role;
-
-    const contentDiv = document.getElementById('profileContent');
-    if (isEditMode) {
-      contentDiv.innerHTML = `
-        <form id="profileEditForm">
-          <div class="profile-field">
-            <label class="profile-label">Username</label>
-            <input type="text" id="editUsername" class="profile-input" value="${username}" required>
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Email</label>
-            <input type="email" id="editEmail" class="profile-input" value="${email}" required>
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Department</label>
-            <input type="text" id="editDepartment" class="profile-input" value="${department}">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Password (leave blank to keep current)</label>
-            <input type="password" id="editPassword" class="profile-input" placeholder="Enter new password">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Confirm Password</label>
-            <input type="password" id="editConfirmPassword" class="profile-input" placeholder="Confirm new password">
-          </div>
-          <div id="formMessage" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; display: none;"></div>
-          <div style="display: flex; gap: 0.75rem;">
-            <button type="submit" class="profile-btn profile-btn-save">Save Changes</button>
-            <button type="button" id="profileCancelBtn" class="profile-btn profile-btn-cancel">Cancel</button>
-            <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
-          </div>
-        </form>
-      `;
-      document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
-      const cancelBtn = document.getElementById('profileCancelBtn');
-      const closeBtn = document.getElementById('profileCloseBtn');
-      if (cancelBtn) cancelBtn.addEventListener('click', cancelEditMode);
-      if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
-    } else {
-      contentDiv.innerHTML = `
-        <div class="profile-field">
-          <label class="profile-label">Username</label>
-          <div class="profile-value">${username}</div>
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Email</label>
-          <div class="profile-value">${email}</div>
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Department</label>
-          <div class="profile-value">${department}</div>
-        </div>
-        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-          <button id="profileEditBtn" class="profile-btn profile-btn-edit" style="background: #6b7280; color: white; flex: 1;">Edit Profile</button>
-          <button id="profileCloseBtn" class="profile-btn profile-btn-close" style="flex: 1;">Close</button>
-        </div>
-      `;
-      const editBtn = document.getElementById('profileEditBtn');
-      const closeBtn = document.getElementById('profileCloseBtn');
-      if (editBtn) editBtn.addEventListener('click', enterEditMode);
-      if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
-    }
-  }
-
-  function enterEditMode() {
-    isEditMode = true;
-    renderProfileModal();
-  }
-
-  function cancelEditMode() {
-    isEditMode = false;
-    renderProfileModal();
-  }
-
-  async function saveProfileChanges(e) {
-    e.preventDefault();
-    
-    const username = document.getElementById('editUsername').value.trim();
-    const email = document.getElementById('editEmail').value.trim();
-    const department = document.getElementById('editDepartment').value.trim();
-    const password = document.getElementById('editPassword').value;
-    const confirmPassword = document.getElementById('editConfirmPassword').value;
-    const messageDiv = document.getElementById('formMessage');
-
-    // Validation
-    if (!username) {
-      showFormMessage('Username is required', 'error');
-      return;
-    }
-
-    if (!email) {
-      showFormMessage('Email is required', 'error');
-      return;
-    }
-
-    if (password && password !== confirmPassword) {
-      showFormMessage('Passwords do not match', 'error');
-      return;
-    }
-
-    if (password && password.length < 8) {
-      showFormMessage('Password must be at least 8 characters', 'error');
-      return;
-    }
-
-    try {
-      const payload = { username, email, department, confirmPassword };
-      if (password) payload.password = password;
-
-      const token = await ensureCsrfToken();
-
-      const resp = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'csrf-token': token
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      const data = await resp.json();
-      
-      if (resp.ok && data.success) {
-        currentProfileUser = data.user;
-        showFormMessage('Profile updated successfully!', 'success');
-        setTimeout(() => {
-          isEditMode = false;
-          renderProfileModal();
-        }, 1500);
-      } else {
-        showFormMessage(data.error || 'Failed to update profile', 'error');
-      }
-    } catch(err) {
-      showFormMessage('Error: ' + err.message, 'error');
-    }
-  }
-
-  function showFormMessage(msg, type) {
-    const messageDiv = document.getElementById('formMessage');
-    messageDiv.textContent = msg;
-    messageDiv.style.display = 'block';
-    messageDiv.style.background = type === 'error' ? '#fee2e2' : '#dcfce7';
-    messageDiv.style.color = type === 'error' ? '#991b1b' : '#166534';
-    messageDiv.style.borderLeft = '4px solid ' + (type === 'error' ? '#dc2626' : '#10b981');
-  }
-
-  // Close modal when clicking overlay
-  document.getElementById('profileModalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeProfileModal();
-    }
-  });
-
-  // Load auth indicator when page loads
-  window.addEventListener('load', loadProfileUserData);
-  </script>
+  <!-- Profile modal behavior is centralized in account-panel.js -->
   <script src="/session-timeout.js"></script>
   <script src="/account-panel.js"></script>
 </body>
