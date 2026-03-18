@@ -777,6 +777,8 @@
     let csrfToken = null;
     let historyRowsCache = [];
     const REQUEST_TIMEOUT_MS = 12000;
+    const UI_LOADING_WATCHDOG_MS = 15000;
+    let loadingWatchdogId = null;
 
     async function fetchJsonWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
       const controller = new AbortController();
@@ -891,6 +893,35 @@
       const loadingIndicator = document.getElementById('loadingIndicator');
       const tableContainer = document.getElementById('tableContainer');
       const emptyState = document.getElementById('emptyState');
+
+      if (loadingWatchdogId) {
+        clearTimeout(loadingWatchdogId);
+      }
+
+      loadingWatchdogId = window.setTimeout(() => {
+        if (loadingIndicator.style.display !== 'none') {
+          loadingIndicator.style.display = 'none';
+          tableContainer.style.display = 'none';
+          emptyState.innerHTML = `
+            <i class="bi bi-exclamation-triangle" style="color: var(--takhlees-red);"></i>
+            <h4>History Loading Timeout</h4>
+            <p>The page took too long to load records. Please retry.</p>
+            <button class="btn-download btn-enhanced mt-3" id="retryHistoryBtnWatchdog">
+              <i class="bi bi-arrow-repeat"></i> Retry
+            </button>
+          `;
+          emptyState.style.display = 'block';
+
+          const retryBtn = document.getElementById('retryHistoryBtnWatchdog');
+          if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+              emptyState.style.display = 'none';
+              loadingIndicator.style.display = 'block';
+              loadHistory();
+            }, { once: true });
+          }
+        }
+      }, UI_LOADING_WATCHDOG_MS);
       
       try {
         const { response: resp, payload: j } = await fetchJsonWithTimeout('/api/history', {
@@ -909,6 +940,11 @@
 
         const rows = j.data || [];
         historyRowsCache = rows;
+
+        if (loadingWatchdogId) {
+          clearTimeout(loadingWatchdogId);
+          loadingWatchdogId = null;
+        }
         
         loadingIndicator.style.display = 'none';
         
@@ -980,6 +1016,11 @@
         }
         attachCheckboxListeners();
       } catch (error) {
+        if (loadingWatchdogId) {
+          clearTimeout(loadingWatchdogId);
+          loadingWatchdogId = null;
+        }
+
         loadingIndicator.style.display = 'none';
         tableContainer.style.display = 'none';
         emptyState.innerHTML = `

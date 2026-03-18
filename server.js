@@ -79,7 +79,13 @@ function buildCspDirectives() {
   };
 
   if (isStrictCsp) {
-    return baseDirectives;
+    // This project currently uses inline scripts in multiple pages.
+    // Keep strict mode compatible until scripts are fully externalized.
+    return {
+      ...baseDirectives,
+      styleSrc: [...baseDirectives.styleSrc, "'unsafe-inline'"],
+      scriptSrc: [...baseDirectives.scriptSrc, "'unsafe-inline'"]
+    };
   }
 
   return {
