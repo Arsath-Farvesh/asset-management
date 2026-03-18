@@ -276,7 +276,7 @@
               <div>
                 <p class="preview-code-label">BARCODE</p>
                 <div class="preview-code-box">
-                  <img id="preview-barcode" style="max-height: 88px; width: auto; max-width: 100%;" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=2&height=40&includetext">
+                  <img id="preview-barcode" style="max-height: 110px; width: 100%; max-width: 100%;" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10">
                 </div>
               </div>
             </div>
@@ -484,6 +484,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       caseType.required = isRequired;
     }
 
+    function buildBarcodeUrl(value) {
+      return `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(value || 'NA')}&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10`;
+    }
+
     function updatePreview() {
         const category = assetCategory.value || 'Not selected';
         const isCaseStyleCategory = category === 'case_details' || category === 'keys';
@@ -521,7 +525,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Generate QR with case data
             const qrData = encodeURIComponent(`${caseName || cName}-${cPhone}-${cNum}`);
                 previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
-                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(cNum || caseName || cName)}&scale=2&height=50&includetext`;
+              previewBarcode.src = buildBarcodeUrl(cNum || caseName || cName);
         } else {
             // Standard asset preview
             const nameEl = document.getElementById('asset-name');
@@ -545,10 +549,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const qrData = encodeURIComponent(`${name}-${category}-${serial}-${employee}`);
                 previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
                 const barcodeValue = serial || name;
-                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodeValue)}&scale=2&height=50&includetext`;
+              previewBarcode.src = buildBarcodeUrl(barcodeValue);
             } else {
                 previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Sample`;
-                previewBarcode.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=Sample&scale=2&height=50&includetext`;
+              previewBarcode.src = buildBarcodeUrl('Sample');
             }
         }
     }

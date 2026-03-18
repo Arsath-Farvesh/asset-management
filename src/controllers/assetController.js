@@ -2,6 +2,25 @@ const assetService = require('../services/assetService');
 const logger = require('../config/logger');
 const PDFDocument = require('pdfkit');
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeCategoryLabel(category) {
+  if (category === 'case_details') {
+    return 'Case Details';
+  }
+  if (category === 'keys' || category === 'equipments_assets') {
+    return 'Keys';
+  }
+  return String(category || '').replace(/_/g, ' ').toUpperCase();
+}
+
 class AssetController {
   // Create asset
   async createAsset(req, res) {
@@ -246,6 +265,93 @@ class AssetController {
     });
 
     doc.end();
+  }
+
+  async getHistoryCodesReport(req, res) {
+    const result = await assetService.getHistory();
+
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    const rows = result.data || [];
+    const autoPrint = req.query.autoprint === 'true';
+    const createdAt = new Date().toLocaleString();
+
+    const cards = rows.map((row) => {
+      const rowLabel = row.serial_number || row.case_number || row.id || '-';
+      const qrPayload = encodeURIComponent(`${row.category || ''}|${row.id || ''}|${row.name || ''}|${rowLabel}`);
+      const barcodePayload = encodeURIComponent(String(rowLabel || row.name || row.id || 'NA'));
+
+      return `
+        <article class="label-card">
+          <header>
+            <h3>${escapeHtml(normalizeCategoryLabel(row.category))}</h3>
+            <p>#${escapeHtml(row.id || '-')}</p>
+          </header>
+          <p><strong>Name:</strong> ${escapeHtml(row.name || '-')}</p>
+          <p><strong>Serial/Case:</strong> ${escapeHtml(rowLabel)}</p>
+          <p><strong>Location:</strong> ${escapeHtml(row.location || '-')}</p>
+          <div class="codes-grid">
+            <div>
+              <h4>QR</h4>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrPayload}" alt="QR ${escapeHtml(row.id || '-')}">
+            </div>
+            <div>
+              <h4>Barcode</h4>
+              <img class="barcode-image" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10" alt="Barcode ${escapeHtml(row.id || '-')}">
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR & Barcode Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .print-btn { padding: 10px 16px; border: none; border-radius: 8px; background: #88010e; color: #fff; cursor: pointer; }
+    .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+    .label-card { border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; break-inside: avoid; }
+    .label-card header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .label-card h3 { margin: 0; font-size: 16px; }
+    .label-card p { margin: 4px 0; font-size: 13px; }
+    .codes-grid { display: grid; grid-template-columns: 180px 1fr; gap: 14px; margin-top: 10px; align-items: center; }
+    .codes-grid h4 { margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
+    .codes-grid img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+    .barcode-image { min-width: 280px; }
+    @media (max-width: 900px) {
+      .labels { grid-template-columns: 1fr; }
+      .codes-grid { grid-template-columns: 1fr; }
+      .barcode-image { min-width: 0; }
+    }
+    @media print {
+      .print-btn { display: none; }
+      body { margin: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 style="margin:0;font-size:20px;">QR & Barcode Sticker Report</h1>
+      <p style="margin:4px 0 0 0;color:#4b5563;">Generated: ${escapeHtml(createdAt)} | Total: ${rows.length}</p>
+    </div>
+    <button class="print-btn" onclick="window.print()">Print</button>
+  </div>
+  <section class="labels">${cards}</section>
+  ${autoPrint ? '<script>window.addEventListener(\'load\', () => window.print());<\/script>' : ''}
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename="asset-codes-${Date.now()}.html"`);
+    return res.send(html);
   }
 }
 

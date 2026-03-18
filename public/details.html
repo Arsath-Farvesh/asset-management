@@ -938,7 +938,7 @@
       ].join('-').replace(/^-+|-+$/g, '') || `asset-${d.id}`;
       const barcodePayload = d.serial_number || d.name || `${payload.category || 'asset'}-${d.id}`;
       const qrSrc = d.qr_code || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrPayload)}`;
-      const barcodeSrc = d.barcode || `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodePayload)}&scale=3&height=60&includetext`;
+      const barcodeSrc = d.barcode || `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodePayload)}&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10`;
       
       let displayCategory = payload.category.replace(/_/g, ' ').toUpperCase();
       if (payload.category === 'case_details') {

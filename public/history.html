@@ -1265,80 +1265,6 @@
       }
     });
 
-    function formatCategoryLabel(category) {
-      if (category === 'case_details') return 'Case Details';
-      if (category === 'keys' || category === 'equipments_assets') return 'Keys';
-      return String(category || '').replace(/_/g, ' ').toUpperCase();
-    }
-
-    function buildCodesReportHtml(rows) {
-      const createdAt = new Date().toLocaleString();
-      const cards = rows.map((row) => {
-        const rowLabel = row.serial_number || row.case_number || row.id;
-        const qrPayload = encodeURIComponent(`${row.category || ''}|${row.id}|${row.name || ''}|${rowLabel || ''}`);
-        const barcodePayload = encodeURIComponent(String(rowLabel || row.name || row.id || 'NA'));
-        return `
-          <article class="label-card">
-            <header>
-              <h3>${formatCategoryLabel(row.category)}</h3>
-              <p>#${row.id}</p>
-            </header>
-            <p><strong>Name:</strong> ${row.name || '-'}</p>
-            <p><strong>Serial/Case:</strong> ${rowLabel || '-'}</p>
-            <p><strong>Location:</strong> ${row.location || '-'}</p>
-            <div class="codes-grid">
-              <div>
-                <h4>QR</h4>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrPayload}" alt="QR ${row.id}">
-              </div>
-              <div>
-                <h4>Barcode</h4>
-                <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=3&height=45&includetext" alt="Barcode ${row.id}">
-              </div>
-            </div>
-          </article>
-        `;
-      }).join('');
-
-      return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR & Barcode Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .print-btn { padding: 10px 16px; border: none; border-radius: 8px; background: #88010e; color: #fff; cursor: pointer; }
-    .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
-    .label-card { border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; break-inside: avoid; }
-    .label-card header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-    .label-card h3 { margin: 0; font-size: 16px; }
-    .label-card p { margin: 4px 0; font-size: 13px; }
-    .codes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; align-items: center; }
-    .codes-grid h4 { margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
-    .codes-grid img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
-    @media print {
-      .print-btn { display: none; }
-      body { margin: 10px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <h1 style="margin:0;font-size:20px;">QR & Barcode Sticker Report</h1>
-      <p style="margin:4px 0 0 0;color:#4b5563;">Generated: ${createdAt} | Total: ${rows.length}</p>
-    </div>
-    <button class="print-btn" onclick="window.print()">Print</button>
-  </div>
-  <section class="labels">
-    ${cards}
-  </section>
-</body>
-</html>`;
-    }
-
     function requireRowsForCodesReport() {
       if (!historyRowsCache.length) {
         alert('No assets available to generate code report.');
@@ -1353,33 +1279,37 @@
         return;
       }
 
-      const html = buildCodesReportHtml(historyRowsCache);
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `qr-barcode-report-${new Date().toISOString().slice(0, 10)}.html`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
+      try {
+        const res = await fetch('/api/history/codes-report', { credentials: 'include' });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || 'Unable to generate QR/barcode report');
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        alert('Download failed: ' + err.message);
+      }
     });
 
-    document.getElementById('printCodesReport').addEventListener('click', () => {
+    document.getElementById('printCodesReport').addEventListener('click', async () => {
       if (!requireRowsForCodesReport()) {
         return;
       }
 
-      const reportWindow = window.open('', '_blank', 'noopener,noreferrer');
-      if (!reportWindow) {
-        alert('Pop-up blocked. Please allow pop-ups for this site to print.');
-        return;
+      try {
+        const res = await fetch('/api/history/codes-report?autoprint=true', { credentials: 'include' });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || 'Unable to generate printable QR/barcode report');
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        alert('Print report failed: ' + err.message);
       }
-
-      reportWindow.document.open();
-      reportWindow.document.write(buildCodesReportHtml(historyRowsCache));
-      reportWindow.document.close();
-      reportWindow.focus();
     });
 
     function bindEditModalEvents() {

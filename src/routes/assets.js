@@ -187,5 +187,6 @@ router.delete('/assets/:category/:id', isAuthenticated, isAdmin, assetController
  */
 router.get('/history', isAuthenticated, assetController.getHistory);
 router.get('/history/pdf', isAuthenticated, assetController.getHistoryPdf);
+router.get('/history/codes-report', isAuthenticated, assetController.getHistoryCodesReport);
 
 module.exports = router;
