@@ -776,6 +776,30 @@
     let currentUser = null;
     let csrfToken = null;
     let historyRowsCache = [];
+    const REQUEST_TIMEOUT_MS = 12000;
+
+    async function fetchJsonWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch (_err) {
+          payload = null;
+        }
+
+        return { response, payload };
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    }
 
     async function ensureCsrfToken() {
       if (csrfToken) return csrfToken;
@@ -787,16 +811,29 @@
 
     async function loadUser() {
       try {
-        const r = await fetch('/api/auth/me', { credentials:'include' });
-        const j = await r.json();
+        const { response: r, payload: j } = await fetchJsonWithTimeout('/api/auth/me', {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+
         if (r.ok && j.success && j.user) {
           currentUser = j.user;
         } else {
+          const fallback = await fetchJsonWithTimeout('/api/auth-status', {
+            credentials: 'include',
+            cache: 'no-store'
+          });
+
+          if (fallback.response.ok && fallback.payload && fallback.payload.user) {
+            currentUser = fallback.payload.user;
+            return;
+          }
+
           window.location.href = '/login.html';
         }
       } catch (e) {
         console.error(e);
-        window.location.href = '/login.html';
+        // Avoid hanging screen if user profile endpoint is slow; fallback to history load as non-admin.
       }
     }
 
@@ -856,11 +893,20 @@
       const emptyState = document.getElementById('emptyState');
       
       try {
-        const resp = await fetch('/api/history', { credentials:'include', cache: 'no-store' });
-        if (!resp.ok) {
-          throw new Error('Failed to load history');
+        const { response: resp, payload: j } = await fetchJsonWithTimeout('/api/history', {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+
+        if (resp.status === 401 || resp.status === 403) {
+          window.location.href = '/login.html';
+          return;
         }
-        const j = await resp.json();
+
+        if (!resp.ok) {
+          throw new Error((j && j.error) || 'Failed to load history');
+        }
+
         const rows = j.data || [];
         historyRowsCache = rows;
         
@@ -935,12 +981,25 @@
         attachCheckboxListeners();
       } catch (error) {
         loadingIndicator.style.display = 'none';
+        tableContainer.style.display = 'none';
         emptyState.innerHTML = `
           <i class="bi bi-exclamation-triangle" style="color: var(--takhlees-red);"></i>
           <h4>Error Loading Data</h4>
-          <p>${error.message}</p>
+          <p>${error.name === 'AbortError' ? 'History request timed out. Please retry.' : error.message}</p>
+          <button class="btn-download btn-enhanced mt-3" id="retryHistoryBtn">
+            <i class="bi bi-arrow-repeat"></i> Retry
+          </button>
         `;
         emptyState.style.display = 'block';
+
+        const retryBtn = document.getElementById('retryHistoryBtn');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => {
+            emptyState.style.display = 'none';
+            loadingIndicator.style.display = 'block';
+            loadHistory();
+          }, { once: true });
+        }
       }
     }
 
