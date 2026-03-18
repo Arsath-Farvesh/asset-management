@@ -477,7 +477,7 @@
           <div class="password-wrapper input-wrapper">
             <i class="bi bi-lock-fill input-icon"></i>
             <input type="password" id="password" class="form-control form-control-enhanced" placeholder="Enter your password" required autocomplete="current-password" oninput="checkPasswordStrength(this.value)">
-            <button class="password-toggle" type="button" onclick="togglePassword('password', this)" tabindex="-1" aria-label="Toggle password visibility">
+            <button class="password-toggle" id="togglePasswordBtn" type="button" tabindex="-1" aria-label="Toggle password visibility" aria-pressed="false">
               <i class="bi bi-eye"></i>
             </button>
           </div>
@@ -590,7 +590,11 @@
           submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Success!';
           submitBtn.classList.add('btn-success');
           setTimeout(() => {
-            window.location.href = "/index.html";
+            if (data.requiresPasswordUpdate) {
+              window.location.href = '/force-password-change.html';
+            } else {
+              window.location.href = "/index.html";
+            }
           }, 500);
         } else {
           const requestRef = data.requestId ? ` <small class="d-block mt-1 text-muted">Ref: ${data.requestId}</small>` : '';
@@ -615,11 +619,23 @@
         field.type = 'text';
         icon.classList.remove('bi-eye');
         icon.classList.add('bi-eye-slash');
+        button.setAttribute('aria-pressed', 'true');
       } else {
         field.type = 'password';
         icon.classList.remove('bi-eye-slash');
         icon.classList.add('bi-eye');
+        button.setAttribute('aria-pressed', 'false');
       }
+    }
+
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    if (togglePasswordBtn) {
+      togglePasswordBtn.addEventListener('click', function () {
+        togglePassword('password', togglePasswordBtn);
+      });
+      togglePasswordBtn.addEventListener('mousedown', function (event) {
+        event.preventDefault();
+      });
     }
 
     function checkPasswordStrength(password) {

@@ -28,6 +28,9 @@ class AuthController {
       }
 
       req.session.user = result.user;
+      req.session.createdAt = Date.now();
+      req.session.lastActivity = Date.now();
+      req.session.requiresPasswordUpdate = Boolean(result.requiresPasswordUpdate);
       req.session.save((saveError) => {
         if (saveError) {
           logger.error('Login failed: could not persist session', {
@@ -38,7 +41,12 @@ class AuthController {
           return res.status(500).json({ success: false, error: 'Unable to complete login. Please try again.' });
         }
 
-        return res.json({ success: true, user: result.user });
+        return res.json({
+          success: true,
+          user: result.user,
+          requiresPasswordUpdate: Boolean(result.requiresPasswordUpdate),
+          passwordStrength: result.passwordStrength
+        });
       });
     } catch (error) {
       logger.error('Unhandled login controller error', {
@@ -60,6 +68,59 @@ class AuthController {
       }
       res.json({ success: true, message: 'Logged out successfully' });
     });
+  }
+
+  async changePassword(req, res) {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, error: 'New password and confirm password are required' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, error: 'Passwords do not match' });
+    }
+
+    const userId = req.session?.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    const result = await authService.changePassword(userId, currentPassword, newPassword);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    if (req.session) {
+      req.session.requiresPasswordUpdate = false;
+    }
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+  }
+
+  async forgotPassword(req, res) {
+    const { email } = req.body;
+    const forwardedProto = (req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim();
+    const resetBaseUrl = process.env.PUBLIC_BASE_URL || `${forwardedProto}://${req.get('host')}`;
+
+    const result = await authService.requestPasswordReset(email, resetBaseUrl);
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    return res.json(result);
+  }
+
+  async resetPassword(req, res) {
+    const { token, newPassword } = req.body;
+    const result = await authService.resetPassword(token, newPassword);
+
+    if (!result.success) {
+      const isTokenIssue = result.error === 'Invalid or expired reset token' || result.error === 'Reset token is required';
+      return res.status(isTokenIssue ? 400 : 500).json(result);
+    }
+
+    return res.json(result);
   }
 
   // Check authentication status

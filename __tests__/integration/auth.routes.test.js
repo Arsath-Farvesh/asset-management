@@ -4,6 +4,9 @@ const pool = require('../../src/config/database');
 
 // Mock database
 jest.mock('../../src/config/database');
+jest.mock('../../src/config/email', () => ({
+  sendMail: jest.fn().mockResolvedValue({ messageId: 'mock-id' })
+}));
 
 describe('Auth Routes Integration Tests', () => {
   let csrfToken;
@@ -11,6 +14,8 @@ describe('Auth Routes Integration Tests', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    process.env.EMAIL_USER = 'test@example.com';
+    process.env.EMAIL_PASS = 'secret';
     agent = request.agent(app);
     
     // Get CSRF token
@@ -62,6 +67,49 @@ describe('Auth Routes Integration Tests', () => {
         .set('csrf-token', csrfToken);
 
       expect([200, 403]).toContain(response.status);
+    });
+  });
+
+  describe('POST /api/forgot-password', () => {
+    it('should handle reset request route', async () => {
+      pool.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, username: 'john', email: 'john@example.com' }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const response = await agent
+        .post('/api/auth/forgot-password')
+        .set('csrf-token', csrfToken)
+        .send({ email: 'john@example.com' });
+
+      expect([200, 403]).toContain(response.status);
+    });
+  });
+
+  describe('POST /api/reset-password', () => {
+    it('should reject invalid reset token', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+
+      const response = await agent
+        .post('/api/auth/reset-password')
+        .set('csrf-token', csrfToken)
+        .send({ token: 'invalid-token', newPassword: 'ValidPass#123' });
+
+      expect([400, 403]).toContain(response.status);
+    });
+  });
+
+  describe('POST /api/auth/change-password', () => {
+    it('should require authentication', async () => {
+      const response = await agent
+        .post('/api/auth/change-password')
+        .set('csrf-token', csrfToken)
+        .send({
+          currentPassword: 'OldPass#123',
+          newPassword: 'NewPass#123',
+          confirmPassword: 'NewPass#123'
+        });
+
+      expect([401, 403]).toContain(response.status);
     });
   });
 });

@@ -57,6 +57,9 @@ router.post('/login', authLimiter, loginValidation, authController.login);
  *         description: Logout successful
  */
 router.post('/logout', authController.logout);
+router.post('/change-password', isAuthenticated, authController.changePassword);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 
 /**
  * @swagger

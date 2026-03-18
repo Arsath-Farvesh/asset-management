@@ -159,10 +159,56 @@ app.use(bodyParser.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== SESSION CONFIGURATION =====
+const DEFAULT_INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+const DEFAULT_MAX_SESSION_AGE = 24 * 60 * 60 * 1000;
+const MIN_INACTIVITY_TIMEOUT = 15 * 60 * 1000;
+const MAX_INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+const MIN_MAX_SESSION_AGE = 30 * 60 * 1000;
+
+function resolveSessionTimeout(rawValue, fallback, minValue, label, maxValue) {
+  const parsedValue = Number.parseInt(rawValue, 10);
+  if (Number.isNaN(parsedValue)) {
+    return fallback;
+  }
+
+  if (parsedValue < minValue) {
+    logger.warn(`${label} is too low. Clamping to safe minimum.`, {
+      configured: parsedValue,
+      minimum: minValue
+    });
+    return minValue;
+  }
+
+  if (Number.isFinite(maxValue) && parsedValue > maxValue) {
+    logger.warn(`${label} is too high. Clamping to policy maximum.`, {
+      configured: parsedValue,
+      maximum: maxValue
+    });
+    return maxValue;
+  }
+
+  return parsedValue;
+}
+
 // 30 minutes of inactivity = automatic logout (1800000 ms)
-const INACTIVITY_TIMEOUT = Number.parseInt(process.env.SESSION_INACTIVITY_TIMEOUT, 10) || 30 * 60 * 1000;
+const INACTIVITY_TIMEOUT = resolveSessionTimeout(
+  process.env.SESSION_INACTIVITY_TIMEOUT,
+  DEFAULT_INACTIVITY_TIMEOUT,
+  MIN_INACTIVITY_TIMEOUT,
+  'SESSION_INACTIVITY_TIMEOUT',
+  MAX_INACTIVITY_TIMEOUT
+);
+
 // Maximum session duration regardless of activity (24 hours)
-const MAX_SESSION_AGE = Number.parseInt(process.env.SESSION_MAX_AGE, 10) || 24 * 60 * 60 * 1000;
+const MAX_SESSION_AGE = Math.max(
+  resolveSessionTimeout(
+    process.env.SESSION_MAX_AGE,
+    DEFAULT_MAX_SESSION_AGE,
+    MIN_MAX_SESSION_AGE,
+    'SESSION_MAX_AGE'
+  ),
+  INACTIVITY_TIMEOUT
+);
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'takhlees.sid';
 
 app.use(session({
@@ -209,18 +255,32 @@ function respondToExpiredSession(req, res) {
   return res.redirect(`/login.html?reason=${encodeURIComponent('Session expired due to inactivity')}`);
 }
 
+function isRequestAuthenticated(req) {
+  return typeof req.isAuthenticated === 'function'
+    ? req.isAuthenticated() || Boolean(req.session && req.session.user)
+    : Boolean(req.session && req.session.user);
+}
+
 // ===== ACTIVITY TRACKING AND INACTIVITY ENFORCEMENT =====
 app.use((req, res, next) => {
-  const isAuthenticated = typeof req.isAuthenticated === 'function'
-    ? req.isAuthenticated()
-    : Boolean(req.session && req.session.user);
+  const isAuthenticated = isRequestAuthenticated(req);
 
   if (!isAuthenticated || !req.session) {
     return next();
   }
 
   const now = Date.now();
+  const createdAt = Number(req.session.createdAt || now);
   const lastActivity = Number(req.session.lastActivity || now);
+
+  if (now - createdAt > MAX_SESSION_AGE) {
+    return req.session.destroy((error) => {
+      if (error) {
+        logger.error('Failed to destroy max-age expired session:', error);
+      }
+      return respondToExpiredSession(req, res);
+    });
+  }
 
   if (now - lastActivity > INACTIVITY_TIMEOUT) {
     return req.session.destroy((error) => {
@@ -259,7 +319,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 
 // ===== ROOT ROUTE =====
 app.get('/', (req, res) => {
-  res.redirect('/login.html');
+  if (isRequestAuthenticated(req)) {
+    return res.redirect('/index.html');
+  }
+
+  return res.redirect('/login.html');
 });
 
 // ===== CSRF TOKEN ENDPOINT =====

@@ -86,6 +86,24 @@
     window.location.href = '/login.html?reason=' + encodeURIComponent(reason);
   }
 
+  async function fetchCsrfToken() {
+    const csrfResponse = await fetch('/api/csrf-token', {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    if (!csrfResponse.ok) {
+      throw new Error(`CSRF token request failed with ${csrfResponse.status}`);
+    }
+
+    const csrfPayload = await csrfResponse.json();
+    if (!csrfPayload || !csrfPayload.csrfToken) {
+      throw new Error('CSRF token missing from response');
+    }
+
+    return csrfPayload.csrfToken;
+  }
+
   async function logout(reason) {
     if (sessionClosed) {
       return;
@@ -96,9 +114,13 @@
     hideWarning();
 
     try {
+      const csrfToken = await fetchCsrfToken();
       await fetch('/api/logout', {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'csrf-token': csrfToken
+        }
       });
     } catch (error) {
       console.error('Logout request failed:', error);

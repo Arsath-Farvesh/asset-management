@@ -704,6 +704,12 @@
         <button class="btn-download btn-enhanced mb-4" id="downloadPdf">
           <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
         </button>
+        <button class="btn-download btn-enhanced mb-4 ms-2" id="downloadCodesReport">
+          <i class="bi bi-qr-code"></i> Download QR & Barcode Report
+        </button>
+        <button class="btn-download btn-enhanced mb-4 ms-2" id="printCodesReport">
+          <i class="bi bi-printer-fill"></i> Print Sticker Sheet
+        </button>
         
         <div id="loadingIndicator" class="loading text-center">
           <div class="spinner-grow spinner-grow-takhlees" role="status">
@@ -769,6 +775,7 @@
   <script>
     let currentUser = null;
     let csrfToken = null;
+    let historyRowsCache = [];
 
     async function ensureCsrfToken() {
       if (csrfToken) return csrfToken;
@@ -855,6 +862,7 @@
         }
         const j = await resp.json();
         const rows = j.data || [];
+        historyRowsCache = rows;
         
         loadingIndicator.style.display = 'none';
         
@@ -1257,6 +1265,123 @@
       }
     });
 
+    function formatCategoryLabel(category) {
+      if (category === 'case_details') return 'Case Details';
+      if (category === 'keys' || category === 'equipments_assets') return 'Keys';
+      return String(category || '').replace(/_/g, ' ').toUpperCase();
+    }
+
+    function buildCodesReportHtml(rows) {
+      const createdAt = new Date().toLocaleString();
+      const cards = rows.map((row) => {
+        const rowLabel = row.serial_number || row.case_number || row.id;
+        const qrPayload = encodeURIComponent(`${row.category || ''}|${row.id}|${row.name || ''}|${rowLabel || ''}`);
+        const barcodePayload = encodeURIComponent(String(rowLabel || row.name || row.id || 'NA'));
+        return `
+          <article class="label-card">
+            <header>
+              <h3>${formatCategoryLabel(row.category)}</h3>
+              <p>#${row.id}</p>
+            </header>
+            <p><strong>Name:</strong> ${row.name || '-'}</p>
+            <p><strong>Serial/Case:</strong> ${rowLabel || '-'}</p>
+            <p><strong>Location:</strong> ${row.location || '-'}</p>
+            <div class="codes-grid">
+              <div>
+                <h4>QR</h4>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrPayload}" alt="QR ${row.id}">
+              </div>
+              <div>
+                <h4>Barcode</h4>
+                <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=3&height=45&includetext" alt="Barcode ${row.id}">
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR & Barcode Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .print-btn { padding: 10px 16px; border: none; border-radius: 8px; background: #88010e; color: #fff; cursor: pointer; }
+    .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .label-card { border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; break-inside: avoid; }
+    .label-card header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .label-card h3 { margin: 0; font-size: 16px; }
+    .label-card p { margin: 4px 0; font-size: 13px; }
+    .codes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; align-items: center; }
+    .codes-grid h4 { margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
+    .codes-grid img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+    @media print {
+      .print-btn { display: none; }
+      body { margin: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 style="margin:0;font-size:20px;">QR & Barcode Sticker Report</h1>
+      <p style="margin:4px 0 0 0;color:#4b5563;">Generated: ${createdAt} | Total: ${rows.length}</p>
+    </div>
+    <button class="print-btn" onclick="window.print()">Print</button>
+  </div>
+  <section class="labels">
+    ${cards}
+  </section>
+</body>
+</html>`;
+    }
+
+    function requireRowsForCodesReport() {
+      if (!historyRowsCache.length) {
+        alert('No assets available to generate code report.');
+        return false;
+      }
+
+      return true;
+    }
+
+    document.getElementById('downloadCodesReport').addEventListener('click', () => {
+      if (!requireRowsForCodesReport()) {
+        return;
+      }
+
+      const html = buildCodesReportHtml(historyRowsCache);
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `qr-barcode-report-${new Date().toISOString().slice(0, 10)}.html`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('printCodesReport').addEventListener('click', () => {
+      if (!requireRowsForCodesReport()) {
+        return;
+      }
+
+      const reportWindow = window.open('', '_blank', 'noopener,noreferrer');
+      if (!reportWindow) {
+        alert('Pop-up blocked. Please allow pop-ups for this site to print.');
+        return;
+      }
+
+      reportWindow.document.open();
+      reportWindow.document.write(buildCodesReportHtml(historyRowsCache));
+      reportWindow.document.close();
+      reportWindow.focus();
+    });
+
     function bindEditModalEvents() {
       const modal = document.getElementById('editModal');
       const closeBtn = document.getElementById('editModalCloseBtn');
@@ -1309,207 +1434,7 @@
     </div>
   </div>
 
-  <script>
-  // Profile Modal Functions
-  let currentProfileUser = null;
-  let isEditMode = false;
-
-  async function loadProfileUserData() {
-    try {
-      const resp = await fetch('/api/auth-status', { credentials: 'include' });
-      const data = await resp.json();
-      if (data.authenticated && data.user) {
-        currentProfileUser = data.user;
-        const indicator = document.getElementById('authIndicator');
-        if (indicator) {
-          indicator.style.display = 'flex';
-          indicator.addEventListener('click', openProfileModal);
-        }
-      }
-    } catch(err) {
-      console.log('Auth check failed:', err);
-    }
-  }
-
-  function openProfileModal() {
-    if (!currentProfileUser) return;
-    isEditMode = false;
-    renderProfileModal();
-    document.getElementById('profileModalOverlay').classList.add('active');
-  }
-
-  function closeProfileModal() {
-    document.getElementById('profileModalOverlay').classList.remove('active');
-    isEditMode = false;
-  }
-
-  function renderProfileModal() {
-    const username = currentProfileUser.username || 'User';
-    const role = (currentProfileUser.role || 'user').charAt(0).toUpperCase() + (currentProfileUser.role || 'user').slice(1);
-    const avatar = username.charAt(0).toUpperCase();
-    const email = currentProfileUser.email || '';
-    const department = currentProfileUser.department || 'Not Set';
-
-    document.getElementById('profileAvatarLarge').textContent = avatar;
-    document.getElementById('profileUsername').textContent = username;
-    document.getElementById('profileRoleDisplay').textContent = role;
-
-    const contentDiv = document.getElementById('profileContent');
-    if (isEditMode) {
-      contentDiv.innerHTML = `
-        <form id="profileEditForm">
-          <div class="profile-field">
-            <label class="profile-label">Username</label>
-            <input type="text" id="editUsername" class="profile-input" value="${username}" required>
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Email</label>
-            <input type="email" id="editEmail" class="profile-input" value="${email}" required>
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Department</label>
-            <input type="text" id="editDepartment" class="profile-input" value="${department}">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Password (leave blank to keep current)</label>
-            <input type="password" id="editPassword" class="profile-input" placeholder="Enter new password">
-          </div>
-          <div class="profile-field">
-            <label class="profile-label">Confirm Password</label>
-            <input type="password" id="editConfirmPassword" class="profile-input" placeholder="Confirm new password">
-          </div>
-          <div id="formMessage" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; display: none;"></div>
-          <div style="display: flex; gap: 0.75rem;">
-            <button type="submit" class="profile-btn profile-btn-save">Save Changes</button>
-            <button type="button" id="profileCancelBtn" class="profile-btn profile-btn-cancel">Cancel</button>
-            <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
-          </div>
-        </form>
-      `;
-      document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
-      const cancelBtn = document.getElementById('profileCancelBtn');
-      const closeBtn = document.getElementById('profileCloseBtn');
-      if (cancelBtn) cancelBtn.addEventListener('click', cancelEditMode);
-      if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
-    } else {
-      contentDiv.innerHTML = `
-        <div class="profile-field">
-          <label class="profile-label">Username</label>
-          <div class="profile-value">${username}</div>
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Email</label>
-          <div class="profile-value">${email}</div>
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Department</label>
-          <div class="profile-value">${department}</div>
-        </div>
-        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-          <button id="profileEditBtn" class="profile-btn profile-btn-edit" style="background: #6b7280; color: white; flex: 1;">Edit Profile</button>
-          <button id="profileCloseBtn" class="profile-btn profile-btn-close" style="flex: 1;">Close</button>
-        </div>
-      `;
-      const editBtn = document.getElementById('profileEditBtn');
-      const closeBtn = document.getElementById('profileCloseBtn');
-      if (editBtn) editBtn.addEventListener('click', enterEditMode);
-      if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
-    }
-  }
-
-  function enterEditMode() {
-    isEditMode = true;
-    renderProfileModal();
-  }
-
-  function cancelEditMode() {
-    isEditMode = false;
-    renderProfileModal();
-  }
-
-  async function saveProfileChanges(e) {
-    e.preventDefault();
-    
-    const username = document.getElementById('editUsername').value.trim();
-    const email = document.getElementById('editEmail').value.trim();
-    const department = document.getElementById('editDepartment').value.trim();
-    const password = document.getElementById('editPassword').value;
-    const confirmPassword = document.getElementById('editConfirmPassword').value;
-    const messageDiv = document.getElementById('formMessage');
-
-    // Validation
-    if (!username) {
-      showFormMessage('Username is required', 'error');
-      return;
-    }
-
-    if (!email) {
-      showFormMessage('Email is required', 'error');
-      return;
-    }
-
-    if (password && password !== confirmPassword) {
-      showFormMessage('Passwords do not match', 'error');
-      return;
-    }
-
-    if (password && password.length < 8) {
-      showFormMessage('Password must be at least 8 characters', 'error');
-      return;
-    }
-
-    try {
-      const payload = { username, email, department, confirmPassword };
-      if (password) payload.password = password;
-
-      const token = await ensureCsrfToken();
-
-      const resp = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'csrf-token': token
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-
-      const data = await resp.json();
-      
-      if (resp.ok && data.success) {
-        currentProfileUser = data.user;
-        showFormMessage('Profile updated successfully!', 'success');
-        setTimeout(() => {
-          isEditMode = false;
-          renderProfileModal();
-        }, 1500);
-      } else {
-        showFormMessage(data.error || 'Failed to update profile', 'error');
-      }
-    } catch(err) {
-      showFormMessage('Error: ' + err.message, 'error');
-    }
-  }
-
-  function showFormMessage(msg, type) {
-    const messageDiv = document.getElementById('formMessage');
-    messageDiv.textContent = msg;
-    messageDiv.style.display = 'block';
-    messageDiv.style.background = type === 'error' ? '#fee2e2' : '#dcfce7';
-    messageDiv.style.color = type === 'error' ? '#991b1b' : '#166534';
-    messageDiv.style.borderLeft = '4px solid ' + (type === 'error' ? '#dc2626' : '#10b981');
-  }
-
-  // Close modal when clicking overlay
-  document.getElementById('profileModalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeProfileModal();
-    }
-  });
-
-  // Load auth indicator when page loads
-  window.addEventListener('load', loadProfileUserData);
-  </script>
+  <!-- Profile modal logic is centralized in account-panel.js -->
 
 <!-- Inline Edit Modal -->
 <div class="edit-modal-overlay" id="editModal">

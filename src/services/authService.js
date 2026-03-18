@@ -1,8 +1,37 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const pool = require('../config/database');
 const logger = require('../config/logger');
+const emailTransporter = require('../config/email');
 
 class AuthService {
+  isStrongPassword(password) {
+    if (!password || typeof password !== 'string') {
+      return false;
+    }
+
+    return password.length >= 8
+      && /[A-Z]/.test(password)
+      && /[a-z]/.test(password)
+      && /[0-9]/.test(password)
+      && /[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password);
+  }
+
+  getPasswordStrengthFeedback(password) {
+    const checks = {
+      length: Boolean(password && password.length >= 8),
+      upper: Boolean(password && /[A-Z]/.test(password)),
+      lower: Boolean(password && /[a-z]/.test(password)),
+      number: Boolean(password && /[0-9]/.test(password)),
+      special: Boolean(password && /[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password))
+    };
+
+    return {
+      isStrong: Object.values(checks).every(Boolean),
+      checks
+    };
+  }
+
   normalizeText(value) {
     if (value === undefined || value === null) {
       return null;
@@ -70,13 +99,179 @@ class AuthService {
       }
 
       logger.info(`User logged in: ${username}`);
+      const passwordStrength = this.getPasswordStrengthFeedback(password);
+
       return { 
         success: true, 
-        user: this.sanitizeUser(user)
+        user: this.sanitizeUser(user),
+        requiresPasswordUpdate: !passwordStrength.isStrong,
+        passwordStrength
       };
     } catch (error) {
       logger.error('Login error:', error);
       return { success: false, error: 'Login failed' };
+    }
+  }
+
+  async changePassword(userId, currentPassword, newPassword) {
+    try {
+      if (!newPassword) {
+        return { success: false, error: 'New password is required' };
+      }
+
+      if (!this.isStrongPassword(newPassword)) {
+        return {
+          success: false,
+          error: 'Password must include upper, lower, number, special character and be at least 8 characters'
+        };
+      }
+
+      const userResult = await pool.query(
+        'SELECT id, password FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (userResult.rows.length === 0) {
+        return { success: false, error: 'User not found' };
+      }
+
+      const user = userResult.rows[0];
+      const currentPasswordMatches = await bcrypt.compare(currentPassword || '', user.password);
+      if (!currentPasswordMatches) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+
+      const isSameAsCurrent = await bcrypt.compare(newPassword, user.password);
+      if (isSameAsCurrent) {
+        return { success: false, error: 'New password must be different from current password' };
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.query(
+        `UPDATE users
+         SET password = $1,
+             reset_password_token_hash = NULL,
+             reset_password_expires_at = NULL,
+             updated_at = NOW()
+         WHERE id = $2`,
+        [hashedPassword, userId]
+      );
+
+      return { success: true };
+    } catch (error) {
+      logger.error('Change password error:', error);
+      return { success: false, error: 'Failed to change password' };
+    }
+  }
+
+  async requestPasswordReset(email, resetUrlBase) {
+    try {
+      const normalizedEmail = this.normalizeText(email);
+      if (!normalizedEmail) {
+        return { success: true, message: 'If your email exists, a reset link has been sent.' };
+      }
+
+      const userResult = await pool.query(
+        'SELECT id, username, email FROM users WHERE lower(email) = lower($1) LIMIT 1',
+        [normalizedEmail]
+      );
+
+      // Return generic message to avoid account enumeration.
+      if (userResult.rows.length === 0) {
+        return { success: true, message: 'If your email exists, a reset link has been sent.' };
+      }
+
+      const user = userResult.rows[0];
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await pool.query(
+        `UPDATE users
+         SET reset_password_token_hash = $1,
+             reset_password_expires_at = $2,
+             updated_at = NOW()
+         WHERE id = $3`,
+        [tokenHash, expiresAt, user.id]
+      );
+
+      const resetUrl = `${resetUrlBase}/reset-password.html?token=${encodeURIComponent(rawToken)}`;
+      const hasEmailCredentials = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+
+      if (hasEmailCredentials) {
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+          to: user.email,
+          subject: 'Takhlees Password Reset Request',
+          text: `Hello ${user.username},\n\nUse this link to reset your password (valid for 1 hour):\n${resetUrl}\n\nIf you did not request this, please ignore this email.`,
+          html: `<p>Hello ${user.username},</p><p>Use this link to reset your password (valid for 1 hour):</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>If you did not request this, please ignore this email.</p>`
+        });
+      } else {
+        logger.warn('Password reset email not sent because EMAIL_USER/EMAIL_PASS are not configured', {
+          email: user.email,
+          resetUrl
+        });
+      }
+
+      return {
+        success: true,
+        message: 'If your email exists, a reset link has been sent.',
+        emailConfigured: hasEmailCredentials
+      };
+    } catch (error) {
+      logger.error('Request password reset error:', error);
+      return { success: false, error: 'Failed to process password reset request' };
+    }
+  }
+
+  async resetPassword(token, newPassword) {
+    try {
+      if (!token) {
+        return { success: false, error: 'Reset token is required' };
+      }
+
+      if (!this.isStrongPassword(newPassword)) {
+        return {
+          success: false,
+          error: 'Password must include upper, lower, number, special character and be at least 8 characters'
+        };
+      }
+
+      const tokenHash = crypto.createHash('sha256').update(String(token)).digest('hex');
+      const userResult = await pool.query(
+        `SELECT id, password
+         FROM users
+         WHERE reset_password_token_hash = $1
+           AND reset_password_expires_at > NOW()
+         LIMIT 1`,
+        [tokenHash]
+      );
+
+      if (userResult.rows.length === 0) {
+        return { success: false, error: 'Invalid or expired reset token' };
+      }
+
+      const user = userResult.rows[0];
+      const isSameAsCurrent = await bcrypt.compare(newPassword, user.password);
+      if (isSameAsCurrent) {
+        return { success: false, error: 'New password must be different from current password' };
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.query(
+        `UPDATE users
+         SET password = $1,
+             reset_password_token_hash = NULL,
+             reset_password_expires_at = NULL,
+             updated_at = NOW()
+         WHERE id = $2`,
+        [hashedPassword, user.id]
+      );
+
+      return { success: true, message: 'Password reset successful. You can now log in.' };
+    } catch (error) {
+      logger.error('Reset password error:', error);
+      return { success: false, error: 'Failed to reset password' };
     }
   }
 

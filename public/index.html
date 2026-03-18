@@ -331,8 +331,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     document.getElementById("logoutBtn").addEventListener("click", async () => {
-      await fetch("/api/logout", { method: "POST", credentials: "include" });
-        window.location.href = "/login.html";
+      try {
+        const csrfRes = await fetch('/api/csrf-token', { credentials: 'include', cache: 'no-store' });
+        const csrfData = await csrfRes.json();
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'csrf-token': csrfData.csrfToken }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = '/login.html';
+      }
     });
 
     // --- Asset form JS ---
@@ -804,202 +815,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 </div>
 
 <script>
-// Profile modal is handled by account-panel.js
-// Stub loadAuthIndicator to prevent double-init on pages that reference it
-function loadAuthIndicator() {
-  // no-op: account-panel.js handles all auth indicator + modal logic
-}
-
-/* ---- legacy stubs kept to avoid ReferenceError if called elsewhere ---- */
-async function _legacyLoadAuthIndicator() {
-  try {
-    const resp = await fetch('/api/auth-status', { credentials: 'include' });
-    const data = await resp.json();
-    if (data.authenticated && data.user) {
-      currentUser = data.user;
-      
-      const indicator = document.getElementById('authIndicator');
-      if (indicator) {
-        indicator.style.display = 'flex';
-        indicator.addEventListener('click', openProfileModal);
-      }
-    }
-  } catch(err) {
-    console.log('Auth check failed:', err);
-  }
-}
-
-function openProfileModal() {
-  if (!currentUser) return;
-  isEditMode = false;
-  renderProfileModal();
-  document.getElementById('profileModalOverlay').classList.add('active');
-}
-
-function closeProfileModal() {
-  document.getElementById('profileModalOverlay').classList.remove('active');
-  isEditMode = false;
-}
-
-function renderProfileModal() {
-  const username = currentUser.username || 'User';
-  const role = (currentUser.role || 'user').charAt(0).toUpperCase() + (currentUser.role || 'user').slice(1);
-  const avatar = username.charAt(0).toUpperCase();
-  const email = currentUser.email || '';
-  const department = currentUser.department || 'Not Set';
-
-  document.getElementById('profileAvatarLarge').textContent = avatar;
-  document.getElementById('profileUsername').textContent = username;
-  document.getElementById('profileRoleDisplay').textContent = role;
-
-  const contentDiv = document.getElementById('profileContent');
-  if (isEditMode) {
-    contentDiv.innerHTML = `
-      <form id="profileEditForm">
-        <div class="profile-field">
-          <label class="profile-label">Username</label>
-          <input type="text" id="editUsername" class="profile-input" value="${username}" required>
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Email</label>
-          <input type="email" id="editEmail" class="profile-input" value="${email}" required>
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Department</label>
-          <input type="text" id="editDepartment" class="profile-input" value="${department}">
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Password (leave blank to keep current)</label>
-          <input type="password" id="editPassword" class="profile-input" placeholder="Enter new password">
-        </div>
-        <div class="profile-field">
-          <label class="profile-label">Confirm Password</label>
-          <input type="password" id="editConfirmPassword" class="profile-input" placeholder="Confirm new password">
-        </div>
-        <div id="formMessage" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; display: none;"></div>
-        <div style="display: flex; gap: 0.75rem;">
-          <button type="submit" class="profile-btn profile-btn-save">Save Changes</button>
-          <button type="button" id="profileCancelBtn" class="profile-btn profile-btn-cancel">Cancel</button>
-          <button type="button" id="profileCloseBtn" class="profile-btn profile-btn-close">Close</button>
-        </div>
-      </form>
-    `;
-    document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
-    const cancelBtn = document.getElementById('profileCancelBtn');
-    const closeBtn = document.getElementById('profileCloseBtn');
-    if (cancelBtn) cancelBtn.addEventListener('click', cancelEditMode);
-    if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
-  } else {
-    contentDiv.innerHTML = `
-      <div class="profile-field">
-        <label class="profile-label">Username</label>
-        <div class="profile-value">${username}</div>
-      </div>
-      <div class="profile-field">
-        <label class="profile-label">Email</label>
-        <div class="profile-value">${email}</div>
-      </div>
-      <div class="profile-field">
-        <label class="profile-label">Department</label>
-        <div class="profile-value">${department}</div>
-      </div>
-      <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-        <button id="profileEditBtn" class="profile-btn profile-btn-edit" style="background: #6b7280; color: white; flex: 1;">Edit Profile</button>
-        <button id="profileCloseBtn" class="profile-btn profile-btn-close" style="flex: 1;">Close</button>
-      </div>
-    `;
-    const editBtn = document.getElementById('profileEditBtn');
-    const closeBtn = document.getElementById('profileCloseBtn');
-    if (editBtn) editBtn.addEventListener('click', enterEditMode);
-    if (closeBtn) closeBtn.addEventListener('click', closeProfileModal);
-  }
-}
-
-function enterEditMode() {
-  isEditMode = true;
-  renderProfileModal();
-}
-
-function cancelEditMode() {
-  isEditMode = false;
-  renderProfileModal();
-}
-
-async function saveProfileChanges(e) {
-  e.preventDefault();
-  
-  const username = document.getElementById('editUsername').value.trim();
-  const email = document.getElementById('editEmail').value.trim();
-  const department = document.getElementById('editDepartment').value.trim();
-  const password = document.getElementById('editPassword').value;
-  const confirmPassword = document.getElementById('editConfirmPassword').value;
-  const messageDiv = document.getElementById('formMessage');
-
-  // Validation
-  if (!username) {
-    showFormMessage('Username is required', 'error');
-    return;
-  }
-
-  if (!email) {
-    showFormMessage('Email is required', 'error');
-    return;
-  }
-
-  if (password && password !== confirmPassword) {
-    showFormMessage('Passwords do not match', 'error');
-    return;
-  }
-
-  if (password && password.length < 8) {
-    showFormMessage('Password must be at least 8 characters', 'error');
-    return;
-  }
-
-  try {
-    const payload = { username, email, department, confirmPassword };
-    if (password) payload.password = password;
-
-    const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
-    const csrfData = await csrfRes.json();
-
-    const resp = await fetch('/api/user/profile', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'csrf-token': csrfData.csrfToken
-      },
-      body: JSON.stringify(payload),
-      credentials: 'include'
-    });
-
-    const data = await resp.json();
-    
-    if (resp.ok && data.success) {
-      currentUser = data.user;
-      showFormMessage('Profile updated successfully!', 'success');
-      setTimeout(() => {
-        isEditMode = false;
-        renderProfileModal();
-      }, 1500);
-    } else {
-      showFormMessage(data.error || 'Failed to update profile', 'error');
-    }
-  } catch(err) {
-    showFormMessage('Error: ' + err.message, 'error');
-  }
-}
-
-function showFormMessage(msg, type) {
-  const messageDiv = document.getElementById('formMessage');
-  messageDiv.textContent = msg;
-  messageDiv.style.display = 'block';
-  messageDiv.style.background = type === 'error' ? '#fee2e2' : '#dcfce7';
-  messageDiv.style.color = type === 'error' ? '#991b1b' : '#166534';
-  messageDiv.style.borderLeft = '4px solid ' + (type === 'error' ? '#dc2626' : '#10b981');
-}
-
-// account-panel.js handles overlay click-away natively
+// Profile modal behavior is centralized in account-panel.js.
 </script>
 
 <script src="/session-timeout.js"></script>
