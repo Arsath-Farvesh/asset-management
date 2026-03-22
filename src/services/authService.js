@@ -157,10 +157,11 @@ class AuthService {
         [hashedPassword, userId]
       );
 
-      return { success: true };
+      logger.info(`Password changed successfully for user ID: ${userId}`);
+      return { success: true, message: 'Password updated successfully' };
     } catch (error) {
-      logger.error('Change password error:', error);
-      return { success: false, error: 'Failed to change password' };
+      logger.error('Change password error:', { userId, message: error.message, stack: error.stack });
+      return { success: false, error: 'Failed to change password - please try again or contact support' };
     }
   }
 

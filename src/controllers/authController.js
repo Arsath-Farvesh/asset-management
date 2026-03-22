@@ -93,6 +93,11 @@ class AuthController {
 
     if (req.session) {
       req.session.requiresPasswordUpdate = false;
+      req.session.save((err) => {
+        if (err) {
+          logger.error('Failed to save session after password change:', err);
+        }
+      });
     }
 
     return res.json({ success: true, message: 'Password updated successfully' });
