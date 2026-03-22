@@ -135,6 +135,7 @@ router.get('/users', isAuthenticated, isAdmin, authController.getAllUsers);
 router.get('/users/stats', isAuthenticated, isAdmin, authController.getUserStats);
 router.post('/users', isAuthenticated, isAdmin, authController.createUser);
 router.put('/users/:id', isAuthenticated, isAdmin, authController.updateUser);
+router.delete('/users/:id', isAuthenticated, isAdmin, authController.deleteUser);
 
 /**
  * @swagger

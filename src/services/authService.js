@@ -637,6 +637,38 @@ class AuthService {
       return { success: false, error: 'Failed to update user' };
     }
   }
+
+  // Delete user (admin only)
+  async deleteUser(targetUserId) {
+    try {
+      if (!targetUserId || targetUserId <= 0) {
+        return { success: false, error: 'Invalid user id' };
+      }
+
+      const userResult = await pool.query(
+        'SELECT id, username FROM users WHERE id = $1',
+        [targetUserId]
+      );
+
+      if (userResult.rows.length === 0) {
+        return { success: false, error: 'User not found' };
+      }
+
+      const user = userResult.rows[0];
+
+      // Delete user
+      await pool.query(
+        'DELETE FROM users WHERE id = $1',
+        [targetUserId]
+      );
+
+      logger.info(`User deleted by admin: ${user.username} (ID: ${targetUserId})`);
+      return { success: true, message: `User ${user.username} has been deleted` };
+    } catch (error) {
+      logger.error('Delete user error:', error);
+      return { success: false, error: 'Failed to delete user' };
+    }
+  }
 }
 
 module.exports = new AuthService();

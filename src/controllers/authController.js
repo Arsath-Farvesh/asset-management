@@ -306,6 +306,24 @@ class AuthController {
 
     return res.json(result);
   }
+
+  async deleteUser(req, res) {
+    const { id } = req.params;
+
+    const targetUserId = Number.parseInt(id, 10);
+    if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid user id' });
+    }
+
+    const result = await authService.deleteUser(targetUserId);
+
+    if (!result.success) {
+      const status = result.error === 'User not found' ? 404 : 500;
+      return res.status(status).json(result);
+    }
+
+    return res.json(result);
+  }
 }
 
 module.exports = new AuthController();
