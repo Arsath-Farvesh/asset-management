@@ -73,6 +73,10 @@ class AuthController {
   async changePassword(req, res) {
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
+    if (!currentPassword) {
+      return res.status(400).json({ success: false, error: 'Current password is required' });
+    }
+
     if (!newPassword || !confirmPassword) {
       return res.status(400).json({ success: false, error: 'New password and confirm password are required' });
     }

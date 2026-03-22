@@ -115,6 +115,8 @@ class AuthService {
 
   async changePassword(userId, currentPassword, newPassword) {
     try {
+      logger.info(`Password change initiated for user ID: ${userId}`);
+
       if (!newPassword) {
         return { success: false, error: 'New password is required' };
       }
@@ -126,6 +128,8 @@ class AuthService {
         };
       }
 
+      logger.info(`New password validation passed for user ID: ${userId}`);
+
       const userResult = await pool.query(
         'SELECT id, password FROM users WHERE id = $1',
         [userId]
@@ -136,31 +140,62 @@ class AuthService {
       }
 
       const user = userResult.rows[0];
+      logger.info(`User found for ID: ${userId}`);
+
       const currentPasswordMatches = await bcrypt.compare(currentPassword || '', user.password);
       if (!currentPasswordMatches) {
+        logger.warn(`Incorrect current password for user ID: ${userId}`);
         return { success: false, error: 'Current password is incorrect' };
       }
+
+      logger.info(`Current password verified for user ID: ${userId}`);
 
       const isSameAsCurrent = await bcrypt.compare(newPassword, user.password);
       if (isSameAsCurrent) {
         return { success: false, error: 'New password must be different from current password' };
       }
 
+      logger.info(`New password differs from current for user ID: ${userId}`);
+
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await pool.query(
+      logger.info(`Password hashed for user ID: ${userId}`);
+
+      // Try updating with just the password first
+      const updateResult = await pool.query(
         `UPDATE users
          SET password = $1,
-             reset_password_token_hash = NULL,
-             reset_password_expires_at = NULL,
              updated_at = NOW()
          WHERE id = $2`,
         [hashedPassword, userId]
       );
 
+      logger.info(`Password updated in database for user ID: ${userId}`, { rowsAffected: updateResult.rowCount });
+
+      // Now try to clear reset tokens if they exist
+      try {
+        await pool.query(
+          `UPDATE users
+           SET reset_password_token_hash = NULL,
+               reset_password_expires_at = NULL
+           WHERE id = $1`,
+          [userId]
+        );
+        logger.info(`Reset tokens cleared for user ID: ${userId}`);
+      } catch (tokenError) {
+        logger.warn(`Could not clear reset tokens for user ID: ${userId}`, { error: tokenError.message });
+        // Non-critical, continue
+      }
+
       logger.info(`Password changed successfully for user ID: ${userId}`);
       return { success: true, message: 'Password updated successfully' };
     } catch (error) {
-      logger.error('Change password error:', { userId, message: error.message, stack: error.stack });
+      logger.error('Change password error:', { 
+        userId, 
+        message: error.message, 
+        code: error.code,
+        detail: error.detail,
+        stack: error.stack 
+      });
       return { success: false, error: 'Failed to change password - please try again or contact support' };
     }
   }
