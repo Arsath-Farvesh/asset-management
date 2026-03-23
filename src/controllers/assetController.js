@@ -331,6 +331,7 @@ class AssetController {
               <img class="barcode-image" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=2.5&height=54&includetext&paddingwidth=20&paddingheight=8" alt="Barcode ${escapeHtml(row.id || '-')}">
             </div>
           </div>
+          <p class="sticker-note">Please do not remove the sticker</p>
         </article>
       `;
     }).join('');
@@ -356,6 +357,7 @@ class AssetController {
     .codes-grid h4 { margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
     .codes-grid img { width: 100%; max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
     .barcode-image { min-width: 0; max-width: 340px; }
+    .sticker-note { margin: 10px 0 0 0; padding: 6px 8px; border: 1px dashed #ef4444; border-radius: 6px; text-align: center; font-size: 12px; font-weight: 700; color: #b91c1c; letter-spacing: 0.2px; }
     @media (max-width: 1100px) {
       .labels { grid-template-columns: 1fr; }
       .codes-grid { grid-template-columns: 1fr; }
@@ -370,6 +372,7 @@ class AssetController {
       .codes-grid { grid-template-columns: 1fr 1fr; }
       .barcode-image { max-width: 100%; }
       .label-card p { margin: 2px 0; }
+      .sticker-note { margin-top: 8px; padding: 5px 6px; font-size: 11px; border-width: 1px; }
     }
   </style>
 </head>
