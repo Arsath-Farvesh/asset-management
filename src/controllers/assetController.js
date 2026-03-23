@@ -309,29 +309,18 @@ class AssetController {
 
     const cards = rows.map((row) => {
       const rowLabel = row.serial_number || row.case_number || row.id || '-';
-      const qrPayload = encodeURIComponent(`${row.category || ''}|${row.id || ''}|${row.name || ''}|${rowLabel}`);
       const barcodePayload = encodeURIComponent(String(rowLabel || row.name || row.id || 'NA'));
 
       return `
         <article class="label-card">
           <header>
             <h3>${escapeHtml(normalizeCategoryLabel(row.category))}</h3>
-            <p>#${escapeHtml(row.id || '-')}</p>
+            <p><strong>Asset No:</strong> #${escapeHtml(row.id || '-')}</p>
           </header>
-          <p><strong>Name:</strong> ${escapeHtml(row.name || '-')}</p>
-          <p><strong>Serial/Case:</strong> ${escapeHtml(rowLabel)}</p>
-          <p><strong>Location:</strong> ${escapeHtml(row.location || '-')}</p>
-          <div class="codes-grid">
-            <div>
-              <h4>QR</h4>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrPayload}" alt="QR ${escapeHtml(row.id || '-')}">
-            </div>
-            <div>
-              <h4>Barcode</h4>
-              <img class="barcode-image" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=2.5&height=54&includetext&paddingwidth=20&paddingheight=8" alt="Barcode ${escapeHtml(row.id || '-')}">
-            </div>
+          <div class="barcode-wrap">
+            <h4>Barcode</h4>
+            <img class="barcode-image" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=2.5&height=54&includetext&paddingwidth=20&paddingheight=8" alt="Barcode ${escapeHtml(row.id || '-')}">
           </div>
-          <p class="sticker-note">Please do not remove the sticker</p>
         </article>
       `;
     }).join('');
@@ -352,15 +341,11 @@ class AssetController {
     .label-card header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
     .label-card h3 { margin: 0; font-size: 16px; }
     .label-card p { margin: 4px 0; font-size: 13px; }
-    .codes-grid { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px; margin-top: 10px; align-items: center; }
-    .codes-grid > div { min-width: 0; }
-    .codes-grid h4 { margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
-    .codes-grid img { width: 100%; max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
-    .barcode-image { min-width: 0; max-width: 340px; }
-    .sticker-note { margin: 10px 0 0 0; padding: 6px 8px; border: 1px dashed #ef4444; border-radius: 6px; text-align: center; font-size: 12px; font-weight: 700; color: #b91c1c; letter-spacing: 0.2px; }
+    .barcode-wrap { margin-top: 10px; }
+    .barcode-wrap h4 { margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
+    .barcode-image { display: block; width: 100%; max-width: 340px; height: auto; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
     @media (max-width: 1100px) {
       .labels { grid-template-columns: 1fr; }
-      .codes-grid { grid-template-columns: 1fr; }
       .barcode-image { max-width: 100%; }
     }
     @media print {
@@ -369,10 +354,8 @@ class AssetController {
       .header { margin-bottom: 8px; }
       .labels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .label-card { border-color: #cbd5e1; page-break-inside: avoid; break-inside: avoid-page; }
-      .codes-grid { grid-template-columns: 1fr 1fr; }
       .barcode-image { max-width: 100%; }
       .label-card p { margin: 2px 0; }
-      .sticker-note { margin-top: 8px; padding: 5px 6px; font-size: 11px; border-width: 1px; }
     }
   </style>
 </head>
