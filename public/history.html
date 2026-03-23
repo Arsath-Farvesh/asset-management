@@ -1337,17 +1337,38 @@
         return;
       }
 
-      selectAllCheckbox.addEventListener('change', selectAllRows);
-      rowCheckboxes.forEach(cb => cb.addEventListener('change', updateBulkActionsBar));
-      deleteSelectedBtn.addEventListener('click', deleteSelectedRows);
-      selectAllBtn.addEventListener('click', () => {
-        const checkbox = document.getElementById('selectAllCheckbox');
-        if (checkbox) {
-          checkbox.checked = true;
-          selectAllRows();
+      if (!selectAllCheckbox.dataset.bound) {
+        selectAllCheckbox.addEventListener('change', selectAllRows);
+        selectAllCheckbox.dataset.bound = '1';
+      }
+
+      rowCheckboxes.forEach((cb) => {
+        if (!cb.dataset.bound) {
+          cb.addEventListener('change', updateBulkActionsBar);
+          cb.dataset.bound = '1';
         }
       });
-      clearSelectionBtn.addEventListener('click', clearSelection);
+
+      if (!deleteSelectedBtn.dataset.bound) {
+        deleteSelectedBtn.addEventListener('click', deleteSelectedRows);
+        deleteSelectedBtn.dataset.bound = '1';
+      }
+
+      if (!selectAllBtn.dataset.bound) {
+        selectAllBtn.addEventListener('click', () => {
+          const checkbox = document.getElementById('selectAllCheckbox');
+          if (checkbox) {
+            checkbox.checked = true;
+            selectAllRows();
+          }
+        });
+        selectAllBtn.dataset.bound = '1';
+      }
+
+      if (!clearSelectionBtn.dataset.bound) {
+        clearSelectionBtn.addEventListener('click', clearSelection);
+        clearSelectionBtn.dataset.bound = '1';
+      }
     }
 
     document.getElementById('downloadPdf').addEventListener('click', async () => {
@@ -1374,20 +1395,31 @@
       return true;
     }
 
+    function downloadBlobFile(blob, filename) {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1500);
+    }
+
     document.getElementById('downloadCodesReport').addEventListener('click', async () => {
       if (!requireRowsForCodesReport()) {
         return;
       }
 
       try {
-        const res = await fetch('/api/history/codes-report', { credentials: 'include' });
+        const res = await fetch('/api/history/codes-report?download=true', { credentials: 'include' });
         if (!res.ok) {
           const txt = await res.text();
           throw new Error(txt || 'Unable to generate QR/barcode report');
         }
         const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener,noreferrer');
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        downloadBlobFile(blob, `asset-codes-report-${timestamp}.html`);
       } catch (err) {
         alert('Download failed: ' + err.message);
       }

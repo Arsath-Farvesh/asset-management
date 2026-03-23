@@ -213,55 +213,82 @@ class AssetController {
     doc.fontSize(18).text('Takhlees Asset History Report', { align: 'center' });
     doc.moveDown(0.5);
     doc.fontSize(10).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.text(`Total Records: ${rows.length}`, { align: 'center' });
     doc.moveDown(1.2);
 
-    const headers = ['ID', 'Category', 'Name', 'Serial', 'Employee', 'Location', 'Submitted By', 'Created At'];
-    const widths = [35, 75, 85, 60, 70, 70, 65, 55];
+    const columns = [
+      { key: 'id', label: 'ID', width: 35 },
+      { key: 'category', label: 'Category', width: 72 },
+      { key: 'name', label: 'Name', width: 85 },
+      { key: 'serial_number', label: 'Serial/Case', width: 66 },
+      { key: 'employee_name', label: 'Employee', width: 70 },
+      { key: 'location', label: 'Location', width: 70 },
+      { key: 'submitted_by', label: 'Submitted By', width: 62 },
+      { key: 'created_at', label: 'Created At', width: 55 }
+    ];
+    const tableLeft = doc.page.margins.left;
+    const tableWidth = columns.reduce((sum, col) => sum + col.width, 0);
+    const headerHeight = 20;
+    const rowHeight = 18;
 
-    const drawHeader = () => {
-      let x = doc.page.margins.left;
-      const y = doc.y;
-      doc.font('Helvetica-Bold').fontSize(9);
-      headers.forEach((h, i) => {
-        doc.text(h, x, y, { width: widths[i], lineBreak: false });
-        x += widths[i];
-      });
-      doc.moveDown(0.8);
-      doc.moveTo(doc.page.margins.left, doc.y)
-        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-        .strokeColor('#cccccc')
-        .stroke();
-      doc.moveDown(0.4);
+    const formatCell = (row, key) => {
+      if (key === 'category') return String(row.category || '-').replace(/_/g, ' ');
+      if (key === 'created_at') return row.created_at ? new Date(row.created_at).toLocaleString() : '-';
+      return String(row[key] || '-');
     };
 
-    drawHeader();
-    doc.font('Helvetica').fontSize(8.5);
-
-    rows.forEach((row) => {
-      if (doc.y > doc.page.height - 60) {
+    const drawTableHeader = () => {
+      if (doc.y + headerHeight > doc.page.height - 50) {
         doc.addPage();
-        drawHeader();
-        doc.font('Helvetica').fontSize(8.5);
       }
 
-      const values = [
-        String(row.id || '-'),
-        String(row.category || '-').replace(/_/g, ' '),
-        String(row.name || '-'),
-        String(row.serial_number || '-'),
-        String(row.employee_name || '-'),
-        String(row.location || '-'),
-        String(row.submitted_by || '-'),
-        row.created_at ? new Date(row.created_at).toLocaleString() : '-'
-      ];
+      const headerY = doc.y;
+      doc.save();
+      doc.rect(tableLeft, headerY, tableWidth, headerHeight).fill('#0f172a');
+      doc.restore();
 
-      let x = doc.page.margins.left;
-      const y = doc.y;
-      values.forEach((v, i) => {
-        doc.text(v, x, y, { width: widths[i], lineBreak: false, ellipsis: true });
-        x += widths[i];
+      let x = tableLeft;
+      doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8.5);
+      columns.forEach((col) => {
+        doc.text(col.label, x + 4, headerY + 6, {
+          width: col.width - 8,
+          lineBreak: false,
+          ellipsis: true
+        });
+        x += col.width;
       });
-      doc.moveDown(1);
+
+      doc.fillColor('#111827');
+      doc.y = headerY + headerHeight;
+    };
+
+    drawTableHeader();
+
+    rows.forEach((row, index) => {
+      if (doc.y + rowHeight > doc.page.height - 45) {
+        doc.addPage();
+        drawTableHeader();
+      }
+
+      const y = doc.y;
+      if (index % 2 === 0) {
+        doc.save();
+        doc.rect(tableLeft, y, tableWidth, rowHeight).fill('#f8fafc');
+        doc.restore();
+      }
+
+      let x = tableLeft;
+      columns.forEach((col) => {
+        doc.rect(x, y, col.width, rowHeight).lineWidth(0.4).strokeColor('#e5e7eb').stroke();
+        doc.fillColor('#111827').font('Helvetica').fontSize(8).text(formatCell(row, col.key), x + 4, y + 5, {
+          width: col.width - 8,
+          lineBreak: false,
+          ellipsis: true
+        });
+        x += col.width;
+      });
+
+      doc.y = y + rowHeight;
     });
 
     doc.end();
@@ -276,6 +303,7 @@ class AssetController {
 
     const rows = result.data || [];
     const autoPrint = req.query.autoprint === 'true';
+    const asDownload = req.query.download === 'true';
     const createdAt = new Date().toLocaleString();
 
     const cards = rows.map((row) => {
@@ -295,11 +323,11 @@ class AssetController {
           <div class="codes-grid">
             <div>
               <h4>QR</h4>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrPayload}" alt="QR ${escapeHtml(row.id || '-')}">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrPayload}" alt="QR ${escapeHtml(row.id || '-')}">
             </div>
             <div>
               <h4>Barcode</h4>
-              <img class="barcode-image" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10" alt="Barcode ${escapeHtml(row.id || '-')}">
+              <img class="barcode-image" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${barcodePayload}&scale=2.5&height=54&includetext&paddingwidth=20&paddingheight=8" alt="Barcode ${escapeHtml(row.id || '-')}">
             </div>
           </div>
         </article>
@@ -313,26 +341,31 @@ class AssetController {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR & Barcode Report</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; color: #111827; }
+    body { font-family: Arial, sans-serif; margin: 16px; color: #111827; background: #f8fafc; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .print-btn { padding: 10px 16px; border: none; border-radius: 8px; background: #88010e; color: #fff; cursor: pointer; }
-    .labels { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
-    .label-card { border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; break-inside: avoid; }
+    .labels { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 12px; }
+    .label-card { border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; break-inside: avoid; background: #ffffff; overflow: hidden; }
     .label-card header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
     .label-card h3 { margin: 0; font-size: 16px; }
     .label-card p { margin: 4px 0; font-size: 13px; }
-    .codes-grid { display: grid; grid-template-columns: 180px 1fr; gap: 14px; margin-top: 10px; align-items: center; }
+    .codes-grid { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px; margin-top: 10px; align-items: center; }
+    .codes-grid > div { min-width: 0; }
     .codes-grid h4 { margin: 0 0 4px 0; font-size: 12px; text-transform: uppercase; color: #4b5563; }
-    .codes-grid img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
-    .barcode-image { min-width: 280px; }
-    @media (max-width: 900px) {
+    .codes-grid img { width: 100%; max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+    .barcode-image { min-width: 0; max-width: 340px; }
+    @media (max-width: 1100px) {
       .labels { grid-template-columns: 1fr; }
       .codes-grid { grid-template-columns: 1fr; }
-      .barcode-image { min-width: 0; }
+      .barcode-image { max-width: 100%; }
     }
     @media print {
       .print-btn { display: none; }
-      body { margin: 10px; }
+      body { margin: 8px; background: #fff; }
+      .labels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .label-card { border-color: #cbd5e1; page-break-inside: avoid; }
+      .codes-grid { grid-template-columns: 1fr 1fr; }
+      .barcode-image { max-width: 100%; }
     }
   </style>
 </head>
@@ -350,7 +383,7 @@ class AssetController {
 </html>`;
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Content-Disposition', `inline; filename="asset-codes-${Date.now()}.html"`);
+    res.setHeader('Content-Disposition', `${asDownload ? 'attachment' : 'inline'}; filename="asset-codes-${Date.now()}.html"`);
     return res.send(html);
   }
 }
