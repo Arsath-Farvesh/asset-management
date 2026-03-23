@@ -872,6 +872,13 @@
     // Load users
     let allUsers = [];
 
+    const escapeHtml = (value) => String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
     const loadUsers = async () => {
       const loadingSpinner = document.getElementById('loadingSpinner');
       const usersTable = document.getElementById('usersTable');
@@ -950,31 +957,31 @@
                 <td>
                   <div class="user-info">
                     <div class="user-avatar">
-                      ${user.first_name ? user.first_name[0].toUpperCase() : user.username[0].toUpperCase()}
+                      ${escapeHtml((user.first_name?.[0] || user.username?.[0] || 'U').toUpperCase())}
                     </div>
                     <div class="user-details">
-                      <h6>${user.first_name || user.username}</h6>
-                      <p>@${user.username}</p>
+                      <h6>${escapeHtml(user.first_name || user.username || 'User')}</h6>
+                      <p>@${escapeHtml(user.username || '-')}</p>
                     </div>
                   </div>
                 </td>
-                <td>${user.email}</td>
+                <td>${escapeHtml(user.email || '-')}</td>
                 <td>
                   <span class="badge-role ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">
                     ${user.role === 'admin' ? 'Administrator' : 'User'}
                   </span>
                 </td>
-                <td>${user.department || '-'}</td>
+                <td>${escapeHtml(user.department || '-')}</td>
                 <td>
                   <div class="dropdown">
                     <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                       <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                      <li><a class="dropdown-item" href="#" onclick="editUser(${user.id})"><i class="bi bi-pencil"></i> Edit</a></li>
-                      <li><a class="dropdown-item" href="#" onclick='resetPassword(${user.id}, ${JSON.stringify(user.username || "")})'><i class="bi bi-key"></i> Reset Password</a></li>
+                      <li><a class="dropdown-item" href="#" onclick="editUser(${Number(user.id) || 0}); return false;"><i class="bi bi-pencil"></i> Edit</a></li>
+                      <li><a class="dropdown-item" href="#" onclick='resetPassword(${Number(user.id) || 0}, ${JSON.stringify(user.username || "")}); return false;'><i class="bi bi-key"></i> Reset Password</a></li>
                       <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item text-danger" href="#" onclick='deleteUser(${user.id}, ${JSON.stringify(user.username || "")})'><i class="bi bi-trash"></i> Delete</a></li>
+                      <li><a class="dropdown-item text-danger" href="#" onclick='deleteUser(${Number(user.id) || 0}, ${JSON.stringify(user.username || "")}); return false;'><i class="bi bi-trash"></i> Delete</a></li>
                     </ul>
                   </div>
                 </td>

@@ -1381,6 +1381,7 @@
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 3000);
       } catch (err) {
         alert('Download failed: ' + err.message);
       }
@@ -1439,6 +1440,7 @@
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 3000);
       } catch (err) {
         alert('Print report failed: ' + err.message);
       }
