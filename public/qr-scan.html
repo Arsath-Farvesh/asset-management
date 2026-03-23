@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Scan QR and barcode labels to quickly access asset information in Takhlees Asset Management System." />
+  <meta name="theme-color" content="#1f2937" />
+  <title>QR & Barcode Scanner - Takhlees Government Services</title>
+  
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme-professional.css">
+  
+  <style>
+    :root {
+      --takhlees-gold: var(--brand-500);
+      --takhlees-blue: #1f2937;
+      --takhlees-dark: #111827;
+      --takhlees-red: #ef4444;
+      --takhlees-success: #10b981;
+      --takhlees-light: #f9fafb;
+      
+      /* Light mode colors */
+      --body-bg-start: #ffffff;
+      --body-bg-end: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e8e8e8;
+      --text-primary: #111827;
+      --text-secondary: #6c757d;
+      --input-bg: #ffffff;
+      --input-border: #ced4da;
+      --input-text: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* Navbar */
+    .navbar-takhlees {
+      background: #ffffff;
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-takhlees .container-fluid {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .shield-icon {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
+    }
+
+    .shield-icon i {
+      font-size: 24px;
+      color: white;
+    }
+
+    .brand-text .main {
+      display: block;
+      margin: 0;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .brand-text .sub {
+      display: block;
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      line-height: 1.2;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
+      color: white;
+    }
+
+    .nav-btn i {
+      margin-right: 6px;
+    }
+
+    /* Authentication Indicator */
+    .auth-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #f0f4f8 0%, #f8fafb 100%);
+      border-radius: 12px;
+      border: 1px solid #e0e7ff;
+      min-width: 200px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(136, 1, 14, 0.3);
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .user-name {
+      color: var(--takhlees-dark);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .user-role {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+
+    .role-admin {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .role-user {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .role-guest {
+      background: #f3e8ff;
+      color: #5b21b6;
+    }
+
+    .auth-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Scanner Container */
+    .scanner-container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .scanner-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 48, 73, 0.2);
+      overflow: hidden;
+      border: none;
+    }
+
+    .scanner-header {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .scanner-header i {
+      font-size: 4rem;
+      color: var(--takhlees-gold);
+      margin-bottom: 1rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .scanner-header h2 {
+      color: white;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .scanner-header p {
+      color: var(--takhlees-gold);
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .scanner-body {
+      padding: 2.5rem;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      min-height: 260px;
+      margin: 0 auto 2rem auto;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 48, 73, 0.15);
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+    }
+
+    .status-message {
+      text-align: center;
+      padding: 1.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    .status-message.info {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      color: var(--takhlees-blue);
+      border: 2px solid #90caf9;
+    }
+
+    .status-message.success {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      color: #2e7d32;
+      border: 2px solid #81c784;
+    }
+
+    .status-message.error {
+      background: #ffffff;
+      color: var(--takhlees-red);
+      border: 2px solid #ef5350;
+    }
+
+    .instructions {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border-left: 4px solid var(--takhlees-gold);
+    }
+
+    .instructions h5 {
+      color: var(--takhlees-blue);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .instructions li {
+      padding: 0.5rem 0;
+      color: var(--takhlees-dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instructions li i {
+      color: var(--takhlees-gold);
+      font-size: 1.2rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .btn-action {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-home {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
+    }
+
+    .btn-home:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
+      color: white;
+    }
+
+    .btn-history {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 48, 73, 0.3);
+    }
+
+    .btn-history:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 48, 73, 0.5);
+      color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .navbar-takhlees {
+        padding: 1rem;
+      }
+      
+      .scanner-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .scanner-header i {
+        font-size: 3rem;
+      }
+      
+      .scanner-body {
+        padding: 1.5rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .btn-action {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    /* Profile Modal Styles */
+    .profile-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-modal-overlay.active {
+      display: flex;
+    }
+
+    .profile-modal {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 0;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      padding: 2rem;
+      text-align: center;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .profile-header h3 {
+      color: white;
+      margin: 0.5rem 0;
+      font-weight: 600;
+    }
+
+    .profile-header p {
+      color: #d1d5db;
+      margin: 0;
+      font-size: 0.9rem;
+      text-transform: capitalize;
+    }
+
+    .profile-avatar-large {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6b7280 0%, var(--brand-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 2rem;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
+    }
+
+    .profile-body {
+      padding: 2rem;
+    }
+
+    .profile-field {
+      margin-bottom: 1.5rem;
+    }
+
+    .profile-label {
+      color: #6c757d;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .profile-value {
+      color: #111827;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+    }
+
+    .profile-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.3s ease;
+    }
+
+    .profile-input:focus {
+      outline: none;
+      border-color: #6b7280;
+      box-shadow: 0 0 0 3px rgba(136, 1, 14, 0.1);
+    }
+
+    .profile-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    .profile-btn-save { background: #10b981; color: white; }
+    .profile-btn-cancel { background: #e5e7eb; color: #374151; }
+    .profile-btn-close { background: #ef4444; color: white; }
+
+    .profile-btn:hover {
+      opacity: 0.9;
+    }
+
+  </style>
+</head>
+<body class="animate-fade-in">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-takhlees navbar-enhanced">
+    <div class="container-fluid">
+      <a class="navbar-brand animate-slide-in" href="/index.html">
+      <div class="brand-logo">
+        <div class="shield-icon">
+          <img src="logo.png" alt="Takhlees company logo" style="width: 30px; height: 30px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <i class="bi bi-shield-fill-check" style="display: none;"></i>
+        </div>
+        <div class="brand-text">
+          <span class="main" style="color: var(--text-primary); font-weight: 600;">Takhlees</span>
+          <span class="sub" style="color: var(--text-secondary); font-size: 0.75rem;">ASSET MANAGEMENT SYSTEM</span>
+        </div>
+      </div>
+      </a>
+      <div class="d-flex gap-2 align-items-center ms-auto">
+        <a id="homeNavBtn" href="/index.html" class="nav-btn btn-enhanced">
+          <i class="bi bi-house-fill"></i> Home
+        </a>
+        <a id="historyNavBtn" href="/history.html" class="nav-btn btn-enhanced">
+          <i class="bi bi-clock-history"></i> History
+        </a>
+        
+        <!-- Authentication Indicator -->
+        <div class="auth-indicator" id="authIndicator" style="display: none;">
+          <div class="auth-status"></div>
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-info">
+            <p class="user-name" id="userName">User</p>
+            <span class="user-role role-user" id="userRole">User</span>
+          </div>
+        </div>
+        
+        <button type="button" class="nav-btn btn-enhanced" id="logoutBtn">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Scanner Container -->
+  <div class="scanner-container">
+    <div class="scanner-card card-enhanced">
+      <div class="scanner-header text-center">
+        <i class="bi bi-qr-code-scan"></i>
+        <h2 class="mb-2">QR & Barcode Scanner</h2>
+        <p class="mb-0">Point your camera at the asset label</p>
+      </div>
+      
+      <div class="scanner-body">
+        <div id="reader"></div>
+        
+        <div id="status" class="status-message text-center"></div>
+        
+        <div class="instructions">
+          <h5>
+            <i class="bi bi-info-circle-fill"></i>
+            Scanning Instructions:
+          </h5>
+          <ul>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              Allow camera access when prompted
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              Position the QR code or barcode within the frame
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              Hold steady until detected
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill"></i>
+              You'll be redirected automatically
+            </li>
+          </ul>
+        </div>
+        
+        <div class="action-buttons d-flex gap-3 justify-content-center mt-4">
+          <button class="btn-action btn-home btn-enhanced" onclick="window.location.href='/index.html'">
+            <i class="bi bi-house-fill"></i>
+            Back to Home
+          </button>
+          <button class="btn-action btn-history btn-enhanced" onclick="window.location.href='/history.html'">
+            <i class="bi bi-clock-history"></i>
+            View History
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const homeNavBtn = document.getElementById('homeNavBtn');
+    const historyNavBtn = document.getElementById('historyNavBtn');
+    const authIndicatorEl = document.getElementById('authIndicator');
+
+    let csrfToken = null;
+    let scannerInstance = null;
+
+    async function ensureCsrfToken() {
+      if (csrfToken) return csrfToken;
+      const res = await fetch('/api/csrf-token', { credentials: 'include', cache: 'no-store' });
+      const data = await res.json();
+      csrfToken = data.csrfToken;
+      return csrfToken;
+    }
+
+    async function checkLogin() {
+      try {
+        const r = await fetch('/api/me', { credentials:'include' });
+        const j = await r.json();
+        if (!r.ok || !j.success || !j.user) {
+          statusEl.className = 'status-message error';
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please login first. Redirecting...';
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 2000);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
+    // ===== Authentication Indicator =====
+    async function loadNavbarUser() {
+      try {
+        const res = await fetch('/api/auth-status', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            
+            userAvatar.textContent = data.user.username.charAt(0).toUpperCase();
+            userName.textContent = data.user.username;
+            const role = data.user.role || 'user';
+            userRole.textContent = role.toUpperCase();
+            userRole.className = `user-role role-${role}`;
+            authIndicatorEl.style.display = 'flex';
+          }
+        }
+      } catch (err) {
+        console.error('Auth status error:', err);
+      }
+    }
+
+    loadNavbarUser();
+
+    homeNavBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/index.html';
+    });
+
+    historyNavBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/history.html';
+    });
+    
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        const token = await ensureCsrfToken();
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'csrf-token': token }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = '/login.html';
+      }
+    });
+
+    checkLogin();
+
+    function getScanFormats() {
+      const formats = [];
+      const supported = window.Html5QrcodeSupportedFormats;
+      if (!supported) {
+        return formats;
+      }
+
+      const desired = [
+        'QR_CODE',
+        'CODE_128',
+        'CODE_39',
+        'EAN_13',
+        'EAN_8',
+        'UPC_A',
+        'UPC_E',
+        'ITF',
+        'CODABAR'
+      ];
+
+      desired.forEach((name) => {
+        if (Object.prototype.hasOwnProperty.call(supported, name)) {
+          formats.push(supported[name]);
+        }
+      });
+
+      return formats;
+    }
+
+    const config = {
+      fps: 12,
+      qrbox: { width: 280, height: 220 },
+      aspectRatio: 1.333,
+      rememberLastUsedCamera: true,
+      formatsToSupport: getScanFormats()
+    };
+
+    function onScanSuccess(decodedText, decodedResult) {
+      const detectedFormat = decodedResult && decodedResult.result && decodedResult.result.format
+        ? decodedResult.result.format.formatName || decodedResult.result.format
+        : 'CODE';
+
+      statusEl.className = 'status-message success';
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${detectedFormat} detected! Redirecting...`;
+      
+      scannerInstance.stop().then(() => {
+        window.location.href = `/details.html?qr=${encodeURIComponent(decodedText)}`;
+      }).catch(()=> {
+        window.location.href = `/details.html?qr=${encodeURIComponent(decodedText)}`;
+      });
+    }
+
+    function onScanError(err) {
+      // ignore noisy scan errors
+    }
+
+    async function startScanner() {
+      try {
+        if (typeof Html5Qrcode === 'undefined') {
+          throw new Error('QR camera library blocked by browser security policy');
+        }
+
+        scannerInstance = new Html5Qrcode('reader');
+        const devices = await Html5Qrcode.getCameras();
+
+        if (devices && devices.length) {
+          const cam = devices.find((d) => /back|rear|environment/i.test(d.label)) || devices[0];
+          try {
+            await scannerInstance.start({ deviceId: { exact: cam.id } }, config, onScanSuccess, onScanError);
+          } catch (firstErr) {
+            await scannerInstance.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
+          }
+        } else {
+          await scannerInstance.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
+        }
+      } catch (err) {
+        statusEl.className = 'status-message error';
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<i class="bi bi-x-circle-fill"></i> Camera unavailable. Please allow camera access and reload.';
+        console.error('Scanner init failed:', err);
+      }
+    }
+
+    startScanner();
+  </script>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal-overlay" id="profileModalOverlay">
+    <div class="profile-modal">
+      <div class="profile-header">
+        <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
+        <h3 id="profileUsername">User</h3>
+        <p id="profileRoleDisplay">User</p>
+      </div>
+      <div class="profile-body" id="profileContent">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal behavior is centralized in account-panel.js -->
+  <script src="/session-timeout.js"></script>
+  <script src="/account-panel.js"></script>
+</body>
+</html>

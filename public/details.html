@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />  <meta name="description" content="View detailed asset information in Takhlees Asset Management System." />
+  <meta name="theme-color" content="#1f2937" />  <title>Asset Details - Takhlees Government Services</title>
+  
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme-professional.css">
+  
+  <style>
+    :root {
+      --takhlees-gold: var(--brand-500);
+      --takhlees-blue: #1f2937;
+      --takhlees-dark: #111827;
+      --takhlees-light: #f9fafb;
+      --takhlees-accent: #3b82f6;
+      --takhlees-success: #10b981;
+      --takhlees-red: #D62828;
+      --takhlees-success: #06A77D;
+      --takhlees-light: #F8F9FA;
+      
+      /* Light mode colors */
+      --body-bg-start: #ffffff;
+      --body-bg-end: #ffffff;
+      --card-bg: #ffffff;
+      --card-border: #e8e8e8;
+      --text-primary: #111827;
+      --text-secondary: #6c757d;
+      --input-bg: #ffffff;
+      --input-border: #ced4da;
+      --input-text: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* Navbar */
+    .navbar-takhlees {
+      background: #ffffff;
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-takhlees .container-fluid {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .shield-icon {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
+    }
+
+    .shield-icon i {
+      font-size: 24px;
+      color: white;
+    }
+
+    .brand-text h5 {
+      margin: 0;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-text p {
+      margin: 0;
+      color: var(--takhlees-gold);
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      color: white !important;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
+      color: white !important;
+    }
+
+    .nav-btn i {
+      margin-right: 6px;
+    }
+
+    /* Authentication Indicator */
+    .auth-indicator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #f0f4f8 0%, #f8fafb 100%);
+      border-radius: 12px;
+      border: 1px solid #e0e7ff;
+      min-width: 200px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(136, 1, 14, 0.3);
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .user-name {
+      color: var(--takhlees-dark);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .user-role {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+
+    .role-admin {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .role-user {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .role-guest {
+      background: #f3e8ff;
+      color: #5b21b6;
+    }
+
+    .auth-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Page Header */
+    .page-header {
+      background: #ffffff;
+      padding: 3rem 0;
+      margin-bottom: 3rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .page-header h1 {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 2.5rem;
+      text-align: center;
+      margin: 0;
+      text-shadow: none;
+    }
+
+    .page-header p {
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    /* Main Content */
+    .main-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 2rem 3rem 2rem;
+    }
+
+    .card-takhlees {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 48, 73, 0.15);
+      border: none;
+      overflow: hidden;
+    }
+
+    .card-header-takhlees {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      padding: 1.5rem 2rem;
+      border: none;
+    }
+
+    .card-header-takhlees h5 {
+      color: white;
+      margin: 0;
+      font-weight: 600;
+      font-size: 1.3rem;
+    }
+
+    .card-header-takhlees p {
+      color: var(--takhlees-gold);
+      margin: 0.5rem 0 0 0;
+      font-size: 0.9rem;
+    }
+
+    .card-body-takhlees {
+      padding: 2rem;
+    }
+
+    /* Details Grid */
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .detail-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border-left: 4px solid var(--takhlees-gold);
+      transition: all 0.3s ease;
+    }
+
+    .detail-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 48, 73, 0.1);
+    }
+
+    .detail-label {
+      color: #6c757d;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .detail-label i {
+      color: var(--takhlees-gold);
+      font-size: 1rem;
+    }
+
+    .detail-value {
+      color: var(--takhlees-dark);
+      font-size: 1.1rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    /* Media Section */
+    .media-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .media-item {
+      text-align: center;
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 48, 73, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .media-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 48, 73, 0.15);
+    }
+
+    .media-item h6 {
+      color: var(--takhlees-blue);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+
+    .media-item img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 2px solid var(--takhlees-gold);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--takhlees-blue);
+    }
+
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 4px solid #e9ecef;
+      border-top: 4px solid var(--takhlees-gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Error State */
+    .error-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--takhlees-dark);
+    }
+
+    .error-state i {
+      font-size: 4rem;
+      color: var(--takhlees-red);
+      margin-bottom: 1.5rem;
+    }
+
+    .error-state h4 {
+      color: var(--takhlees-blue);
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .btn-action {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-back {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 48, 73, 0.3);
+      cursor: pointer;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 48, 73, 0.5);
+      color: white;
+    }
+
+    .btn-home {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
+    }
+
+    .btn-home:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
+      color: white;
+    }
+
+    /* Profile Modal Styles */
+    .profile-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-modal-overlay.active {
+      display: flex;
+    }
+
+    .profile-modal {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 0;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, var(--takhlees-blue) 0%, var(--takhlees-dark) 100%);
+      padding: 2rem;
+      text-align: center;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .profile-avatar-large {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 2rem;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.4);
+    }
+
+    .profile-header h3 {
+      color: white;
+      margin: 0 0 0.5rem 0;
+      font-weight: 700;
+    }
+
+    .profile-header p {
+      color: var(--takhlees-gold);
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .profile-body {
+      padding: 2rem;
+    }
+
+    .profile-field {
+      margin-bottom: 1.5rem;
+    }
+
+    .profile-label {
+      color: #6c757d;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .profile-value {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      color: var(--takhlees-dark);
+      font-weight: 500;
+    }
+
+    .profile-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.3s ease;
+    }
+
+    .profile-input:focus {
+      outline: none;
+      border-color: var(--takhlees-gold);
+      box-shadow: 0 0 0 3px rgba(136, 1, 14, 0.1);
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .profile-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+
+    .profile-btn-edit {
+      background: linear-gradient(135deg, var(--takhlees-gold) 0%, var(--brand-hover) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(136, 1, 14, 0.3);
+    }
+
+    .profile-btn-edit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(136, 1, 14, 0.5);
+    }
+
+    .profile-btn-save {
+      background: #10b981;
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .profile-btn-save:hover {
+      background: #059669;
+    }
+
+    .profile-btn-cancel {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .profile-btn-cancel:hover {
+      background: #d1d5db;
+    }
+
+    .profile-btn-close {
+      background: #ef4444;
+      color: white;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .profile-btn-close:hover {
+      background: #dc2626;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      
+      .main-container {
+        padding: 0 1rem 2rem 1rem;
+      }
+      
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .btn-action {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    
+
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar-takhlees">
+    <div class="container-fluid">
+      <div class="brand-logo">
+        <div class="shield-icon">
+          <i class="bi bi-shield-fill-check"></i>
+        </div>
+        <div class="brand-text">
+          <h5>Takhlees <span style="color: var(--takhlees-gold);">/</span> ASSET MANAGEMENT SYSTEM</h5>
+          <p>GOVERNMENT SERVICES</p>
+        </div>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <a href="/index.html" class="nav-btn">
+          <i class="bi bi-house-fill"></i> Home
+        </a>
+        <a href="/history.html" class="nav-btn">
+          <i class="bi bi-clock-history"></i> History
+        </a>
+        <a href="/qr-scan.html" class="nav-btn">
+          <i class="bi bi-qr-code-scan"></i> Scan
+        </a>
+        
+        <!-- Authentication Indicator -->
+        <div class="auth-indicator" id="authIndicator" style="display: none;">
+          <div class="auth-status"></div>
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-info">
+            <p class="user-name" id="userName">User</p>
+            <span class="user-role role-user" id="userRole">User</span>
+          </div>
+        </div>
+        
+        <button class="nav-btn" id="logoutBtn">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header text-center">
+    <h1 class="mb-2"><i class="bi bi-info-circle me-2"></i> Asset Details</h1>
+    <p class="mb-0">Complete asset information and documentation</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-container">
+    <div class="card-takhlees card-enhanced">
+      <div class="card-header-takhlees card-header-enhanced">
+        <h5 class="mb-2"><i class="bi bi-file-earmark-text-fill me-2"></i> Asset Information</h5>
+        <p class="mb-0">Detailed record from Takhlees Government Services</p>
+      </div>
+      <div class="card-body-takhlees">
+        <div id="loadingState" class="loading text-center">
+          <div class="spinner"></div>
+          <p class="mb-0">Loading asset details...</p>
+        </div>
+        
+        <div id="result" style="display: none;"></div>
+        
+        <div id="errorState" class="error-state text-center" style="display: none;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <h4 class="mb-3">Asset Not Found</h4>
+          <p id="errorMessage" class="mb-0">The requested asset could not be found in the system.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons d-flex gap-3 justify-content-center mt-4">
+      <button class="btn-action btn-back btn-enhanced" id="backBtn">
+        <i class="bi bi-arrow-left"></i>
+        Go Back
+      </button>
+      <a href="/index.html" class="btn-action btn-home btn-enhanced">
+        <i class="bi bi-house-fill"></i>
+        Return to Home
+      </a>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-modal-overlay" id="profileModalOverlay">
+    <div class="profile-modal">
+      <div class="profile-header">
+        <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
+        <h3 id="profileUsername">User</h3>
+        <p id="profileRoleDisplay">User</p>
+      </div>
+      <div class="profile-body" id="profileContent">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ===== Authentication Indicator =====
+    async function loadAuthIndicator() {
+      try {
+        const res = await fetch('/api/auth-status', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            const authIndicator = document.getElementById('authIndicator');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            
+            // Set avatar with first letter of username
+            userAvatar.textContent = data.user.username.charAt(0).toUpperCase();
+            userName.textContent = data.user.username;
+            
+            // Set role with appropriate styling
+            const role = data.user.role || 'user';
+            userRole.textContent = role.toUpperCase();
+            userRole.className = `user-role role-${role}`;
+            
+            authIndicator.style.display = 'flex';
+          }
+        }
+      } catch (err) {
+        console.error('Auth status error:', err);
+      }
+    }
+
+    // Load auth indicator on page load
+    loadAuthIndicator();
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+        const csrfData = await csrfRes.json();
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'csrf-token': csrfData.csrfToken }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = '/login.html';
+      }
+    });
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      window.history.back();
+    });
+
+    function qs(key) {
+      const params = new URLSearchParams(location.search);
+      return params.get(key);
+    }
+
+    const KNOWN_CATEGORIES = new Set([
+      'assets',
+      'case_details',
+      'depreciation_history',
+      'digital_media',
+      'documents',
+      'employees',
+      'keys',
+      'financial_assets',
+      'furniture',
+      'infrastructure',
+      'intellectual_property',
+      'it_hardware',
+      'leased_assets',
+      'locations',
+      'machinery_equipment',
+      'maintenance_logs',
+      'real_estate',
+      'software_license',
+      'tools',
+      'vehicles',
+      'equipments_assets',
+      'laptops',
+      'monitors',
+      'accessories',
+      'id_cards'
+    ]);
+
+    function parseQrPayload(rawQr) {
+      const decoded = (() => {
+        try {
+          return decodeURIComponent(rawQr);
+        } catch (_err) {
+          return rawQr;
+        }
+      })();
+
+      const parts = String(decoded)
+        .split('-')
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+      // New report/label format: category|id|name|serial
+      if (String(decoded).includes('|')) {
+        const pipeParts = String(decoded)
+          .split('|')
+          .map((part) => part.trim())
+          .filter(Boolean);
+
+        if (pipeParts.length >= 2 && KNOWN_CATEGORIES.has(String(pipeParts[0]).toLowerCase())) {
+          const category = String(pipeParts[0]).toLowerCase();
+          const id = /^\d+$/.test(pipeParts[1]) ? Number.parseInt(pipeParts[1], 10) : null;
+          return {
+            category,
+            id,
+            name: pipeParts[2] || null,
+            serial: pipeParts[3] || null,
+            employee: null
+          };
+        }
+      }
+
+      if (parts.length === 0) {
+        return null;
+      }
+
+      const categoryIndex = parts.findIndex((part) => KNOWN_CATEGORIES.has(part.toLowerCase()));
+      if (categoryIndex === -1) {
+        return null;
+      }
+
+      const category = parts[categoryIndex].toLowerCase();
+      const lastPart = parts[parts.length - 1];
+      const id = /^\d+$/.test(lastPart) ? Number.parseInt(lastPart, 10) : null;
+
+      return {
+        category,
+        id,
+        name: parts.slice(0, categoryIndex).join('-') || null,
+        serial: parts[categoryIndex + 1] || null,
+        employee: parts.slice(categoryIndex + 2, id ? -1 : undefined).join('-') || null
+      };
+    }
+
+    async function findAssetByLooseToken(rawToken) {
+      const token = String(rawToken || '').trim().toLowerCase();
+      if (!token) {
+        return null;
+      }
+
+      const historyResp = await fetch('/api/history', { credentials: 'include', cache: 'no-store' });
+      if (historyResp.status === 401 || historyResp.status === 403) {
+        window.location.href = '/login.html';
+        return null;
+      }
+
+      let historyPayload;
+      try {
+        historyPayload = await historyResp.json();
+      } catch (_err) {
+        throw new Error('Invalid server response');
+      }
+
+      if (!historyResp.ok || !historyPayload.success || !Array.isArray(historyPayload.data)) {
+        throw new Error(historyPayload.error || 'Unable to look up asset from barcode');
+      }
+
+      const match = historyPayload.data.find((item) => {
+        const serial = String(item.serial_number || '').trim().toLowerCase();
+        const name = String(item.name || '').trim().toLowerCase();
+        const itemId = String(item.id || '').trim().toLowerCase();
+
+        return serial === token || name === token || itemId === token;
+      });
+
+      if (!match || !match.category || !match.id) {
+        return null;
+      }
+
+      return {
+        category: match.category,
+        id: match.id
+      };
+    }
+
+    async function fetchByQR(qr) {
+      try {
+        const parsed = parseQrPayload(qr);
+        if (!parsed || !parsed.category) {
+          // Barcode scans often contain only serial text; resolve by history lookup.
+          const looseMatch = await findAssetByLooseToken(qr);
+          if (!looseMatch) {
+            showError('Asset not found for scanned QR/Barcode value');
+            return;
+          }
+
+          await fetchByCategoryId(looseMatch.category, looseMatch.id);
+          return;
+        }
+
+        if (parsed.id) {
+          await fetchByCategoryId(parsed.category, parsed.id);
+          return;
+        }
+
+        const listResp = await fetch(`/api/assets/${encodeURIComponent(parsed.category)}`, { credentials: 'include' });
+        if (listResp.status === 401 || listResp.status === 403) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        let listPayload;
+        try {
+          listPayload = await listResp.json();
+        } catch (_err) {
+          throw new Error('Invalid server response');
+        }
+
+        if (!listResp.ok || !listPayload.success || !Array.isArray(listPayload.data)) {
+          throw new Error(listPayload.error || 'Unable to look up QR asset');
+        }
+
+        const normalizedName = (parsed.name || '').toLowerCase();
+        const normalizedSerial = (parsed.serial || '').toLowerCase();
+        const normalizedEmployee = (parsed.employee || '').toLowerCase();
+
+        const matched = listPayload.data.find((item) => {
+          const itemName = String(item.name || item.asset_name || item.case_name || '').toLowerCase();
+          const itemSerial = String(item.serial_number || item.asset_tag || item.employee_id || item.key_reference || '').toLowerCase();
+          const itemEmployee = String(item.employee_name || item.customer_name || '').toLowerCase();
+
+          if (normalizedSerial && itemSerial === normalizedSerial) {
+            return true;
+          }
+
+          if (normalizedName && itemName === normalizedName && (!normalizedEmployee || itemEmployee === normalizedEmployee)) {
+            return true;
+          }
+
+          return false;
+        });
+
+        if (!matched || !matched.id) {
+          showError('QR Code not found in system');
+          return;
+        }
+
+        render({ category: parsed.category, data: matched });
+      } catch (err) {
+        showError('Error: ' + err.message);
+      }
+    }
+
+    function render(payload) {
+      const container = document.getElementById('result');
+      const d = payload.data;
+      const qrPayload = [
+        d.name || '',
+        payload.category || '',
+        d.serial_number || '',
+        d.employee_name || '',
+        d.id || ''
+      ].join('-').replace(/^-+|-+$/g, '') || `asset-${d.id}`;
+      const barcodePayload = d.serial_number || d.name || `${payload.category || 'asset'}-${d.id}`;
+      const qrSrc = d.qr_code || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrPayload)}`;
+      const barcodeSrc = d.barcode || `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(barcodePayload)}&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10`;
+      
+      let displayCategory = payload.category.replace(/_/g, ' ').toUpperCase();
+      if (payload.category === 'case_details') {
+        displayCategory = 'Case Details';
+      } else if (payload.category === 'keys' || payload.category === 'equipments_assets') {
+        displayCategory = 'Keys';
+      }
+
+      const detailsHTML = `
+        <div class="details-grid">
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-tag-fill"></i>
+              Asset ID
+            </div>
+            <div class="detail-value">#${d.id}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-bookmark-fill"></i>
+              Category
+            </div>
+            <div class="detail-value">${displayCategory}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-box-fill"></i>
+              Asset Name
+            </div>
+            <div class="detail-value">${d.name || '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-barcode"></i>
+              Serial Number
+            </div>
+            <div class="detail-value">${d.serial_number || '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-person-fill"></i>
+              Employee
+            </div>
+            <div class="detail-value">${d.employee_name || '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-geo-alt-fill"></i>
+              Location
+            </div>
+            <div class="detail-value">${d.location || d.case_type || '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-person-check-fill"></i>
+              Submitted By
+            </div>
+            <div class="detail-value">${d.submitted_by || '-'}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">
+              <i class="bi bi-calendar-event-fill"></i>
+              Created At
+            </div>
+            <div class="detail-value">${new Date(d.created_at).toLocaleString()}</div>
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = detailsHTML;
+      
+      const mediaHTML = `
+        <div class="media-section">
+          <div class="media-item">
+            <h6><i class="bi bi-qr-code"></i> QR Code</h6>
+            <img src="${qrSrc}" alt="QR Code">
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+              <div class="detail-label" style="margin-bottom: 0.5rem;">
+                <i class="bi bi-geo-alt-fill"></i>
+                Location
+              </div>
+              <div class="detail-value">${d.location || d.case_type || '-'}</div>
+            </div>
+          </div>
+          <div class="media-item">
+            <h6><i class="bi bi-barcode-scan"></i> Barcode</h6>
+            <img src="${barcodeSrc}" alt="Barcode">
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+              <div class="detail-label" style="margin-bottom: 0.5rem;">
+                <i class="bi bi-geo-alt-fill"></i>
+                Location
+              </div>
+              <div class="detail-value">${d.location || d.case_type || '-'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      container.innerHTML += mediaHTML;
+      
+      document.getElementById('loadingState').style.display = 'none';
+      container.style.display = 'block';
+    }
+
+    function showError(message) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorState').style.display = 'block';
+    }
+
+    const qr = qs('qr');
+    const category = qs('category');
+    const id = qs('id');
+
+    async function fetchByCategoryId(cat, assetId) {
+      try {
+        const resp = await fetch(`/api/assets/${encodeURIComponent(cat)}/${encodeURIComponent(assetId)}`, { credentials:'include' });
+
+        if (resp.status === 401 || resp.status === 403) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        let j;
+        try {
+          j = await resp.json();
+        } catch (_err) {
+          throw new Error('Invalid server response');
+        }
+
+        if (!resp.ok) {
+          throw new Error(j.error || 'Not found');
+        }
+
+        if (!j.success) throw new Error(j.error || 'Not found');
+        render({ category: cat, data: j.data });
+      } catch(err) {
+        showError('Not found: ' + err.message);
+      }
+    }
+
+    if (qr) {
+      fetchByQR(qr);
+    } else if (category && id) {
+      fetchByCategoryId(category, id);
+    } else {
+      showError('No asset reference provided in URL');
+    }
+
+    // Profile Modal Functions
+    let currentUser = null;
+    let isEditMode = false;
+
+    async function loadProfileUserData() {
+      try {
+        const resp = await fetch('/api/auth-status', { credentials: 'include' });
+        const data = await resp.json();
+        if (data.authenticated && data.user) {
+          currentUser = data.user;
+          
+          const indicator = document.getElementById('authIndicator');
+          if (indicator) {
+            indicator.style.display = 'flex';
+            indicator.addEventListener('click', openProfileModal);
+          }
+        }
+      } catch(err) {
+        console.log('Auth check failed:', err);
+      }
+    }
+
+    function openProfileModal() {
+      if (!currentUser) return;
+      isEditMode = false;
+      renderProfileModal();
+      document.getElementById('profileModalOverlay').classList.add('active');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profileModalOverlay').classList.remove('active');
+      isEditMode = false;
+    }
+
+    function renderProfileModal() {
+      const username = currentUser.username || 'User';
+      const role = (currentUser.role || 'user').charAt(0).toUpperCase() + (currentUser.role || 'user').slice(1);
+      const avatar = username.charAt(0).toUpperCase();
+      const email = currentUser.email || '';
+      const department = currentUser.department || 'Not Set';
+
+      document.getElementById('profileAvatarLarge').textContent = avatar;
+      document.getElementById('profileUsername').textContent = username;
+      document.getElementById('profileRoleDisplay').textContent = role;
+
+      const contentDiv = document.getElementById('profileContent');
+      if (isEditMode) {
+        contentDiv.innerHTML = `
+          <form id="profileEditForm">
+            <div class="profile-field">
+              <label class="profile-label">Username</label>
+              <input type="text" id="editUsername" class="profile-input" value="${username}" required>
+            </div>
+            <div class="profile-field">
+              <label class="profile-label">Email</label>
+              <input type="email" id="editEmail" class="profile-input" value="${email}" required>
+            </div>
+            <div class="profile-field">
+              <label class="profile-label">Department</label>
+              <input type="text" id="editDepartment" class="profile-input" value="${department}">
+            </div>
+            <div class="profile-field">
+              <label class="profile-label">Password (leave blank to keep current)</label>
+              <input type="password" id="editPassword" class="profile-input" placeholder="Enter new password">
+            </div>
+            <div class="profile-field">
+              <label class="profile-label">Confirm Password</label>
+              <input type="password" id="editConfirmPassword" class="profile-input" placeholder="Confirm new password">
+            </div>
+            <div id="formMessage" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; display: none;"></div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button type="submit" class="profile-btn profile-btn-save">Save Changes</button>
+              <button type="button" class="profile-btn profile-btn-cancel" onclick="cancelEditMode()">Cancel</button>
+              <button type="button" class="profile-btn profile-btn-close" onclick="closeProfileModal()">Close</button>
+            </div>
+          </form>
+        `;
+        document.getElementById('profileEditForm').addEventListener('submit', saveProfileChanges);
+      } else {
+        contentDiv.innerHTML = `
+          <div class="profile-field">
+            <label class="profile-label">Username</label>
+            <div class="profile-value">${username}</div>
+          </div>
+          <div class="profile-field">
+            <label class="profile-label">Email</label>
+            <div class="profile-value">${email}</div>
+          </div>
+          <div class="profile-field">
+            <label class="profile-label">Department</label>
+            <div class="profile-value">${department}</div>
+          </div>
+          <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+            <button class="profile-btn profile-btn-edit" onclick="enterEditMode()" style="background: #6b7280; color: white; flex: 1;">Edit Profile</button>
+            <button class="profile-btn profile-btn-close" onclick="closeProfileModal()" style="flex: 1;">Close</button>
+          </div>
+        `;
+      }
+    }
+
+    function enterEditMode() {
+      isEditMode = true;
+      renderProfileModal();
+    }
+
+    function cancelEditMode() {
+      isEditMode = false;
+      renderProfileModal();
+    }
+
+    async function saveProfileChanges(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('editUsername').value.trim();
+      const email = document.getElementById('editEmail').value.trim();
+      const department = document.getElementById('editDepartment').value.trim();
+      const password = document.getElementById('editPassword').value;
+      const confirmPassword = document.getElementById('editConfirmPassword').value;
+      const messageDiv = document.getElementById('formMessage');
+
+      // Validation
+      if (!username) {
+        showFormMessage('Username is required', 'error');
+        return;
+      }
+
+      if (!email) {
+        showFormMessage('Email is required', 'error');
+        return;
+      }
+
+      if (password && password !== confirmPassword) {
+        showFormMessage('Passwords do not match', 'error');
+        return;
+      }
+
+      if (password && password.length < 8) {
+        showFormMessage('Password must be at least 8 characters', 'error');
+        return;
+      }
+
+      try {
+        const payload = { username, email, department, confirmPassword };
+        if (password) payload.password = password;
+
+        const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+        const csrfData = await csrfRes.json();
+
+        const resp = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'csrf-token': csrfData.csrfToken
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include'
+        });
+
+        const data = await resp.json();
+        
+        if (resp.ok && data.success) {
+          currentUser = data.user;
+          showFormMessage('Profile updated successfully!', 'success');
+          setTimeout(() => {
+            isEditMode = false;
+            renderProfileModal();
+          }, 1500);
+        } else {
+          showFormMessage(data.error || 'Failed to update profile', 'error');
+        }
+      } catch(err) {
+        showFormMessage('Error: ' + err.message, 'error');
+      }
+    }
+
+    function showFormMessage(msg, type) {
+      const messageDiv = document.getElementById('formMessage');
+      messageDiv.textContent = msg;
+      messageDiv.style.display = 'block';
+      messageDiv.style.background = type === 'error' ? '#fee2e2' : '#dcfce7';
+      messageDiv.style.color = type === 'error' ? '#991b1b' : '#166534';
+      messageDiv.style.borderLeft = '4px solid ' + (type === 'error' ? '#dc2626' : '#10b981');
+    }
+
+    // Close modal when clicking overlay
+    document.getElementById('profileModalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeProfileModal();
+      }
+    });
+
+    // Load auth indicator when page loads
+    window.addEventListener('load', loadProfileUserData);
+  </script>
+    <script src="/session-timeout.js"></script>
+  <script src="/account-panel.js"></script>
+</body>
+</html>

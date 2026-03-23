@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Takhlees Asset Management System - Professional asset tracking and management solution for government services in Dubai.">
+<meta name="keywords" content="asset management, Dubai government, Takhlees, inventory management">
+<meta name="author" content="Takhlees Government Services">
+<meta name="theme-color" content="#1f2937">
+<title>Takhlees Asset Management System</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme-professional.css">
+</head>
+<body class="animate-fade-in">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-takhlees navbar-enhanced">
+  <div class="container-fluid">
+    <a class="navbar-brand animate-slide-in" href="#">
+      <div class="brand-logo">
+        <div class="shield-icon">
+          <img src="logo.png" alt="Takhlees company logo" style="width: 30px; height: 30px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+          <i class="bi bi-shield-fill-check" style="display: none;"></i>
+        </div>
+        <div class="brand-text">
+          <span class="main" style="color: var(--text-primary); font-weight: 600;">Takhlees</span>
+          <span class="sub" style="color: var(--text-secondary); font-size: 0.75rem;">ASSET MANAGEMENT SYSTEM</span>
+        </div>
+      </div>
+    </a>
+    
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <a href="history.html" class="btn btn-gold btn-sm btn-enhanced" title="View History">
+        <i class="bi bi-clock-history me-1"></i><span class="d-none d-md-inline">History</span>
+      </a>
+      <a href="qr-scan.html" class="btn btn-outline-gold btn-sm btn-enhanced" title="Scan QR Code">
+        <i class="bi bi-qr-code me-1"></i><span class="d-none d-md-inline">Scan QR</span>
+      </a>
+      
+      <!-- Authentication Indicator -->
+      <div class="auth-indicator d-none d-md-flex" id="authIndicator">
+        <div class="auth-status"></div>
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-info">
+          <p class="user-name" id="userName">User</p>
+          <span class="user-role role-user" id="userRole">User</span>
+        </div>
+      </div>
+      
+      <button id="logoutBtn" class="btn btn-outline-gold btn-sm btn-enhanced" title="Logout">
+        <i class="bi bi-box-arrow-right me-1"></i><span class="d-none d-sm-inline">Logout</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header" id="addAssetHeader">
+  <div class="container text-center">
+    <h1><i class="bi bi-plus-circle-fill me-3"></i>Asset Input Module</h1>
+    <p>Add and manage assets for Takhlees Government Services</p>
+  </div>
+</div>
+
+<!-- Admin-only notice shown to normal users -->
+<div id="addAssetNoAccess" style="display:none;" class="container mt-5">
+  <div class="text-center py-5">
+    <i class="bi bi-lock-fill" style="font-size:3rem;color:#e63757;"></i>
+    <h3 class="mt-3" style="color:#e63757;">Admin Access Required</h3>
+    <p class="text-muted">Only administrators can add assets. Contact your admin if you need to submit data.</p>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="container" id="addAssetMain">
+  <div class="row">
+    <!-- Form Section -->
+    <div class="col-lg-8">
+      <div class="card-takhlees card-enhanced animate-fade-in">
+        <div class="card-header-takhlees card-header-enhanced">
+          <h3><i class="bi bi-pencil-square me-2"></i>Asset Details</h3>
+        </div>
+        <div class="card-body-takhlees">
+          <form id="asset-form">
+            <div class="row mb-4">
+              <div class="col-md-6" id="asset-category-col">
+                <label for="asset-category" class="form-label form-label-enhanced required-field">Category</label>
+                <div class="input-group">
+                  <select class="form-select form-control-enhanced" id="asset-category" required>
+                    <option value="">Select a category</option>
+                    <option value="assets">Assets</option>
+                    <option value="case_details">Case Details</option>
+                    <option value="depreciation_history">Depreciation History</option>
+                    <option value="digital_media">Digital Media</option>
+                    <option value="documents">Documents</option>
+                    <option value="employees">Employees</option>
+                    <option value="keys">Keys</option>
+                    <option value="financial_assets">Financial Assets</option>
+                    <option value="furniture">Furniture</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="intellectual_property">Intellectual Property</option>
+                    <option value="it_hardware">IT Hardware</option>
+                    <option value="leased_assets">Leased Assets</option>
+                    <option value="locations">Locations</option>
+                    <option value="machinery_equipment">Machinery & Equipment</option>
+                    <option value="maintenance_logs">Maintenance Logs</option>
+                    <option value="real_estate">Real Estate</option>
+                    <option value="software_license">Software License</option>
+                    <option value="tools">Tools</option>
+                    <option value="vehicles">Vehicles</option>
+                  </select>
+                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" id="clear-category"><i class="bi bi-x-circle me-2"></i>Clear</a></li>
+                    <li><a class="dropdown-item" href="qr-scan.html"><i class="bi bi-qr-code me-2"></i>Scan QR</a></li>
+                    <li><a class="dropdown-item" href="history.html"><i class="bi bi-clock-history me-2"></i>View History</a></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-md-6" id="asset-name-col">
+                <label for="asset-name" id="asset-name-label" class="form-label form-label-enhanced required-field">Asset Name</label>
+                <div id="asset-name-container">
+                  <select class="form-select form-control-enhanced" id="asset-name" disabled required>
+                    <option value="">Select a category first</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Case Details Section -->
+            <div id="customer-details-section" class="animate-fade-in" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="customer-name" class="form-label form-label-enhanced required-field">Customer Name</label>
+                  <input type="text" class="form-control form-control-enhanced" id="customer-name" placeholder="Enter customer name">
+                </div>
+                <div class="col-md-6">
+                  <label for="customer-phone" class="form-label form-label-enhanced required-field">Customer Phone</label>
+                  <input type="tel" class="form-control form-control-enhanced" id="customer-phone" placeholder="+971 XX XXX XXXX">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="case-date" class="form-label form-label-enhanced required-field">Date</label>
+                  <input type="date" class="form-control form-control-enhanced" id="case-date">
+                </div>
+                <div class="col-md-6">
+                  <label for="case-number" class="form-label form-label-enhanced required-field">Case Number</label>
+                  <input type="text" class="form-control form-control-enhanced" id="case-number" placeholder="Enter case number">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label for="case-type" class="form-label form-label-enhanced required-field">Type of Case</label>
+                  <input type="text" class="form-control form-control-enhanced" id="case-type" placeholder="e.g., Ejari Registration, Visa Application">
+                </div>
+              </div>
+            </div>
+
+            <!-- Standard Fields -->
+            <div id="standard-fields">
+              <div class="row mb-3">
+                <div class="col-md-6" id="serial-number-col">
+                  <label for="serial-number" class="form-label form-label-enhanced">Serial Number</label>
+                  <input type="text" class="form-control form-control-enhanced" id="serial-number" placeholder="Enter serial number">
+                </div>
+                <div class="col-md-6" id="employee-name-col">
+                  <label for="employee-name" class="form-label form-label-enhanced">Assigned Employee</label>
+                  <input type="text" class="form-control form-control-enhanced" id="employee-name" placeholder="Enter employee name">
+                </div>
+              </div>
+              <div class="row mb-3" id="location-field-row">
+                <div class="col-md-6">
+                  <label for="asset-location" class="form-label form-label-enhanced">Location</label>
+                  <select class="form-select form-control-enhanced" id="asset-location">
+                    <option value="">Select location</option>
+                    <option value="DDL">DDL</option>
+                    <option value="EJARI">EJARI</option>
+                    <option value="Finance Office">Finance Office</option>
+                    <option value="Management Office">Management Office</option>
+                    <option value="Private Notary">Private Notary</option>
+                    <option value="RDC">RDC</option>
+                    <option value="RDC Electrical Enforcement">RDC Electrical Enforcement</option>
+                    <option value="__manual__">Manual entry</option>
+                  </select>
+                  <input type="text" class="form-control form-control-enhanced mt-2 d-none" id="asset-location-manual" placeholder="Enter location">
+                </div>
+              </div>
+            </div>
+            
+            <div id="dynamic-fields"></div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+              <button type="reset" class="btn btn-secondary btn-enhanced">
+                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset Form
+              </button>
+              <button type="submit" class="btn btn-primary btn-enhanced">
+                <i class="bi bi-plus-circle-fill me-2"></i>Add Asset
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="col-lg-4">
+      <div class="card-takhlees card-enhanced preview-enhanced animate-fade-in">
+        <div class="card-header-takhlees card-header-enhanced">
+          <h3><i class="bi bi-eye-fill me-2"></i>Asset Preview</h3>
+        </div>
+        <div class="card-body-takhlees" style="padding: 1rem;">
+
+          <!-- Asset Title -->
+          <div class="text-center pb-3 mb-3" style="border-bottom: 1px solid var(--color-border-default);">
+            <h5 id="preview-name" style="font-weight: 700; color: var(--color-text-primary); font-size: 1rem; margin-bottom: 0.5rem; word-break: break-word;">Asset Name</h5>
+            <span id="preview-category" style="display:inline-block; background: var(--color-primary); color: white; font-size: 0.65rem; letter-spacing: 0.08em; padding: 0.25em 0.85em; border-radius: 100px; text-transform: uppercase; font-weight: 600;">NOT SELECTED</span>
+          </div>
+
+          <!-- Standard Fields -->
+          <div class="preview-info-table mb-3">
+            <div class="preview-row" id="preview-serial-row">
+              <span class="preview-key">Serial</span>
+              <span class="preview-val" id="preview-serial">N/A</span>
+            </div>
+            <div class="preview-row" id="preview-employee-row">
+              <span class="preview-key">Employee</span>
+              <span class="preview-val" id="preview-employee">N/A</span>
+            </div>
+            <div class="preview-row" id="preview-location-row">
+              <span class="preview-key">Location</span>
+              <span class="preview-val" id="preview-location">N/A</span>
+            </div>
+          </div>
+
+          <!-- Case / Keys Fields -->
+          <div id="preview-customer-details" class="preview-info-table mb-3" style="display: none;">
+            <div class="preview-row">
+              <span class="preview-key">Customer</span>
+              <span class="preview-val" id="preview-customer-name">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Phone</span>
+              <span class="preview-val" id="preview-customer-phone">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Case #</span>
+              <span class="preview-val" id="preview-case-number">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Case Type</span>
+              <span class="preview-val" id="preview-case-type">N/A</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-key">Location</span>
+              <span class="preview-val" id="preview-case-location">N/A</span>
+            </div>
+          </div>
+
+          <!-- QR & Barcode -->
+          <div style="border-top: 1px solid var(--color-border-default); padding-top: 0.9rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+              <div>
+                <p class="preview-code-label">QR CODE</p>
+                <div class="preview-code-box">
+                  <img id="preview-qr" style="max-height: 88px; width: auto; max-width: 100%;" alt="QR Code" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=Takhlees">
+                </div>
+              </div>
+              <div>
+                <p class="preview-code-label">BARCODE</p>
+                <div class="preview-code-box">
+                  <img id="preview-barcode" style="max-height: 110px; width: 100%; max-width: 100%;" alt="Barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=TAKHLEES&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Toast (fixed, top-center) -->
+<div id="success-alert" role="alert" style="display:none;">
+  <i class="bi bi-check-circle-fill" style="font-size:1.25rem; color: var(--color-success); flex-shrink:0;"></i>
+  <div>
+    <strong style="display:block; margin-bottom:0.1rem;">Asset Added</strong>
+    <span style="font-size:0.875rem; font-weight:400; color:#374151;">Asset has been saved successfully.</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    // Check authentication and get user info
+    let auth = { authenticated: false };
+    try {
+      const authRes = await fetch("/api/check-auth", { credentials: "include" });
+      auth = await authRes.json();
+    } catch (err) {
+      console.error('Auth check failed:', err);
+    }
+    if (!auth.authenticated) {
+      window.location.href = "/login.html";
+      return;
+    }
+
+    // Display auth indicator with user info
+    if (auth.user && auth.user.username) {
+        const authIndicator = document.getElementById("authIndicator");
+        const userAvatar = document.getElementById("userAvatar");
+        const userName = document.getElementById("userName");
+        const userRole = document.getElementById("userRole");
+        
+        if (authIndicator && userAvatar && userName && userRole) {
+          userAvatar.textContent = auth.user.username.charAt(0).toUpperCase();
+          userName.textContent = auth.user.username;
+          const role = auth.user.role || 'user';
+          userRole.textContent = role.toUpperCase();
+          userRole.className = `user-role role-${role}`;
+          authIndicator.classList.remove('d-none');
+        }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        const csrfRes = await fetch('/api/csrf-token', { credentials: 'include', cache: 'no-store' });
+        const csrfData = await csrfRes.json();
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'csrf-token': csrfData.csrfToken }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = '/login.html';
+      }
+    });
+
+    // --- Asset form JS ---
+    const assetForm = document.getElementById('asset-form');
+    const assetCategory = document.getElementById('asset-category');
+    const assetNameCol = document.getElementById('asset-name-col');
+    const assetNameLabel = document.getElementById('asset-name-label');
+    const assetNameContainer = document.getElementById('asset-name-container');
+    const dynamicFields = document.getElementById('dynamic-fields');
+    const successAlert = document.getElementById('success-alert');
+    
+    // Sections
+    const customerDetailsSection = document.getElementById('customer-details-section');
+    const standardFields = document.getElementById('standard-fields');
+    
+    // Standard fields
+    const serialNumber = document.getElementById('serial-number');
+    const employeeName = document.getElementById('employee-name');
+    const locationInput = document.getElementById('asset-location');
+    const locationManual = document.getElementById('asset-location-manual');
+    const serialNumberCol = document.getElementById('serial-number-col');
+    const employeeNameCol = document.getElementById('employee-name-col');
+    const locationFieldRow = document.getElementById('location-field-row');
+    
+    // Customer fields
+    const customerName = document.getElementById('customer-name');
+    const customerPhone = document.getElementById('customer-phone');
+    const caseDate = document.getElementById('case-date');
+    const caseNumber = document.getElementById('case-number');
+    const caseType = document.getElementById('case-type');
+
+    // Preview elements
+    const previewName = document.getElementById('preview-name');
+    const previewCategory = document.getElementById('preview-category');
+    const previewSerialRow = document.getElementById('preview-serial-row');
+    const previewSerial = document.getElementById('preview-serial');
+    const previewEmployeeRow = document.getElementById('preview-employee-row');
+    const previewEmployee = document.getElementById('preview-employee');
+    const previewLocationRow = document.getElementById('preview-location-row');
+    const previewLocation = document.getElementById('preview-location');
+    const previewCustomerDetails = document.getElementById('preview-customer-details');
+    const previewCustomerName = document.getElementById('preview-customer-name');
+    const previewCustomerPhone = document.getElementById('preview-customer-phone');
+    const previewCaseNumber = document.getElementById('preview-case-number');
+    const previewCaseType = document.getElementById('preview-case-type');
+    const previewCaseLocation = document.getElementById('preview-case-location');
+    const previewQr = document.getElementById('preview-qr');
+    const previewBarcode = document.getElementById('preview-barcode');
+
+    // Event listeners for live preview
+    serialNumber.addEventListener('input', updatePreview);
+    employeeName.addEventListener('input', updatePreview);
+    locationInput.addEventListener('change', () => {
+      updateLocationManualVisibility();
+      updatePreview();
+    });
+    locationInput.addEventListener('input', updatePreview);
+    locationManual.addEventListener('input', updatePreview);
+    customerName.addEventListener('input', updatePreview);
+    customerPhone.addEventListener('input', updatePreview);
+    caseDate.addEventListener('input', updatePreview);
+    caseNumber.addEventListener('input', updatePreview);
+    caseType.addEventListener('input', updatePreview);
+
+    const categoryAssets = {
+        assets: ["Laptop","Printer","Projector","Scanner"],
+      case_details: [],
+        depreciation_history: ["Laptop Depreciation","Vehicle Depreciation"],
+        digital_media: ["Camera","Lighting Kit","Microphone","Tripod"],
+        documents: ["Contract","Invoice","Policy Document"],
+        employees: [],
+        financial_assets: ["Bonds","Cash Reserve","Mutual Funds","Stocks"],
+        furniture: ["Bookshelf","Conference Table","L-Shaped Table","Office Chair","Small Table"],
+        infrastructure: ["Networking Equipment","Power Backup","Server Room"],
+        intellectual_property: ["Copyright","Patent","Trademark"],
+        it_hardware: ["Desktop PC","Keyboard","Laptop","Monitor","Mouse"],
+        leased_assets: ["Leased Car","Leased Laptop","Leased Printer"],
+        locations: ["Branch 1","Branch 2","Head Office","Warehouse"],
+        machinery_equipment: ["CNC Machine","Drill Press","Forklift"],
+        maintenance_logs: ["AC Service","Elevator Maintenance","Generator Check"],
+        real_estate: ["Office Building","Shop","Warehouse"],
+        software_license: ["Adobe Photoshop","Antivirus","ERP System","MS Office"],
+        tools: ["Drill","Hammer","Screwdriver Set","Wrench"],
+        vehicles: ["Motorbike","Pickup Truck","Sedan","SUV"]
+    };
+
+    const categoryFields = {
+        assets: [
+            { type: 'date', id: 'purchase_date', label: 'Purchase Date', placeholder: '' },
+            { type: 'number', id: 'value', label: 'Value ($)', placeholder: 'Enter asset value' }
+        ],
+        employees: [
+            { type: 'text', id: 'department', label: 'Department', placeholder: 'Enter department' },
+            { type: 'text', id: 'position', label: 'Position', placeholder: 'Enter job position' }
+        ],
+        maintenance_logs: [
+            { type: 'date', id: 'maintenance_date', label: 'Maintenance Date', placeholder: '' },
+            { type: 'text', id: 'technician', label: 'Technician', placeholder: 'Technician name' }
+        ],
+        it_hardware: [
+            { type: 'text', id: 'brand', label: 'Brand', placeholder: 'Device brand' },
+            { type: 'text', id: 'model', label: 'Model', placeholder: 'Device model' }
+        ],
+        vehicles: [
+            { type: 'text', id: 'make', label: 'Make', placeholder: 'Vehicle make' },
+            { type: 'text', id: 'model', label: 'Model', placeholder: 'Vehicle model' },
+            { type: 'text', id: 'year', label: 'Year', placeholder: 'Manufacturing year' }
+        ],
+        keys: [
+          { type: 'date', id: 'date', label: 'Date', placeholder: 'Equip Assign Date' },
+          { type: 'number', id: 'keys', label: 'Keys', placeholder: 'No of Quantity' }
+        ]
+    };
+
+    function updateLocationManualVisibility() {
+      if (locationInput.value === '__manual__') {
+        locationManual.classList.remove('d-none');
+        locationManual.required = true;
+      } else {
+        locationManual.classList.add('d-none');
+        locationManual.required = false;
+        locationManual.value = '';
+      }
+    }
+
+    function getLocationValue() {
+      if (locationInput.value === '__manual__') {
+        return locationManual.value.trim();
+      }
+      return locationInput.value;
+    }
+
+    function setCaseFieldsRequired(isRequired) {
+      customerName.required = isRequired;
+      customerPhone.required = isRequired;
+      caseDate.required = isRequired;
+      caseNumber.required = isRequired;
+      caseType.required = isRequired;
+    }
+
+    function buildBarcodeUrl(value) {
+      return `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(value || 'NA')}&scale=3&height=58&includetext&paddingwidth=24&paddingheight=10`;
+    }
+
+    function updatePreview() {
+        const category = assetCategory.value || 'Not selected';
+        const isCaseStyleCategory = category === 'case_details' || category === 'keys';
+
+        if (isCaseStyleCategory) {
+          previewCategory.textContent = 'Case Details';
+        } else {
+          previewCategory.textContent = category;
+        }
+
+        if (isCaseStyleCategory) {
+            // Case details preview
+            const nameEl = document.getElementById('asset-name');
+            const caseName = nameEl ? nameEl.value : '';
+            const cName = customerName.value || 'Customer Name';
+            const cPhone = customerPhone.value || 'N/A';
+            const cDate = caseDate.value || 'N/A';
+            const cNum = caseNumber.value || 'N/A';
+            const cType = caseType.value || 'N/A';
+            const locationVal = getLocationValue() || 'N/A';
+            
+            previewName.textContent = caseName || 'Case Name';
+            previewCustomerName.textContent = cName;
+            previewCustomerPhone.textContent = cPhone;
+            previewCaseNumber.textContent = cNum;
+            previewCaseType.textContent = cType;
+            previewCaseLocation.textContent = locationVal;
+            
+            // Hide standard fields in preview, show case details
+            previewSerialRow.style.display = 'none';
+            previewEmployeeRow.style.display = 'none';
+            previewLocationRow.style.display = 'none';
+            previewCustomerDetails.style.display = 'block';
+            
+            // Generate QR with case data
+            const qrData = encodeURIComponent(`${caseName || cName}-${cPhone}-${cNum}`);
+                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
+              previewBarcode.src = buildBarcodeUrl(cNum || caseName || cName);
+        } else {
+            // Standard asset preview
+            const nameEl = document.getElementById('asset-name');
+            const name = nameEl ? nameEl.value : '';
+            const serial = serialNumber.value || '';
+            const employee = employeeName.value || '';
+            const locationVal = getLocationValue() || '';
+
+            previewName.textContent = name || 'Asset Name';
+            previewSerial.textContent = serial || 'N/A';
+            previewEmployee.textContent = employee || 'N/A';
+            previewLocation.textContent = locationVal || 'N/A';
+            
+            // Show standard fields in preview, hide case details
+            previewSerialRow.style.display = 'block';
+            previewEmployeeRow.style.display = 'block';
+            previewLocationRow.style.display = 'block';
+            previewCustomerDetails.style.display = 'none';
+
+            if (name && category !== 'Not selected') {
+                const qrData = encodeURIComponent(`${name}-${category}-${serial}-${employee}`);
+                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${qrData}`;
+                const barcodeValue = serial || name;
+              previewBarcode.src = buildBarcodeUrl(barcodeValue);
+            } else {
+                previewQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Sample`;
+              previewBarcode.src = buildBarcodeUrl('Sample');
+            }
+        }
+    }
+
+    function updateDynamicFields() {
+        const category = assetCategory.value;
+        const isCaseStyleCategory = category === 'case_details' || category === 'keys';
+        dynamicFields.innerHTML = '';
+
+        if (assetNameLabel) {
+          assetNameLabel.textContent = isCaseStyleCategory ? 'Case Name' : 'Asset Name';
+        }
+
+        // Handle Case Details category specially
+        if (isCaseStyleCategory) {
+            // Show asset name, hide standard fields
+            assetNameCol.classList.remove('hidden-field');
+            standardFields.style.display = 'block';
+            serialNumberCol.style.display = 'none';
+            employeeNameCol.style.display = 'none';
+            locationFieldRow.style.display = 'flex';
+            customerDetailsSection.style.display = 'block';
+          setCaseFieldsRequired(true);
+            locationInput.required = true;
+            updateLocationManualVisibility();
+            
+            // Set case name input
+            assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter case name" required>`;
+            const assetNameEl = document.getElementById('asset-name');
+            if (assetNameEl) {
+                assetNameEl.addEventListener('input', updatePreview);
+                assetNameEl.addEventListener('change', updatePreview);
+            }
+            
+            updatePreview();
+            return;
+        } else {
+            // Show standard layout
+            assetNameCol.classList.remove('hidden-field');
+            standardFields.style.display = 'block';
+            serialNumberCol.style.display = '';
+            employeeNameCol.style.display = '';
+            locationFieldRow.style.display = '';
+            customerDetailsSection.style.display = 'none';
+          setCaseFieldsRequired(false);
+            locationInput.required = false;
+            updateLocationManualVisibility();
+        }
+
+        // Handle Asset Name field for standard categories
+        if (!category) {
+            assetNameContainer.innerHTML = `
+                <select class="form-select" id="asset-name" disabled required>
+                    <option value="">Select a category first</option>
+                </select>
+            `;
+        } else if (category === 'employees') {
+          assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter employee name" required>`;
+        } else if (categoryAssets[category]) {
+            let selectHTML = `<select class="form-select" id="asset-name" required>
+                <option value="">Select ${category.replace(/_/g,' ')} asset</option>`;
+            categoryAssets[category].forEach(name => {
+                selectHTML += `<option value="${name}">${name}</option>`;
+            });
+            selectHTML += '</select>';
+            assetNameContainer.innerHTML = selectHTML;
+        } else {
+            assetNameContainer.innerHTML = `<input type="text" class="form-control" id="asset-name" placeholder="Enter asset name" required>`;
+        }
+
+        // Attach listeners to the new asset-name element
+        const assetNameEl = document.getElementById('asset-name');
+        if (assetNameEl) {
+            assetNameEl.addEventListener('input', updatePreview);
+            assetNameEl.addEventListener('change', updatePreview);
+        }
+
+        // Handle Additional Details fields
+        if (categoryFields[category]) {
+            const fields = categoryFields[category];
+            let html = '<div class="row mb-3"><div class="col-12"><h5 class="section-title">Additional Details</h5></div></div>';
+            fields.forEach((f, i) => {
+                if (i % 2 === 0) html += '<div class="row mb-3">';
+                html += `<div class="col-md-6">
+                    <label for="${f.id}" class="form-label">${f.label}</label>
+                    <input type="${f.type}" class="form-control" id="${f.id}" placeholder="${f.placeholder}">
+                </div>`;
+                if (i % 2 === 1 || i === fields.length - 1) html += '</div>';
+            });
+            dynamicFields.innerHTML = html;
+        }
+        
+        updatePreview();
+    }
+
+    assetCategory.addEventListener('change', () => {
+        updateDynamicFields();
+    });
+
+    document.getElementById('clear-category').addEventListener('click', (e) => {
+        e.preventDefault();
+        assetCategory.value = '';
+        updateDynamicFields();
+    });
+
+    assetForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+      if (!assetForm.reportValidity()) {
+        return;
+      }
+      
+      // Get CSRF token
+      let csrfToken = '';
+      try {
+        const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+        const csrfData = await csrfRes.json();
+        csrfToken = csrfData.csrfToken;
+      } catch (err) {
+        console.error('Failed to get CSRF token:', err);
+        alert('Security token retrieval failed. Please refresh the page.');
+        return;
+      }
+      
+        const category = assetCategory.value;
+        const isCaseStyleCategory = category === 'case_details' || category === 'keys';
+        let payload = {};
+
+        if (isCaseStyleCategory) {
+            // Case details payload
+            const caseName = (document.getElementById('asset-name').value || '').trim();
+            const customerNameVal = (customerName.value || '').trim();
+            const customerPhoneVal = (customerPhone.value || '').trim();
+            const caseDateVal = caseDate.value;
+            const caseNumberVal = (caseNumber.value || '').trim();
+            const caseTypeVal = (caseType.value || '').trim();
+            const locationVal = getLocationValue();
+
+            if (!caseName || !customerNameVal || !customerPhoneVal || !caseDateVal || !caseNumberVal || !caseTypeVal || !locationVal) {
+              alert('Please complete all mandatory case fields.');
+              return;
+            }
+
+            if (locationInput.value === '__manual__' && !locationVal) {
+              alert('Manual location is mandatory when Manual entry is selected.');
+              return;
+            }
+
+            payload = {
+                name: caseName, // case name
+                customer_name: customerNameVal,
+                customer_phone: customerPhoneVal,
+                case_date: caseDateVal,
+                case_number: caseNumberVal,
+                case_type: caseTypeVal,
+                location: locationVal
+            };
+        } else {
+            // Standard asset payload
+            const name = (document.getElementById('asset-name').value || '').trim();
+            const serial = (serialNumber.value || '').trim();
+            const employee = (employeeName.value || '').trim();
+            const locationVal = getLocationValue();
+
+            if (!name) {
+              alert('Asset name is mandatory.');
+              return;
+            }
+
+            if (locationInput.value === '__manual__' && !locationVal) {
+              alert('Manual location is mandatory when Manual entry is selected.');
+              return;
+            }
+            
+            payload = { 
+                name, 
+                serial_number: serial, 
+                employee_name: employee, 
+                location: locationVal 
+            };
+
+            if (categoryFields[category]) {
+                categoryFields[category].forEach(f => {
+                    const val = document.getElementById(f.id).value;
+                    payload[f.id] = val;
+                });
+            }
+        }
+
+        try {
+            const res = await fetch(`/api/assets/${category}`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'csrf-token': csrfToken
+                },
+                body: JSON.stringify(payload),
+                credentials: "include"
+            });
+          let data;
+          try {
+            data = await res.json();
+          } catch (parseErr) {
+            console.error('JSON parse error:', parseErr);
+            throw new Error('Server response was invalid');
+          }
+          
+          console.log('Asset submission response:', { status: res.status, ok: res.ok, data });
+          
+          // Handle CSRF token errors
+          if (res.status === 403 && data.error && data.error.includes('CSRF')) {
+            alert('Security validation failed. Please refresh and try again.');
+            location.reload();
+            return;
+          }
+          
+          // Check for success
+          if (!res.ok || !data.success) {
+            const errorMsg = data.error || `Server error: ${res.status}`;
+            console.error('API error details:', {
+              status: res.status,
+              statusText: res.statusText,
+              error: errorMsg,
+              fullResponse: data
+            });
+            throw new Error(errorMsg);
+          }
+          
+          // Success - show alert and reset form
+          successAlert.style.display = 'flex';
+          successAlert.classList.remove('toast-hide');
+          setTimeout(() => {
+            successAlert.classList.add('toast-hide');
+            setTimeout(() => {
+              successAlert.style.display = 'none';
+              successAlert.classList.remove('toast-hide');
+            }, 320);
+          }, 3000);
+          assetForm.reset();
+          updateDynamicFields();
+        } catch (err) {
+            console.error('Asset submission error:', err);
+            console.log('📋 To debug, check the database table with: /api/db-schema endpoint');
+            alert('Error adding asset: ' + err.message);
+        }
+    });
+
+    updateDynamicFields();
+    updateLocationManualVisibility();
+});
+</script>
+
+<!-- Profile Modal -->
+<div class="profile-modal-overlay" id="profileModalOverlay">
+  <div class="profile-modal">
+    <div class="profile-header">
+      <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
+      <h3 id="profileUsername">User</h3>
+      <p id="profileRoleDisplay">User</p>
+    </div>
+    <div class="profile-body" id="profileContent">
+      <!-- Content will be populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+// Profile modal behavior is centralized in account-panel.js.
+</script>
+
+<script src="/session-timeout.js"></script>
+<script src="/account-panel.js"></script>
+</body>
+</html>

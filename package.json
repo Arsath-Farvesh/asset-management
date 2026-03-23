@@ -1,0 +1,63 @@
+{
+  "name": "qr-asset-management",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "preflight": "node scripts/preflight.js",
+    "preflight:strict": "node scripts/preflight.js --strict",
+    "compliance:check": "node scripts/compliance-check.js",
+    "release:check": "npm run preflight:strict && npm test && npm run docs:lint && npm run compliance:check",
+    "docs:lint": "markdownlint README.md RAILWAY_DEPLOYMENT_RUNBOOK.md ISO_READINESS_EVIDENCE.md ISO_STATEMENT_OF_APPLICABILITY_TEMPLATE.md compliance/*.md",
+    "docs:lint:fix": "markdownlint README.md RAILWAY_DEPLOYMENT_RUNBOOK.md ISO_READINESS_EVIDENCE.md ISO_STATEMENT_OF_APPLICABILITY_TEMPLATE.md compliance/*.md --fix",
+    "start": "node server.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:unit": "jest --testPathPatterns=unit",
+    "test:integration": "jest --testPathPatterns=integration",
+    "migrate": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:status": "knex migrate:currentVersion"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "bwip-js": "^4.7.0",
+    "compression": "^1.8.1",
+    "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "dotenv": "^17.2.2",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.0.1",
+    "express-session": "^1.18.2",
+    "express-validator": "^7.0.1",
+    "helmet": "^8.1.0",
+    "knex": "^3.1.0",
+    "nodemailer": "^7.0.7",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-microsoft": "^2.1.0",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "qrcode": "^1.5.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "markdownlint-cli": "^0.48.0",
+    "supertest": "^7.2.2"
+  }
+}
