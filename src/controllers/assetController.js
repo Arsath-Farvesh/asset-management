@@ -304,6 +304,7 @@ class AssetController {
     const rows = result.data || [];
     const autoPrint = req.query.autoprint === 'true';
     const asDownload = req.query.download === 'true';
+    const paper = String(req.query.paper || 'a4').toLowerCase() === 'letter' ? 'Letter' : 'A4';
     const createdAt = new Date().toLocaleString();
 
     const cards = rows.map((row) => {
@@ -341,6 +342,7 @@ class AssetController {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR & Barcode Report</title>
   <style>
+    @page { size: ${paper} portrait; margin: 10mm; }
     body { font-family: Arial, sans-serif; margin: 16px; color: #111827; background: #f8fafc; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .print-btn { padding: 10px 16px; border: none; border-radius: 8px; background: #88010e; color: #fff; cursor: pointer; }
@@ -361,11 +363,13 @@ class AssetController {
     }
     @media print {
       .print-btn { display: none; }
-      body { margin: 8px; background: #fff; }
+      body { margin: 0; background: #fff; font-size: 11px; }
+      .header { margin-bottom: 8px; }
       .labels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .label-card { border-color: #cbd5e1; page-break-inside: avoid; }
+      .label-card { border-color: #cbd5e1; page-break-inside: avoid; break-inside: avoid-page; }
       .codes-grid { grid-template-columns: 1fr 1fr; }
       .barcode-image { max-width: 100%; }
+      .label-card p { margin: 2px 0; }
     }
   </style>
 </head>
@@ -373,7 +377,7 @@ class AssetController {
   <div class="header">
     <div>
       <h1 style="margin:0;font-size:20px;">QR & Barcode Sticker Report</h1>
-      <p style="margin:4px 0 0 0;color:#4b5563;">Generated: ${escapeHtml(createdAt)} | Total: ${rows.length}</p>
+      <p style="margin:4px 0 0 0;color:#4b5563;">Generated: ${escapeHtml(createdAt)} | Total: ${rows.length} | Paper: ${paper}</p>
     </div>
     <button class="print-btn" onclick="window.print()">Print</button>
   </div>

@@ -1431,7 +1431,7 @@
       }
 
       try {
-        const res = await fetch('/api/history/codes-report?autoprint=true', { credentials: 'include' });
+        const res = await fetch('/api/history/codes-report?autoprint=true&paper=a4', { credentials: 'include' });
         if (!res.ok) {
           const txt = await res.text();
           throw new Error(txt || 'Unable to generate printable QR/barcode report');
